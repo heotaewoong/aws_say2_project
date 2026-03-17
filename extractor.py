@@ -1,10 +1,27 @@
 import pandas as pd
 import json
-# import openai  # 실제 API 사용 시 활성화
+import google.generativeai as genai
 
 class PhenotypeExtractor:
-    def __init__(self):
-        # 🧪 Lab 결과 판정 기준 (실제 프로젝트 시 확장 필요)
+    def __init__(self, api_key):
+        # xAI API 설정
+        genai.configure(api_key=api_key)
+
+        # 시스템 명령 설정 (모델의 역할을 정의)
+        system_instruction = (
+            "You are a highly skilled Clinical Geneticist and Pulmonologist. "
+            "Your task is to perform deep phenotyping by mapping clinical findings "
+            "to the Human Phenotype Ontology (HPO) for rare disease diagnosis."
+        )
+        
+        # 모델 초기화 (JSON 모드 강제)
+        self.model = genai.GenerativeModel(
+            model_name="gemini-2.0-flash",
+            system_instruction=system_instruction,
+            generation_config={"response_mime_type": "application/json"}
+        )
+        
+        # Lab 결과 판정 기준
         self.lab_rules = {
             'Platelet Count': {'low': 150, 'hpo': 'HP:0001873'},
             'Glucose': {'high': 126, 'hpo': 'HP:0000819'},
@@ -12,41 +29,40 @@ class PhenotypeExtractor:
         }
 
     def extract_from_text_llm(self, text):
-        """
-        [Phase 2-1] LLM을 사용하여 텍스트에서 HPO 추출
-        프롬프트 엔지니어링이 핵심입니다.
-        """
         prompt = f"""
-        당신은 숙련된 호흡기 내과 전문의입니다. 
-        아래의 의사 소견서에서 환자의 이상 소견(Phenotypes)을 추출하여 HPO ID와 매핑하세요.
-        결과는 반드시 JSON 리스트 형식으로 답변하세요.
+        Analyze the following Discharge Summary and extract all clinical phenotypes mapped to HPO IDs.
+        Focus on features relevant to both common and rare respiratory conditions.
+
+        Note: Exclude normal findings, medications, and procedures.
         
-        [소견서 본문]
+        [Discharge Summary]
         {text}
         
-        [응답 형식]
+        Return a JSON list of objects:
         [
-          {{"finding": "증상명", "hpo_id": "HP:XXXXXXX"}},
-          ...
+          {{"finding": "...", "hpo_id": "HP:XXXXXXX"}}
         ]
         """
-        # 실제 API 호출 예시 (현재는 프로토타입 결과 반환)
-        # response = openai.ChatCompletion.create(model="gpt-4o", messages=[{"role": "user", "content": prompt}])
-        # return json.loads(response.choices[0].message.content)
         
-        print("🤖 LLM 엔진이 텍스트를 분석 중입니다...")
-        return [
-            {"finding": "Clubbing", "hpo_id": "HP:0001217"},
-            {"finding": "Dyspnea", "hpo_id": "HP:0002094"}
-        ]
+        try:
+            print("✨ Gemini-2,0-Flash가 소견서를 분석 중입니다...")
+            response = self.model.generate_content(prompt)
+            
+            # Gemini는 설정에 따라 순수 JSON 문자열을 반환합니다.
+            return json.loads(response.text)
+            
+        except Exception as e:
+            print(f"❌ Gemini API 호출 중 에러 발생: {e}")
+            return []
+
 
     def extract_from_lab_data(self, lab_row):
-        """
-        [Phase 2-2] 수치 데이터를 규칙 기반으로 HPO 변환
-        """
-        label = lab_row['label']
-        value = lab_row['valuenum']
+        label = lab_row.get('label')
+        value = lab_row.get('valuenum')
         
+        if pd.isna(value) or not label:
+            return None
+            
         if label in self.lab_rules:
             rule = self.lab_rules[label]
             if 'low' in rule and value < rule['low']:
@@ -54,7 +70,7 @@ class PhenotypeExtractor:
             if 'high' in rule and value > rule['high']:
                 return {'finding': f'High {label}', 'hpo_id': rule['hpo']}
         return None
-
+    
 if __name__ == "__main__":
     extractor = PhenotypeExtractor()
     print("✅ Extractor 모듈 로드 완료")

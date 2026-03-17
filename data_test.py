@@ -1,39 +1,41 @@
 import pandas as pd
 from extractor import PhenotypeExtractor
 
-def run_phase2_prototype(subject_id):
-    extractor = PhenotypeExtractor()
-    
-    # 1. 로컬 파일 로드
-    try:
-        notes_df = pd.read_csv('./data/discharge.csv')
-        labs_df = pd.read_csv('./data/labevents.csv')
-    except FileNotFoundError as e:
-        print(f"❌ 데이터를 찾을 수 없습니다: {e}")
-        return
+def run_phase2_prototype(subject_id, api_key):
+    # Gemini API 키로 초기화
+    extractor = PhenotypeExtractor(api_key=api_key)
 
-    # 2. 해당 환자의 텍스트 데이터 추출
-    patient_note = notes_df[notes_df['subject_id'] == subject_id]['text'].values[0]
-    nlp_results = extractor.extract_from_text_llm(patient_note)
-    nlp_hpos = [res['hpo_id'] for res in nlp_results]
+    # 데이터 로드 및 병합 (이전과 동일)
+    notes_df = pd.read_csv('./data/discharge.csv', nrows=100)
+    labs_df = pd.read_csv('./data/labevents.csv', nrows=100)
+    items_df = pd.read_csv('./data/d_labitems.csv', nrows=100)
+    labs_merged = pd.merge(labs_df, items_df[['itemid', 'label']], on='itemid', how='left')
 
-    # 3. 해당 환자의 Lab 데이터 추출
-    patient_labs = labs_df[labs_df['subject_id'] == subject_id]
+    # NLP 추출 (Gemini 사용)
+    patient_notes = notes_df[notes_df['subject_id'] == subject_id]
+    if not patient_notes.empty:
+        text_content = patient_notes.iloc[0]['text']
+        text_content = text_content[:1000]
+        nlp_results = extractor.extract_from_text_llm(text_content)
+        nlp_hpos = [res['hpo_id'] for res in nlp_results]
+    else:
+        nlp_hpos = []
+
+    # Lab 추출
+    patient_labs = labs_merged[labs_merged['subject_id'] == subject_id]
     lab_hpos = []
     for _, row in patient_labs.iterrows():
         res = extractor.extract_from_lab_data(row)
         if res:
             lab_hpos.append(res['hpo_id'])
 
-    # 4. 통합 프로필 (Patient HPO Profile)
+    # 결과 통합
     combined_profile = list(set(nlp_hpos + lab_hpos))
-    
-    print(f"\n--- 환자(ID: {subject_id}) Phase 2 결과 ---")
-    print(f"📝 NLP 추출 HPO: {nlp_hpos}")
-    print(f"🧪 Lab 추출 HPO: {lab_hpos}")
-    print(f"🧬 최종 통합 프로필: {combined_profile}")
+    print(f"\n✅ 분석 완료 (Subject ID: {subject_id})")
+    print(f"🧬 최종 HPO 프로필: {combined_profile}")
     
     return combined_profile
 
-# 실행 (예시 subject_id)
-run_phase2_prototype(10001472)
+if __name__ == "__main__":
+    GEMINI_API_KEY = "AIzaSyDGiaHsbviOjfYXPkPm3dgj0IcT-YrQ17o" # 실제 키 입력
+    run_phase2_prototype(10000032, GEMINI_API_KEY)

@@ -57,7 +57,7 @@ class KnowledgeBaseBuilder:
 if __name__ == "__main__":
     # 로컬 경로 설정
     XML_FILE = "./data/en_product4.xml"
-    OUTPUT_CSV = "./data/processed/orphadata_weighted.csv"
+    OUTPUT_CSV = "./data/orphadata_weighted.csv"
     
     builder = KnowledgeBaseBuilder(XML_FILE)
     builder.build_csv(OUTPUT_CSV)
