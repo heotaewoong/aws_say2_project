@@ -62,7 +62,7 @@ else:
                 # Phase 3: Vision 분석 및 Grad-CAM
                 vision_hpos = []
                 if uploaded_img:
-                    vision_results = engines["vision"].extract_vision_hpos("temp_cxr.jpg", threshold=0.1)
+                    vision_results = engines["vision"].extract_vision_hpos("temp_cxr.jpg", threshold=0.5)
                     vision_hpos = [f['hpo_id'] for f in vision_results]
                     
                     # Grad-CAM 생성 (가장 확률 높은 질환)
