@@ -9,7 +9,7 @@ class PubMedCLIPEngine:
     def __init__(self, model_path="./models/pubmed-clip", device=None):
         # 1. 장치 설정 (Mac mps 지원)
         if device is None:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
         else:
             self.device = device
             
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     engine = PubMedCLIPEngine(model_path=MY_MODEL_PATH)
     
     # 테스트용 이미지 경로 (기태님의 실제 경로로 수정)
-    test_img = "data/sub-S11869_ses-E23135_run-1_bp-chest_vp-ap_cr.png"
+    test_img = "data/CheXpert-v1.0 batch 2 (train 1)/patient00001/study1/view1_frontal.jpg"
     
     if os.path.exists(test_img):
         results = engine.extract_vision_hpos(test_img)
