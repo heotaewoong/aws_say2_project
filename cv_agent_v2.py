@@ -1,5 +1,7 @@
 import torch.optim as optim
+import torch
 import torch.nn.functional as F
+from normal_link_model import NormalLinkAE
 
 class NormalLinkEngine:
     def __init__(self, model_path=None):
