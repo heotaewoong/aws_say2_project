@@ -8,8 +8,8 @@ import os
 
 # 1. 환경 설정 및 모델 로드
 def load_model(model_path, device):
-    from normal_link_model import NormalLinkAE
-    model = NormalLinkAE().to(device)
+    from normal_link_model import DeepNormalLinkAE
+    model = DeepNormalLinkAE().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
     return model
@@ -83,8 +83,8 @@ def evaluate(image_path, model_path):
 
 if __name__ == "__main__":
     # 테스트할 이미지 경로와 학습된 모델 경로를 입력하세요.
-    TEST_IMG = "./data/test/abnormal_sample.png" 
-    MODEL_WEIGHTS = "normal_link_v2_ep50.pth"
+    TEST_IMG = "./data/pneumonia_data/test/PNEUMONIA/person1682_virus_2899.jpeg" 
+    MODEL_WEIGHTS = "./mini_project/normal_link_v2_ep50.pth"
     
     if os.path.exists(TEST_IMG) and os.path.exists(MODEL_WEIGHTS):
         evaluate(TEST_IMG, MODEL_WEIGHTS)

@@ -6,13 +6,14 @@ from torchvision import transforms
 from PIL import Image
 import os
 import glob
+from loss import HybridLoss
 
 # 1. 커스텀 데이터셋 정의
 class NormalXrayDataset(Dataset):
     def __init__(self, data_dir, transform=None):
         # 정상(Normal) 이미지만 모여있는 폴더 경로
         self.image_paths = glob.glob(os.path.join(data_dir, "*.png")) + \
-                           glob.glob(os.path.join(data_dir, "*.jpg"))
+                           glob.glob(os.path.join(data_dir, "*.jpeg"))
         self.transform = transform
 
     def __len__(self):
@@ -42,16 +43,16 @@ def train():
     ])
 
     # 데이터 로더 (경로를 기태님의 환경에 맞게 수정하세요)
-    dataset = NormalXrayDataset(data_dir="./data/train/normal", transform=transform)
+    dataset = NormalXrayDataset(data_dir="./data/pneumonia_data/train/NORMAL", transform=transform)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     # 모델 초기화
-    from normal_link_model import NormalLinkAE
-    model = NormalLinkAE().to(device)
+    from normal_link_model import DeepNormalLinkAE
+    model = DeepNormalLinkAE().to(device)
     
     # 손실 함수 및 최적화 도구
-    criterion = nn.MSELoss() # 일단 기본 MSE로 시작
-    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
+    criterion = HybridLoss(alpha=0.8) 
+    optimizer = optim.Adam(model.parameters(), lr=lr)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5)
 
     print(f"🚀 학습 시작! 기기: {device} | 데이터 수: {len(dataset)}")
