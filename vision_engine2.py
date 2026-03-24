@@ -13,10 +13,7 @@ class CheXNetEngine:
         num_ftrs = self.model.classifier.in_features
         
         # CheXNet의 14개 질환 출력을 위해 최종 레이어 수정
-        self.model.classifier = nn.Sequential(
-            nn.Linear(num_ftrs, 14),
-            nn.Sigmoid()
-        )
+        self.model.classifier = nn.Linear(num_ftrs, 14)
         
         # 2. 모델 가중치 로드
         if model_path and os.path.exists(model_path):
@@ -37,9 +34,10 @@ class CheXNetEngine:
 
         # 3. 14가지 소견 라벨 및 HPO 매핑
         self.labels = [
-            "Atelectasis", "Cardiomegaly", "Effusion", "Infiltration", "Mass", 
-            "Nodule", "Pneumonia", "Pneumothorax", "Consolidation", "Edema", 
-            "Emphysema", "Fibrosis", "Pleural_Thickening", "Hernia"
+            "Atelectasis", "Cardiomegaly", "Consolidation", "Edema", 
+            "Enlarged Cardiomediastinum", "Fracture", "Lung Lesion", 
+            "Lung Opacity", "No Finding", "Pleural Effusion", 
+            "Pleural Other", "Pneumonia", "Pneumothorax", "Support Devices"
         ]
         
         self.hpo_map = {
@@ -63,7 +61,6 @@ class CheXNetEngine:
         """이미지 전처리 및 시각화용 원본 이미지 반환"""
         transform = transforms.Compose([
             transforms.Resize(256),
-            transforms.CenterCrop(224),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
