@@ -1,60 +1,58 @@
 import torch
 import torch.nn as nn
 
-class DeepNormalLinkAE(nn.Module):
+class SkipNormalLinkAE(nn.Module):
     def __init__(self):
-        super(DeepNormalLinkAE, self).__init__()
+        super(SkipNormalLinkAE, self).__init__()
         
-        # 1. Encoder: 더 깊고 넓게 (3 -> 32 -> 64 -> 128 -> 256 -> 512)
-        self.encoder = nn.Sequential(
-            # Layer 1: 224 -> 112
-            nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(32),
-            nn.LeakyReLU(0.2),
-            
-            # Layer 2: 112 -> 56
-            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(64),
-            nn.LeakyReLU(0.2),
-            
-            # Layer 3: 56 -> 28
-            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(128),
-            nn.LeakyReLU(0.2),
-            
-            # Layer 4: 28 -> 14
-            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(256),
-            nn.LeakyReLU(0.2),
-            
-            # Layer 5 (Bottleneck): 14 -> 7 (더 깊은 압축)
-            nn.Conv2d(256, 512, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(512),
-            nn.LeakyReLU(0.2),
-            nn.Dropout2d(0.2) 
+        # --- Encoder: 레이어를 개별 정의하여 중간 출력을 보존 ---
+        self.enc1 = self._conv_block(3, 32)    # 224 -> 112
+        self.enc2 = self._conv_block(32, 64)   # 112 -> 56
+        self.enc3 = self._conv_block(64, 128)  # 56 -> 28
+        self.enc4 = self._conv_block(128, 256) # 28 -> 14
+        self.enc5 = self._conv_block(256, 512) # 14 -> 7 (Bottleneck)
+        
+        # enc5의 출력이 들어옴 (512)
+        self.dec5 = self._up_block(512, 256) 
+        # dec5(256) + enc4(256) = 512가 입력으로 들어옴
+        self.dec4 = self._up_block(512, 128) 
+        # dec4(128) + enc3(128) = 256이 입력으로 들어옴
+        self.dec3 = self._up_block(256, 64)
+        # dec3(64) + enc2(64) = 128이 입력으로 들어옴
+        self.dec2 = self._up_block(128, 32)
+        # dec2(32) + enc1(32) = 64가 입력으로 들어옴
+        self.dec1 = nn.Sequential(
+            nn.ConvTranspose2d(64, 3, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.Sigmoid()
         )
-        
-        # 2. Decoder: 대칭적으로 복원 (512 -> 256 -> 128 -> 64 -> 32 -> 3)
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(512, 256, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.BatchNorm2d(256),
-            nn.LeakyReLU(0.2),
-            
-            nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.BatchNorm2d(128),
-            nn.LeakyReLU(0.2),
-            
-            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.BatchNorm2d(64),
-            nn.LeakyReLU(0.2),
-            
-            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.BatchNorm2d(32),
-            nn.LeakyReLU(0.2),
-            
-            nn.ConvTranspose2d(32, 3, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.Sigmoid() 
+
+    def _conv_block(self, in_ch, out_ch):
+        return nn.Sequential(
+            nn.Conv2d(in_ch, out_ch, 3, stride=2, padding=1),
+            nn.BatchNorm2d(out_ch),
+            nn.LeakyReLU(0.2)
+        )
+
+    def _up_block(self, in_ch, out_ch):
+        return nn.Sequential(
+            nn.ConvTranspose2d(in_ch, out_ch, 3, stride=2, padding=1, output_padding=1),
+            nn.BatchNorm2d(out_ch),
+            nn.LeakyReLU(0.2)
         )
 
     def forward(self, x):
-        return self.decoder(self.encoder(x))
+        # Encoder (중간 결과 저장)
+        e1 = self.enc1(x)
+        e2 = self.enc2(e1)
+        e3 = self.enc3(e2)
+        e4 = self.enc4(e3)
+        e5 = self.enc5(e4)
+        
+        # Decoder (중간 결과를 Concatenate 하여 디테일 복원)
+        d5 = self.dec5(e5)
+        d4 = self.dec4(torch.cat([d5, e4], dim=1)) # 256 + 256 = 512
+        d3 = self.dec3(torch.cat([d4, e3], dim=1)) # 128 + 128 = 256
+        d2 = self.dec2(torch.cat([d3, e2], dim=1)) # 64 + 64 = 128
+        out = self.dec1(torch.cat([d2, e1], dim=1)) # 32 + 32 = 64
+        
+        return out
