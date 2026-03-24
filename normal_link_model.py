@@ -26,6 +26,7 @@ class SkipNormalLinkAE(nn.Module):
             nn.Sigmoid()
         )
 
+        
     def _conv_block(self, in_ch, out_ch):
         return nn.Sequential(
             nn.Conv2d(in_ch, out_ch, 3, stride=2, padding=1),
