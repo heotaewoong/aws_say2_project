@@ -27,39 +27,54 @@ LABEL_ORDER = [
     "Support Devices"
 ]
 
-def prepare_mimic_df(aug_csv_path, chexpert_csv_path):
-    # 1. 라벨 정보 로드 및 전처리
+# 💡 img_root 매개변수를 추가로 받습니다.
+def prepare_mimic_df(aug_csv_path, chexpert_csv_path, img_root):
     labels_df = pd.read_csv(chexpert_csv_path)
-    # 불확실성(-1.0) 처리 (U-Ones: 1.0으로 변환), 결측치는 0.0
     labels_df[LABEL_ORDER] = labels_df[LABEL_ORDER].fillna(0).replace(-1, 1)
     
-    # 2. 분류된 이미지 리스트 CSV 로드
     aug_df = pd.read_csv(aug_csv_path)
     
     flat_data = []
     print(f"🔍 '{aug_csv_path}' 데이터 파싱 중...")
     
+    missing_count = 0 # 누락된 파일이 몇 개인지 세어봅시다.
+
     for _, row in aug_df.iterrows():
-        # AP, PA 컬럼에서 이미지 경로 추출
         for view_col in ['AP', 'PA']:
+            raw_string = str(row[view_col])
+            if raw_string == 'nan' or 'p10' not in raw_string:
+                continue
+                
             try:
-                img_list = ast.literal_eval(row[view_col])
+                img_list = ast.literal_eval(raw_string)
                 for img_path in img_list:
-                    # 경로에서 study_id 추출 (예: .../s50084553/...)
-                    study_id = int(img_path.split('/')[-2][1:])
+                    if 'p10' not in img_path:
+                        continue
                     
-                    # 해당 study_id의 라벨 행 찾기
+                    # 🚀 [핵심 추가] 실제 파일 존재 여부 검사
+                    # 만약 로컬 폴더에 'files' 폴더 없이 바로 'p10'이 있다면 아래 주석을 해제하세요.
+                    # img_path = img_path.replace('files/', '') 
+                    
+                    img_full_path = os.path.join(img_root, img_path)
+                    
+                    # 로컬 하드디스크에 파일이 없으면 리스트에 넣지 않고 스킵합니다!
+                    if not os.path.exists(img_full_path):
+                        missing_count += 1
+                        continue
+                    # -----------------------------------------
+
+                    study_id = int(img_path.split('/')[-2][1:])
                     label_row = labels_df[labels_df['study_id'] == study_id]
                     if not label_row.empty:
                         flat_data.append({
                             'path': img_path,
-                            'labels': label_row[LABEL_ORDER].values[0] # 지정된 순서대로 추출
+                            'labels': label_row[LABEL_ORDER].values[0]
                         })
             except:
                 continue
                 
     final_df = pd.DataFrame(flat_data)
-    print(f"✅ 파싱 완료: 총 {len(final_df)}장의 이미지 확보")
+    print(f"✅ 파싱 완료: 총 {len(final_df)}장의 실제 이미지 확보 (존재하지 않는 파일 {missing_count}장 제외됨)")
     return final_df
 
 class MimicDataset(Dataset):
@@ -94,8 +109,8 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # 데이터 준비 (라벨 순서가 보장된 DataFrame 생성)
-    train_df = prepare_mimic_df(TRAIN_CSV, CHEXPERT_CSV)
-    val_df = prepare_mimic_df(VAL_CSV, CHEXPERT_CSV)
+    train_df = prepare_mimic_df(TRAIN_CSV, CHEXPERT_CSV, IMG_ROOT)
+    val_df = prepare_mimic_df(VAL_CSV, CHEXPERT_CSV, IMG_ROOT)
     
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -118,7 +133,7 @@ def train():
     # 2. 손실 함수 및 옵티마이저 (Multi-label 특화)
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=2)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=2)
 
     print(f"🚀 학습 시작! Device: {device}")
 
@@ -159,7 +174,7 @@ def train():
             auroc = 0.0
             
         print(f"✅ Epoch [{epoch+1}] Avg Loss: {epoch_loss/len(train_loader):.4f} | Val AUROC: {auroc:.4f}")
-        scheduler.step(epoch_loss)
+        scheduler.step(auroc)
 
         # 성능이 좋아지면 모델 저장
         if auroc > best_auroc:
