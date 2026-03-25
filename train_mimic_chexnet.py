@@ -42,7 +42,7 @@ def prepare_mimic_df(aug_csv_path, chexpert_csv_path, img_root):
     for _, row in aug_df.iterrows():
         for view_col in ['AP', 'PA']:
             raw_string = str(row[view_col])
-            if raw_string == 'nan' or 'p10' not in raw_string:
+            if raw_string == 'nan':
                 continue
                 
             try:
@@ -90,8 +90,15 @@ class MimicDataset(Dataset):
         row = self.df.iloc[idx]
         img_full_path = os.path.join(self.img_root, row['path'])
         
-        # 이미지 로드 (MIMIC-CXR-JPG 경로 구조 대응)
-        image = Image.open(img_full_path).convert('RGB')
+        # 🚀 [핵심 수정] try-except 블록을 통해 손상된 이미지 예외 처리
+        try:
+            image = Image.open(img_full_path).convert('RGB')
+        except Exception as e:
+            # 이미지가 손상되어 열리지 않으면 콘솔에 경고만 띄우고
+            print(f"⚠️ [경고] 손상된 이미지 건너뜀 (다음 이미지 대체): {img_full_path}")
+            # 리스트의 다음 인덱스 이미지를 재귀적으로 불러옵니다.
+            return self.__getitem__((idx + 1) % len(self))
+            
         label = torch.FloatTensor(row['labels'])
         
         if self.transform:
@@ -100,13 +107,13 @@ class MimicDataset(Dataset):
 
 def train():
     # --- [경로 설정] 기태님의 로컬 환경에 맞춰 수정하세요 ---
-    IMG_ROOT = "data\mimic-iv-cxr\official_data_iccv_final" # 이미지 최상위 폴더 (files/p10/... 가 시작되는 곳)
-    TRAIN_CSV = "data\mimic-iv-cxr\mimic_cxr_aug_train.csv"
-    VAL_CSV = "data\mimic-iv-cxr\mimic_cxr_aug_validate.csv"
+    IMG_ROOT = "data" # 이미지 최상위 폴더 (files/p10/... 가 시작되는 곳)
+    TRAIN_CSV = "data/mimic_cxr_aug_train.csv"
+    VAL_CSV = "data/mimic_cxr_aug_validate.csv"
     CHEXPERT_CSV = "data/mimic-cxr-2.0.0-chexpert.csv"
     # --------------------------------------------------
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     
     # 데이터 준비 (라벨 순서가 보장된 DataFrame 생성)
     train_df = prepare_mimic_df(TRAIN_CSV, CHEXPERT_CSV, IMG_ROOT)
@@ -168,9 +175,18 @@ def train():
         val_preds = np.vstack(all_preds)
         val_labels = np.vstack(all_labels)
         
-        try:
-            auroc = roc_auc_score(val_labels, val_preds, average='macro')
-        except:
+        # 🚀 [시니어의 최적화] 경고(Warning)를 방지하는 안전한 AUROC 계산법
+        val_auroc_list = []
+        for c in range(14): # 14개 질환 각각에 대해 평가
+            # 해당 질환의 정답지(Label)에 0과 1이 모두 존재하는지 확인 (고유값이 2개 이상인가?)
+            if len(np.unique(val_labels[:, c])) > 1:
+                score = roc_auc_score(val_labels[:, c], val_preds[:, c])
+                val_auroc_list.append(score)
+        
+        # 유효한 AUROC 점수들이 모였다면 평균을 내고, 아니면 0.0 처리
+        if len(val_auroc_list) > 0:
+            auroc = np.mean(val_auroc_list)
+        else:
             auroc = 0.0
             
         print(f"✅ Epoch [{epoch+1}] Avg Loss: {epoch_loss/len(train_loader):.4f} | Val AUROC: {auroc:.4f}")
