@@ -81,7 +81,7 @@ class CheXNetEngine:
         with torch.no_grad():
             outputs = self.model(input_tensor)
         
-        probabilities = outputs[0].tolist()
+        probabilities = torch.sigmoid(outputs[0]).tolist()
         results = []
         
         print(f"\n--- [Vision 분석 결과: {os.path.basename(image_path)}] ---")
