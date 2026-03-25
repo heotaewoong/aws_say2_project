@@ -47,8 +47,8 @@ def train():
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     # 모델 초기화
-    from normal_link_model import DeepNormalLinkAE
-    model = DeepNormalLinkAE().to(device)
+    from normal_link_model import PureNormalAE
+    model = PureNormalAE().to(device)
     
     # 손실 함수 및 최적화 도구
     criterion = HybridLoss(alpha=0.8) 

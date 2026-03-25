@@ -8,8 +8,8 @@ import os
 
 # 1. 환경 설정 및 모델 로드
 def load_model(model_path, device):
-    from normal_link_model import SkipNormalLinkAE
-    model = SkipNormalLinkAE().to(device)
+    from normal_link_model import PureNormalAE
+    model = PureNormalAE().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
     return model
@@ -21,8 +21,7 @@ def evaluate(image_path, model_path):
     # 2. 이미지 전처리 (학습 때와 동일해야 함)
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        transforms.ToTensor()
     ])
 
     # 시각화를 위한 역정규화(De-normalization) 함수
@@ -46,13 +45,8 @@ def evaluate(image_path, model_path):
         # 에러 맵 생성 (채널 평균)
         error_map = torch.mean(mse_loss, dim=1).squeeze().cpu().numpy()
 
-    # 4. 시각화 (원본 | 복원 | 에러 맵)
-    orig_np = denormalize(img_tensor.squeeze().cpu()).permute(1, 2, 0).numpy()
-    recon_np = denormalize(reconstructed.squeeze().cpu()).permute(1, 2, 0).numpy()
-    
-    # 픽셀값 범위 제한 (0~1)
-    orig_np = np.clip(orig_np, 0, 1)
-    recon_np = np.clip(recon_np, 0, 1)
+    orig_np = img_tensor.squeeze().cpu().permute(1, 2, 0).numpy()
+    recon_np = reconstructed.squeeze().cpu().permute(1, 2, 0).numpy()
 
     plt.figure(figsize=(15, 5))
     
@@ -83,8 +77,8 @@ def evaluate(image_path, model_path):
 
 if __name__ == "__main__":
     # 테스트할 이미지 경로와 학습된 모델 경로를 입력하세요.
-    TEST_IMG = "./data/pneumonia.jpeg" 
-    MODEL_WEIGHTS = "./mini_proj/normal_link_v2_ep50.pth"
+    TEST_IMG = "./data/pneumonia_data/test/PNEUMONIA/person16_virus_47.jpeg" 
+    MODEL_WEIGHTS = "normal_link_v2_ep10.pth"
     
     if os.path.exists(TEST_IMG) and os.path.exists(MODEL_WEIGHTS):
         evaluate(TEST_IMG, MODEL_WEIGHTS)
