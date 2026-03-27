@@ -1,59 +1,46 @@
 import torch
 import torch.nn as nn
 
-class SkipNormalLinkAE(nn.Module):
+class DeepNormalLinkAE(nn.Module):
     def __init__(self):
-        super(SkipNormalLinkAE, self).__init__()
+        super(DeepNormalLinkAE, self).__init__()
         
-        # --- Encoder: 레이어를 개별 정의하여 중간 출력을 보존 ---
-        self.enc1 = self._conv_block(3, 32)    # 224 -> 112
-        self.enc2 = self._conv_block(32, 64)   # 112 -> 56
-        self.enc3 = self._conv_block(64, 128)  # 56 -> 28
-        self.enc4 = self._conv_block(128, 256) # 28 -> 14
-        self.enc5 = self._conv_block(256, 512) # 14 -> 7 (Bottleneck)
+        # --- Encoder: 정보를 압축하는 과정 ---
+        self.encoder = nn.Sequential(
+            self._conv_block(3, 32),    # 224 -> 112
+            self._conv_block(32, 64),   # 112 -> 56
+            self._conv_block(64, 128),  # 56 -> 28
+            self._conv_block(128, 256), # 28 -> 14
+            self._conv_block(256, 512)  # 14 -> 7 (Bottleneck: 가장 압축된 상태)
+        )
         
-        # enc5의 출력이 들어옴 (512)
-        self.dec5 = self._up_block(512, 256) 
-        # dec5(256) + enc4(256) = 512가 입력으로 들어옴
-        self.dec4 = self._up_block(512, 128) 
-        # dec4(128) + enc3(128) = 256이 입력으로 들어옴
-        self.dec3 = self._up_block(256, 64)
-        # dec3(64) + enc2(64) = 128이 입력으로 들어옴
-        self.dec2 = self._up_block(128, 32)
-        # dec2(32) + enc1(32) = 64가 입력으로 들어옴
-        self.dec1 = nn.Sequential(
-            nn.ConvTranspose2d(64, 3, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.Sigmoid()
+        # --- Decoder: 병목(Bottleneck) 정보만으로 정상 흉부를 상상해서 그리는 과정 ---
+        self.decoder = nn.Sequential(
+            self._up_block(512, 256),   # 7 -> 14
+            self._up_block(256, 128),   # 14 -> 28
+            self._up_block(128, 64),    # 28 -> 56
+            self._up_block(64, 32),     # 56 -> 112
+            # 마지막 레이어는 up_block 대신 직접 정의하여 3채널(RGB) 및 Sigmoid 적용
+            nn.ConvTranspose2d(32, 3, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.Sigmoid()                # 112 -> 224
         )
 
-        
     def _conv_block(self, in_ch, out_ch):
         return nn.Sequential(
             nn.Conv2d(in_ch, out_ch, 3, stride=2, padding=1),
             nn.BatchNorm2d(out_ch),
-            nn.LeakyReLU(0.2)
+            nn.LeakyReLU(0.2, inplace=True)
         )
 
     def _up_block(self, in_ch, out_ch):
         return nn.Sequential(
             nn.ConvTranspose2d(in_ch, out_ch, 3, stride=2, padding=1, output_padding=1),
             nn.BatchNorm2d(out_ch),
-            nn.LeakyReLU(0.2)
+            nn.LeakyReLU(0.2, inplace=True)
         )
 
     def forward(self, x):
-        # Encoder (중간 결과 저장)
-        e1 = self.enc1(x)
-        e2 = self.enc2(e1)
-        e3 = self.enc3(e2)
-        e4 = self.enc4(e3)
-        e5 = self.enc5(e4)
-        
-        # Decoder (중간 결과를 Concatenate 하여 디테일 복원)
-        d5 = self.dec5(e5)
-        d4 = self.dec4(torch.cat([d5, e4], dim=1)) # 256 + 256 = 512
-        d3 = self.dec3(torch.cat([d4, e3], dim=1)) # 128 + 128 = 256
-        d2 = self.dec2(torch.cat([d3, e2], dim=1)) # 64 + 64 = 128
-        out = self.dec1(torch.cat([d2, e1], dim=1)) # 32 + 32 = 64
-        
+        # 스킵 커넥션 없이 순수하게 압축(Encoder) 후 복원(Decoder)
+        latent = self.encoder(x)
+        out = self.decoder(latent)
         return out
