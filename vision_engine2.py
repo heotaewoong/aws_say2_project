@@ -171,11 +171,14 @@ class CheXNetEngine:
         return output_path
 
 if __name__ == "__main__":
+    import pandas as pd # pandas import가 필요합니다.
+
     # ---------------------------------------------------------
-    # 1. 파일 경로 설정 (기태님의 환경에 맞게 파일명을 수정하세요)
+    # 1. 파일 경로 설정
     # ---------------------------------------------------------
-    MODEL_WEIGHTS = "mini_proj/chexnet_mimic_best.pth"  # 🔥 직접 만드신 가중치 파일 이름으로 변경
-    TEST_IMAGE = "data/mimic-iv-cxr/official_data_iccv_final/files/p13/p13002213/s57432719/c6990a0d-1670f8e6-e0913288-d7b2d39e-bcae2109.jpg"       # 🔥 테스트할 X-ray 이미지 경로
+    MODEL_WEIGHTS = "aws_say2_project/chexnet_mimic_best.pth"  
+    TEST_IMAGE = "data/files/p16/p16388630/s55608109/4117beda-25f87b76-d28f80a8-be9edfba-63f87751.jpg"
+    CHEXPERT_CSV = "data/mimic-cxr-2.0.0-chexpert.csv" # 🔥 정답지 CSV 경로 추가
     
     # ---------------------------------------------------------
     # 2. 엔진 초기화 및 모델 로드
@@ -184,9 +187,46 @@ if __name__ == "__main__":
     engine = CheXNetEngine(model_path=MODEL_WEIGHTS)
     
     # ---------------------------------------------------------
+    # [새로 추가된 기능] 2.5 실제 정답(Ground Truth) 확인
+    # ---------------------------------------------------------
+    print("\n📋 [실제 정답 (Ground Truth)] 확인 중...")
+    try:
+        labels_df = pd.read_csv(CHEXPERT_CSV)
+        
+        # 🚀 [시니어의 수정] 불안정한 split 대신 정규표현식(Regex) 사용
+        import re
+        # 's' 뒤에 숫자(\d)가 8개 있는 패턴을 찾아서 숫자만 그룹(1)으로 뽑아냅니다.
+        match = re.search(r's(\d{8})', TEST_IMAGE)
+        
+        if match:
+            study_id = int(match.group(1)) # 완벽하게 58448020 만 추출됨
+            gt_row = labels_df[labels_df['study_id'] == study_id]
+            
+            if not gt_row.empty:
+                has_disease = False
+                for label in engine.labels:
+                    val = gt_row[label].values[0]
+                    if val == 1.0:
+                        print(f"  - 🔴 {label} (Positive: 확진)")
+                        has_disease = True
+                    elif val == -1.0:
+                        print(f"  - 🟡 {label} (Uncertain: 불확실/의증)")
+                        has_disease = True
+                
+                if not has_disease or gt_row['No Finding'].values[0] == 1.0:
+                    print("  - 🟢 정상 (No Finding / 특이 소견 없음)")
+            else:
+                print(f"  - ⚠️ 정답지에서 study_id({study_id})를 찾을 수 없습니다.")
+        else:
+            print(f"  - ⚠️ 이미지 경로에서 study_id 형식을 찾을 수 없습니다: {TEST_IMAGE}")
+
+    except Exception as e:
+        print(f"  - ⚠️ 정답지 확인 중 에러 발생: {e}")
+
+    # ---------------------------------------------------------
     # 3. 이미지 분석 (임계값 이상의 질환 및 HPO 추출)
     # ---------------------------------------------------------
-    THRESHOLD = 0.3  # 필요에 따라 0.5나 0.6 등으로 조절 가능
+    THRESHOLD = 0.4
     results = engine.extract_vision_hpos(TEST_IMAGE, threshold=THRESHOLD)
     
     # ---------------------------------------------------------
@@ -198,7 +238,6 @@ if __name__ == "__main__":
             target_idx = res['index']
             target_label = res['finding']
             
-            # 저장될 히트맵 파일 이름 (예: heatmap_Pneumonia.png)
             output_filename = f"heatmap_{target_label.replace(' ', '_')}.png"
             
             engine.get_cam_visualize(

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class DeepNormalLinkAE(nn.Module):
-    def __init__(self):
+    def __init__(self, latent_dim=512):
         super(DeepNormalLinkAE, self).__init__()
         
         # --- Encoder: 정보를 압축하는 과정 ---
@@ -13,7 +13,15 @@ class DeepNormalLinkAE(nn.Module):
             self._conv_block(128, 256), # 28 -> 14
             self._conv_block(256, 512)  # 14 -> 7 (Bottleneck: 가장 압축된 상태)
         )
+
+        # --- 2. True Bottleneck (일렬종대 압축) ---
+        # 7*7*512 = 25088 개의 공간 정보를 완전히 파괴하고 512개의 핵심 벡터로만 압축합니다.
+        self.flatten = nn.Flatten()
+        self.fc_enc = nn.Linear(512 * 7 * 7, latent_dim)
         
+        # 다시 25088 개로 복구
+        self.fc_dec = nn.Linear(latent_dim, 512 * 7 * 7)
+
         # --- Decoder: 병목(Bottleneck) 정보만으로 정상 흉부를 상상해서 그리는 과정 ---
         self.decoder = nn.Sequential(
             self._up_block(512, 256),   # 7 -> 14
@@ -40,7 +48,17 @@ class DeepNormalLinkAE(nn.Module):
         )
 
     def forward(self, x):
-        # 스킵 커넥션 없이 순수하게 압축(Encoder) 후 복원(Decoder)
-        latent = self.encoder(x)
-        out = self.decoder(latent)
+        batch_size = x.size(0)
+        
+        # 1. Convolutional Encoding
+        x = self.encoder(x)
+        
+        # 2. Strict Bottleneck (공간 정보 파괴 및 극도 압축)
+        x = self.flatten(x)
+        latent = self.fc_enc(x)             # [Batch, 512] 벡터로 압축됨
+        x = self.fc_dec(latent)             # [Batch, 25088] 벡터로 복원됨
+        x = x.view(batch_size, 512, 7, 7)   # 다시 2D 맵으로 재조립
+        
+        # 3. Convolutional Decoding
+        out = self.decoder(x)
         return out

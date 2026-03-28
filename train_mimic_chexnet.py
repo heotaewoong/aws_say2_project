@@ -42,13 +42,18 @@ def prepare_mimic_df(aug_csv_path, chexpert_csv_path, img_root):
     for _, row in aug_df.iterrows():
         for view_col in ['AP', 'PA']:
             raw_string = str(row[view_col])
-            if raw_string == 'nan':
+            # 결측치이거나, 우리가 찾는 4개 폴더 이름이 아예 문자열에 없으면 변환 시도도 하지 않고 넘깁니다.
+            if raw_string == 'nan' or not any(folder in raw_string for folder in ('p10', 'p11', 'p12', 'p13')):
                 continue
                 
             try:
+                target_folders = ('p10', 'p11', 'p12', 'p13')
+                
                 img_list = ast.literal_eval(raw_string)
                 for img_path in img_list:
-                    if 'p10' not in img_path:
+                    # img_path 안에 target_folders 중 하나라도 포함되어 있는지 검사합니다.
+                    # startswith('/files/p10') 처럼 할 수도 있지만, 가장 안전하고 파이썬다운 방식입니다.
+                    if not any(folder in img_path for folder in target_folders):
                         continue
                     
                     # 🚀 [핵심 추가] 실제 파일 존재 여부 검사
