@@ -177,7 +177,7 @@ if __name__ == "__main__":
     # 1. 파일 경로 설정
     # ---------------------------------------------------------
     MODEL_WEIGHTS = "aws_say2_project/chexnet_mimic_best.pth"  
-    TEST_IMAGE = "data/files/p16/p16388630/s55608109/4117beda-25f87b76-d28f80a8-be9edfba-63f87751.jpg"
+    TEST_IMAGE = "data/mimic-iv-cxr/official_data_iccv_final/files/p18/p18000745/s51763935/b230c38f-9e5cf14c-bd97b7f0-4483d7e1-7edf4bfe.jpg"
     CHEXPERT_CSV = "data/mimic-cxr-2.0.0-chexpert.csv" # 🔥 정답지 CSV 경로 추가
     
     # ---------------------------------------------------------
