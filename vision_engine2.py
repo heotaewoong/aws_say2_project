@@ -70,7 +70,7 @@ class CheXNetEngine:
         # OpenCV용 원본 이미지 변환 (BGR)
         original_img = np.array(pil_image)
         original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
-        original_img = cv2.resize(original_img, (224, 224)) # 모델 입력 크기에 맞춤
+        original_img = cv2.resize(original_img, (448, 448)) # 모델 입력 크기에 맞춤
         
         return input_tensor, original_img
 
@@ -153,7 +153,7 @@ class CheXNetEngine:
             
         # ReLU 및 정규화
         cam = np.maximum(cam, 0)
-        cam = cv2.resize(cam, (224, 224))
+        cam = cv2.resize(cam, (448, 448))
         # 0으로 나누기 방지를 위해 작은 값(1e-8) 추가
         cam = (cam - np.min(cam)) / (np.max(cam) - np.min(cam) + 1e-8)
         
