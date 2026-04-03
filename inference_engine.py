@@ -7,7 +7,7 @@ class RareDiseaseInference:
         if kb_path is None:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             # 프로젝트 구조에 맞춰 경로 조정 (data/orphadata_weighted.csv)
-            kb_path = os.path.normpath(os.path.join(current_dir, "..", "data", "orphadata_weighted.csv"))
+            kb_path = os.path.normpath(os.path.join(current_dir, "data", "orphadata_weighted.csv"))
 
         if not os.path.exists(kb_path):
             raise FileNotFoundError(f"❌ 지식 베이스 파일이 없습니다: {kb_path}")

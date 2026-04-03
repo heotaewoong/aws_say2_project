@@ -1,4 +1,4 @@
-from vision_engine import PubMedCLIPEngine
+from vision_engine import CheXNetEngine
 from extractor import TextPhenotypeExtractor
 from lab_genomic_agent import LabGenomicAgent
 from inference_engine import RareDiseaseInference # 1. 교체된 엔진
@@ -36,7 +36,7 @@ def run_diagnostic_system(subject_id, xray_path, note_text, lab_data, variant_da
     print("-" * 60)
 
     # 1. 에이전트 초기화
-    agent_a = PubMedCLIPEngine()
+    agent_a = CheXNetEngine()
     agent_b = TextPhenotypeExtractor()
     agent_c = LabGenomicAgent()
     agent_e = RareDiseaseInference() # 2. 새로운 추론 엔진 초기화
@@ -78,7 +78,7 @@ def run_diagnostic_system(subject_id, xray_path, note_text, lab_data, variant_da
 if __name__ == "__main__":
     # 1. 테스트 데이터 설정
     sample_id = "10000032"
-    img = "./data/sub-S11869_ses-E23135_run-1_bp-chest_vp-ap_cr.png"
+    img = "./data/person3_bacteria_13.jpeg"
     note = "Patient presents with progressive dyspnea and finger clubbing."
     labs = {'WBC Count': 14.5, 'Oxygen Saturation': 91.0}
     genes = ['SFTPB']
