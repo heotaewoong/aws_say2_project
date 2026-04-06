@@ -1,0 +1,112 @@
+{
+  "case_id": "SAMPLE-001",
+  "ranked_diseases": [
+    {
+      "rank": 1,
+      "name_kr": "COPD 급성 악화",
+      "name_en": "Copd Exacerbation",
+      "icd10": [
+        "J44.0",
+        "J44.1"
+      ],
+      "score": 0.6111,
+      "confidence": "moderate"
+    },
+    {
+      "rank": 2,
+      "name_kr": "급성 악화를 동반한 상세불명의 만성 폐쇄성 폐질환",
+      "name_en": "Chronic obstructive pulmonary disease with acute exacerbation, unspecified",
+      "icd10": [
+        "J441"
+      ],
+      "score": 0.5278,
+      "confidence": "moderate"
+    },
+    {
+      "rank": 3,
+      "name_kr": "흉수",
+      "name_en": "Pleural Effusion",
+      "icd10": [
+        "J90",
+        "J91.0",
+        "J91.8"
+      ],
+      "score": 0.5141,
+      "confidence": "moderate"
+    },
+    {
+      "rank": 4,
+      "name_kr": "급성호흡곤란증후군 (ARDS)",
+      "name_en": "Acute respiratory distress syndrome [ARDS]",
+      "icd10": [
+        "J80"
+      ],
+      "score": 0.4991,
+      "confidence": "moderate"
+    },
+    {
+      "rank": 5,
+      "name_kr": "지역사회획득 폐렴 (CAP)",
+      "name_en": "Bacterial pneumonia, NEC",
+      "icd10": [
+        "J15"
+      ],
+      "score": 0.4836,
+      "confidence": "moderate"
+    },
+    {
+      "rank": 6,
+      "name_kr": "폐색전증",
+      "name_en": "Pulmonary embolism",
+      "icd10": [
+        "I26"
+      ],
+      "score": 0.4734,
+      "confidence": "moderate"
+    },
+    {
+      "rank": 7,
+      "name_kr": "급성 하기도감염을 동반한 만성 폐쇄성 폐질환",
+      "name_en": "Chronic obstructive pulmonary disease with acute lower respiratory infection",
+      "icd10": [
+        "J440"
+      ],
+      "score": 0.45,
+      "confidence": "moderate"
+    },
+    {
+      "rank": 8,
+      "name_kr": "천식 급성 악화",
+      "name_en": "Asthma Exacerbation",
+      "icd10": [
+        "J45.21",
+        "J45.31",
+        "J45.41",
+        "J45.51",
+        "J46"
+      ],
+      "score": 0.4356,
+      "confidence": "moderate"
+    },
+    {
+      "rank": 9,
+      "name_kr": "흡인성 폐렴",
+      "name_en": "Aspiration Pneumonia",
+      "icd10": [
+        "J69.0"
+      ],
+      "score": 0.432,
+      "confidence": "moderate"
+    },
+    {
+      "rank": 10,
+      "name_kr": "농흉",
+      "name_en": "Pyothorax",
+      "icd10": [
+        "J86"
+      ],
+      "score": 0.4234,
+      "confidence": "moderate"
+    }
+  ]
+}
