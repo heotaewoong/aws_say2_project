@@ -8,7 +8,38 @@ import pandas as pd
 import os
 import ast
 import numpy as np
-from sklearn.metrics import roc_auc_score
+import cv2
+from sklearn.metrics import roc_auc_score, precision_recall_curve, precision_score, recall_score, f1_score
+
+from mimic_dataset import prepare_mimic_df, MimicDataset
+from chexpert_dataset import prepare_chexpert_df, ChexpertDataset
+from soo_net import SooNetEngine
+
+# 1. 데이터셋 스위치
+USE_MIMIC = True  # True: MIMIC-CXR 사용 / False: CheXpert 사용
+
+# 2. 모델 & 학습 하이퍼파라미터
+TARGET_SIZE = (448, 448)    # 입력 이미지 해상도 (TXV 고해상도 방식)
+BATCH_SIZE = 16             # 배치 사이즈 (메모리 부족 시 8로 하향)
+NUM_WORKERS = 2             # 데이터 로더 워커 수 (Mac MPS 환경 고려 2 이하 권장)
+LEARNING_RATE = 1e-4        # 초기 학습률
+EPOCHS = 15                 # 총 학습 에포크 수
+LR_PATIENCE = 2             # Validation 성능이 개선되지 않을 때 대기하는 에포크 수
+NUM_CLASSES = 14            # 분류할 질환 개수
+
+# 3. 데이터셋 및 가중치 저장 경로 자동 세팅
+if USE_MIMIC:
+    IMG_ROOT = "data" 
+    TRAIN_CSV = "data/mimic_cxr_aug_train.csv"
+    VAL_CSV = "data/mimic_cxr_aug_validate.csv"
+    CHEXPERT_CSV = "data/mimic-cxr-2.0.0-chexpert.csv"
+    SAVE_MODEL_NAME = "chexnet_1ch_448_mimic_best.pth"
+else:
+    IMG_ROOT = "data/chexpert" 
+    TRAIN_CSV = "data/chexpert/train.csv"
+    VAL_CSV = "data/chexpert/valid.csv"
+    CHEXPERT_CSV = None  # CheXpert는 별도 정답지 불필요
+    SAVE_MODEL_NAME = "chexnet_1ch_448_chexpert_best.pth"
 
 LABEL_ORDER = [
     "Atelectasis", "Cardiomegaly", "Consolidation", "Edema", 
@@ -18,8 +49,22 @@ LABEL_ORDER = [
 ]
 
 # =====================================================================
-# 🚀 1. 고해상도(448) & 1채널(Grayscale) 전용 TXV 전처리
+# 🚀 1. 전처리 클래스
 # =====================================================================
+class ChestXrayPreprocess:
+    def __init__(self, target_size=(224, 224), clip_limit=2.0):
+        self.target_size = target_size
+        self.clip_limit = clip_limit
+
+    def __call__(self, img):
+        # Pickle 에러 방지를 위해 __call__ 내부에서 객체 생성
+        clahe = cv2.createCLAHE(clipLimit=self.clip_limit, tileGridSize=(8, 8))
+        img_np = np.array(img.convert('L'))
+        img_clahe = clahe.apply(img_np)
+        img_pil = Image.fromarray(img_clahe).convert('RGB')
+        img_padded = ImageOps.pad(img_pil, self.target_size, method=Image.BILINEAR, color=(0, 0, 0))
+        return img_padded
+
 class TXV_Transform:
     def __init__(self, target_size=(448, 448), is_train=False):
         self.target_size = target_size
@@ -43,131 +88,6 @@ class TXV_Transform:
         return img_tensor
 
 # =====================================================================
-# 📊 2-A. MIMIC-IV-CXR 전용 데이터셋
-# =====================================================================
-def prepare_mimic_df(aug_csv_path, chexpert_csv_path, img_root):
-    labels_df = pd.read_csv(chexpert_csv_path)
-    labels_df[LABEL_ORDER] = labels_df[LABEL_ORDER].fillna(0).replace(-1, 1)
-    aug_df = pd.read_csv(aug_csv_path)
-    
-    flat_data = []
-    print(f"🔍 MIMIC 데이터 파싱 중: {aug_csv_path}")
-    missing_count = 0 
-
-    for _, row in aug_df.iterrows():
-        for view_col in ['AP', 'PA']:
-            raw_string = str(row[view_col])
-            if raw_string == 'nan' or not any(folder in raw_string for folder in ('p10', 'p11', 'p12', 'p13')):
-                continue
-                
-            try:
-                img_list = ast.literal_eval(raw_string)
-                for img_path in img_list:
-                    if not any(folder in img_path for folder in ('p10', 'p11', 'p12', 'p13')):
-                        continue
-                    
-                    img_full_path = os.path.join(img_root, img_path)
-                    if not os.path.exists(img_full_path):
-                        missing_count += 1
-                        continue
-
-                    study_id = int(img_path.split('/')[-2][1:])
-                    label_row = labels_df[labels_df['study_id'] == study_id]
-                    if not label_row.empty:
-                        flat_data.append({
-                            'path': img_full_path,
-                            'labels': label_row[LABEL_ORDER].values[0]
-                        })
-            except Exception:
-                continue
-                
-    final_df = pd.DataFrame(flat_data)
-    print(f"✅ MIMIC 파싱 완료: 총 {len(final_df)}장 (누락 {missing_count}장)")
-    return final_df
-
-class MimicDataset(Dataset):
-    def __init__(self, df, transform=None):
-        self.df = df
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.df)
-
-    def __getitem__(self, idx):
-        row = self.df.iloc[idx]
-        img_full_path = row['path']
-        
-        try:
-            # 🚀 [핵심] 1채널 흑백(Grayscale) 모드로 이미지를 엽니다!
-            image = Image.open(img_full_path).convert('L')
-        except Exception:
-            return self.__getitem__((idx + 1) % len(self))
-            
-        label = torch.FloatTensor(row['labels'].astype(float))
-        
-        if self.transform:
-            image = self.transform(image)
-        return image, label
-
-# =====================================================================
-# 📊 2-B. CheXpert 전용 데이터셋
-# =====================================================================
-def prepare_chexpert_df(csv_path, img_root):
-    df = pd.read_csv(csv_path)
-    
-    # CheXpert의 라벨들을 가져옵니다 (결측치는 0, 불확실(-1)은 1로 간주)
-    df[LABEL_ORDER] = df[LABEL_ORDER].fillna(0).replace(-1, 1)
-    
-    # 프론탈 뷰(Frontal)만 사용할 경우 필터링 (선택 사항)
-    if 'Frontal/Lateral' in df.columns:
-        df = df[df['Frontal/Lateral'] == 'Frontal']
-    
-    flat_data = []
-    print(f"🔍 CheXpert 데이터 파싱 중: {csv_path}")
-    missing_count = 0
-
-    for _, row in df.iterrows():
-        # CheXpert의 Path 컬럼 예시: 'CheXpert-v1.0-small/train/patient00001/...'
-        img_full_path = os.path.join(img_root, row['Path'])
-        
-        if not os.path.exists(img_full_path):
-            missing_count += 1
-            continue
-            
-        flat_data.append({
-            'path': img_full_path,
-            'labels': row[LABEL_ORDER].values
-        })
-        
-    final_df = pd.DataFrame(flat_data)
-    print(f"✅ CheXpert 파싱 완료: 총 {len(final_df)}장 (누락 {missing_count}장)")
-    return final_df
-
-class ChexpertDataset(Dataset):
-    def __init__(self, df, transform=None):
-        self.df = df
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.df)
-
-    def __getitem__(self, idx):
-        row = self.df.iloc[idx]
-        img_full_path = row['path']
-        
-        try:
-            # 🚀 [핵심] 1채널 흑백(Grayscale) 모드로 불러옵니다.
-            image = Image.open(img_full_path).convert('L')
-        except Exception:
-            return self.__getitem__((idx + 1) % len(self))
-            
-        label = torch.FloatTensor(row['labels'].astype(float))
-        
-        if self.transform:
-            image = self.transform(image)
-        return image, label
-
-# =====================================================================
 # 🚀 3. 메인 학습 루프 (Train Loop)
 # =====================================================================
 def train():
@@ -177,23 +97,12 @@ def train():
     # --------------------------------------------------
     # 💡 1. 학습할 데이터셋 선택 (주석을 풀어서 사용하세요)
     # --------------------------------------------------
-    USE_MIMIC = True  # True면 MIMIC 사용, False면 CheXpert 사용
     
     if USE_MIMIC:
-        IMG_ROOT = "data" 
-        TRAIN_CSV = "data/mimic_cxr_aug_train.csv"
-        VAL_CSV = "data/mimic_cxr_aug_validate.csv"
-        CHEXPERT_CSV = "data/mimic-cxr-2.0.0-chexpert.csv"
-        
         train_df = prepare_mimic_df(TRAIN_CSV, CHEXPERT_CSV, IMG_ROOT)
         val_df = prepare_mimic_df(VAL_CSV, CHEXPERT_CSV, IMG_ROOT)
         TrainDatasetClass = MimicDataset
     else:
-        # CheXpert용 경로 설정
-        IMG_ROOT = "data/chexpert" 
-        TRAIN_CSV = "data/chexpert/train.csv"
-        VAL_CSV = "data/chexpert/valid.csv"
-        
         train_df = prepare_chexpert_df(TRAIN_CSV, IMG_ROOT)
         val_df = prepare_chexpert_df(VAL_CSV, IMG_ROOT)
         TrainDatasetClass = ChexpertDataset
@@ -201,39 +110,34 @@ def train():
     # --------------------------------------------------
     # 💡 2. 트랜스폼 및 데이터로더 설정
     # --------------------------------------------------
-    train_transform = TXV_Transform(target_size=(448, 448), is_train=True)
-    val_transform = TXV_Transform(target_size=(448, 448), is_train=False)
+    train_transform = TXV_Transform(target_size=TARGET_SIZE, is_train=True)
+    val_transform = TXV_Transform(target_size=TARGET_SIZE, is_train=False)
     
     train_ds = TrainDatasetClass(train_df, train_transform)
     val_ds = TrainDatasetClass(val_df, val_transform)
     
     # 해상도가 커졌으므로 메모리를 고려해 batch_size를 16으로 하향 조정
-    batch_size = 16 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=2)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=2)
+    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS)
+    val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS)
 
     # --------------------------------------------------
     # 💡 3. 모델 초기화 (1채널 고해상도 DenseNet-121)
     # --------------------------------------------------
-    model = models.densenet121(weights=None) # 입력 레이어를 바꿀 것이므로 초기 가중치 사용 안 함
-    
-    # [입구 공사] 1채널 흑백 이미지를 받도록 첫 번째 Conv 교체
-    model.features.conv0 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-    
-    # [출구 공사] 14개 질환 예측
-    model.classifier = nn.Linear(model.classifier.in_features, 14)
-    model = model.to(device)
+    print("🧠 SooNetEngine을 통해 모델 아키텍처를 로드합니다...")
+    engine = SooNetEngine(model_path=None)
+    model = engine.model
+    model.train()
 
     # 손실 함수 및 옵티마이저
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-4)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=2)
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=LR_PATIENCE)
 
     # --------------------------------------------------
     # 💡 4. 학습 시작
     # --------------------------------------------------
     best_auroc = 0.0
-    for epoch in range(15): # 필요에 따라 에포크 수 조정
+    for epoch in range(EPOCHS): # 필요에 따라 에포크 수 조정
         model.train()
         epoch_loss = 0
         
@@ -265,23 +169,60 @@ def train():
         val_preds = np.vstack(all_preds)
         val_labels = np.vstack(all_labels)
         
-        val_auroc_list = []
-        for c in range(14): 
-            if len(np.unique(val_labels[:, c])) > 1:
-                score = roc_auc_score(val_labels[:, c], val_preds[:, c])
-                val_auroc_list.append(score)
-        
-        auroc = np.mean(val_auroc_list) if len(val_auroc_list) > 0 else 0.0
-            
-        print(f"✅ Epoch [{epoch+1}] Avg Loss: {epoch_loss/len(train_loader):.4f} | Val AUROC: {auroc:.4f}")
-        scheduler.step(auroc)
+        print(f"\n📊 --- Epoch {epoch+1} Validation Report ---")
+        print(f"{'Disease':<27s} | {'AUROC':<6s} | {'Best_Th':<7s} | {'Prec':<6s} | {'Recall':<6s} | {'F1':<6s}")
+        print("-" * 75)
 
-        if auroc > best_auroc:
-            best_auroc = auroc
-            # 저장 이름으로 MIMIC인지 CheXpert인지 구분
-            save_name = "chexnet_1ch_448_mimic_best.pth" if USE_MIMIC else "chexnet_1ch_448_chexpert_best.pth"
-            torch.save(model.state_dict(), save_name)
-            print(f"💾 Best Model Saved: {save_name} (AUROC: {auroc:.4f})")
+        val_auroc_list = []
+        val_f1_list = []
+
+        for c, class_name in enumerate(LABEL_ORDER): 
+            if len(np.unique(val_labels[:, c])) > 1:
+                # 1. AUROC
+                auroc = roc_auc_score(val_labels[:, c], val_preds[:, c])
+                val_auroc_list.append(auroc)
+                
+                # 2. Optimal Threshold 찾기
+                precisions, recalls, thresholds = precision_recall_curve(val_labels[:, c], val_preds[:, c])
+                
+                # 💡 [시니어의 안전장치] precision_recall_curve는 threshold보다 배열 길이가 1개 깁니다.
+                # 배열 길이를 맞추기 위해 마지막 극단값 제외 (IndexError 방지)
+                precisions = precisions[:-1]
+                recalls = recalls[:-1]
+                
+                numerator = 2 * recalls * precisions
+                denominator = recalls + precisions
+                f1_scores = np.divide(numerator, denominator, out=np.zeros_like(numerator), where=(denominator!=0))
+                
+                best_idx = np.argmax(f1_scores)
+                best_threshold = thresholds[best_idx]
+                
+                # 3. 최적 임계값 적용 후 P, R, F1 계산
+                opt_preds = (val_preds[:, c] >= best_threshold).astype(int)
+                val_prec = precision_score(val_labels[:, c], opt_preds, zero_division=0)
+                val_rec = recall_score(val_labels[:, c], opt_preds, zero_division=0)
+                val_f1 = f1_score(val_labels[:, c], opt_preds, zero_division=0)
+                
+                val_f1_list.append(val_f1)
+                
+                print(f"{class_name:<27s} | {auroc:.4f} | {best_threshold:.4f}  | {val_prec:.4f} | {val_rec:.4f} | {val_f1:.4f}")
+            else:
+                print(f"{class_name:<27s} |  N/A   |  N/A     |  N/A   |  N/A   |  N/A")
+        
+        print("-" * 75)
+        
+        avg_auroc = np.mean(val_auroc_list) if len(val_auroc_list) > 0 else 0.0
+        avg_f1 = np.mean(val_f1_list) if len(val_f1_list) > 0 else 0.0
+            
+        print(f"✅ Epoch [{epoch+1}/{EPOCHS}] Avg Loss: {epoch_loss/len(train_loader):.4f} | Macro AUROC: {avg_auroc:.4f} | Macro F1: {avg_f1:.4f}\n")
+        
+        # 모델 저장과 스케줄러는 여전히 임계값에 흔들리지 않는 절대 지표인 AUROC를 기준으로 합니다.
+        scheduler.step(avg_auroc)
+
+        if avg_auroc > best_auroc:
+            best_auroc = avg_auroc
+            torch.save(model.state_dict(), SAVE_MODEL_NAME)
+            print(f"💾 Best Model Saved: {SAVE_MODEL_NAME} (AUROC: {avg_auroc:.4f})")
 
 if __name__ == "__main__":
     train()

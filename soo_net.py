@@ -12,7 +12,13 @@ class SooNetEngine:
         self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
         
         # 1. 아키텍처 정의 (DenseNet-121)
-        self.model = models.densenet121(weights='IMAGENET1K_V1')
+        if model_path and os.path.exists(model_path):
+            # 1. 추론 모드: 어차피 덮어쓸 거니까 무거운 ImageNet을 부르지 않음 (None)
+            self.model = models.densenet121(weights=None)
+        else:
+            # 2. 학습 모드: 맨땅에 헤딩하지 않도록 전이 학습(Transfer Learning) 베이스 로드
+            print("💡 전이 학습(Transfer Learning)을 위해 ImageNet 가중치를 베이스로 로드합니다.")
+            self.model = models.densenet121(weights='IMAGENET1K_V1')
         
         # 🚀 [수정 1] TXV 방식: 1채널(흑백) 입력을 받도록 첫 번째 Conv 레이어 교체
         # 원래 DenseNet은 3채널(RGB)을 받지만, 1채널 입력에 맞게 입구를 뜯어고칩니다.
