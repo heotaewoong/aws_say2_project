@@ -28,11 +28,11 @@ BATCH_SIZE = 32
 NUM_WORKERS = 2             
 
 # 💡 평가할 가중치 파일 경로를 지정하세요!
-WEIGHT_PATH = "chexnet_1ch_448_mimic_best.pth" 
+WEIGHT_PATH = "model/chexnet_1ch_448_chexpert_best.pth" 
 
 if USE_MIMIC:
-    IMG_ROOT = "data" 
-    VAL_CSV = "data/mimic_cxr_aug_validate.csv" # 테스트/검증용 CSV
+    IMG_ROOT = "data/mimic-iv-cxr/official_data_iccv_final" 
+    VAL_CSV = "data/mimic-iv-cxr/mimic_cxr_aug_validate.csv" # 테스트/검증용 CSV
     CHEXPERT_CSV = "data/mimic-cxr-2.0.0-chexpert.csv"
 else:
     IMG_ROOT = "data/chexpert" 
