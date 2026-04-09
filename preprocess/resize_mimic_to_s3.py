@@ -23,14 +23,11 @@ TARGET_SIZE = (448, 448)
 MAX_WORKERS = 16
 REGION      = "ap-northeast-2"
 
-AWS_ACCESS_KEY = os.environ.get("AWS_ACCESS_KEY_ID", "")
-AWS_SECRET_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+# AWS 키는 환경변수 또는 IAM Role로 관리 (하드코딩 금지)
+# export AWS_ACCESS_KEY_ID=...
+# export AWS_SECRET_ACCESS_KEY=...
 
-session = boto3.Session(
-    aws_access_key_id=AWS_ACCESS_KEY,
-    aws_secret_access_key=AWS_SECRET_KEY,
-    region_name=REGION
-)
+session = boto3.Session(region_name=REGION)
 s3 = session.client('s3')
 
 
@@ -103,7 +100,7 @@ def main():
     start = time.time()
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {executor.submit(process_study, row): i
+        futures = {executor.submit(process_study, row): i 
                    for i, row in df.iterrows()}
 
         for i, future in enumerate(concurrent.futures.as_completed(futures)):

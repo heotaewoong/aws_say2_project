@@ -5,6 +5,15 @@ MIMIC-CXR 레이블 CSV ↔ S3 이미지 매핑 확인 스크립트
 import pandas as pd
 import boto3
 import os
+from pathlib import Path
+
+# .env 파일 로드 (로컬 실행 시)
+_env = Path(__file__).resolve().parent / ".env"
+if _env.exists():
+    for line in _env.read_text().splitlines():
+        if "=" in line and not line.startswith("#"):
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
 
 # ── 설정 ──
 S3_BUCKET = "say1-pre-project-5"

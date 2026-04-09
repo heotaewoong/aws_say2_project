@@ -3,6 +3,15 @@ SageMaker Training Job 실행 — MIMIC-CXR 448x448 only
 실행: python sagemaker/run_sagemaker.py
 """
 import boto3, os, tarfile, time
+from pathlib import Path
+
+# .env 파일 로드 (로컬 실행 시)
+_env = Path(__file__).resolve().parent.parent / ".env"
+if _env.exists():
+    for line in _env.read_text().splitlines():
+        if "=" in line and not line.startswith("#"):
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
 
 AWS_REGION    = "ap-northeast-2"
 AWS_ACCESS_KEY = os.environ.get("AWS_ACCESS_KEY_ID", "")
@@ -79,7 +88,7 @@ response = sm.create_training_job(
     },
     EnableManagedSpotTraining=True,
     CheckpointConfig={
-        "S3Uri": f"s3://{BUCKET}/checkpoints/chexnet-mimic-v2/",
+        "S3Uri": f"s3://{BUCKET}/checkpoints/chexnet-balanced-v1/",
         "LocalPath": "/opt/ml/checkpoints",
     },
     HyperParameters={
@@ -89,7 +98,8 @@ response = sm.create_training_job(
         "early-stop-patience":  "5",
         "region":               AWS_REGION,
         "mimic-bucket":         BUCKET,
-        "mimic-max-samples":    "20000",
+        "train-csv":            "/opt/ml/input/data/mimic_csv/mimic_cxr_balance1_train.csv",
+        "valid-csv":            "/opt/ml/input/data/mimic_csv/mimic_cxr_balance1_valid.csv",
         "sagemaker_program":    "train.py",
         "sagemaker_submit_directory": f"s3://{BUCKET}/code/sourcedir.tar.gz",
     },
@@ -98,7 +108,10 @@ response = sm.create_training_job(
         "AWS_ACCESS_KEY_ID":     AWS_ACCESS_KEY,
         "AWS_SECRET_ACCESS_KEY": AWS_SECRET_KEY,
         "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
-    }
+    },
+    Tags=[
+        {"Key": "project", "Value": "pre-sagemaker-2-2-team"},
+    ]
 )
 
 print(f"Job ARN: {response['TrainingJobArn']}")

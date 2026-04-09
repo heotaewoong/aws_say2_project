@@ -1,3 +1,7 @@
-# Ignore Python bytecode files and __pycache__ directories
+.env
 __pycache__/
 *.pyc
+*.pth
+data/
+models/
+cam_Atelectasis.png

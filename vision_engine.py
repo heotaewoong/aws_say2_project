@@ -20,7 +20,7 @@ class CheXNetEngine:
             print(f"🔄 가중치 로드 중: {model_path} ...")
             checkpoint = torch.load(model_path, map_location='cpu')
 
-            # .pth.tar 구조 대응 (state_dict 키가 있는 경우)
+            # .pth.tar 구조 대응 (state_dict 키가 있는 ㅇ경우)
             if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
                 state_dict = checkpoint['state_dict']
             else:
@@ -93,7 +93,7 @@ class CheXNetEngine:
         
         return input_tensor, original_img
 
-    def extract_vision_hpos(self, image_path, threshold=0.3):
+    def extract_vision_hpos(self, image_path, threshold=0.4):
         """이미지를 분석하여 임계값 이상의 소견과 HPO 코드를 반환"""
         input_tensor, _ = self._preprocess(image_path)
         
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
     # 1. 엔진 초기화 (학습된 가중치 로드)
-    weights_path = os.path.join(current_dir, "models", "chexnet_mimic_best.pth")
+    weights_path = os.path.join(current_dir, "models", "chexnet_best.pth")
     engine = CheXNetEngine(model_path=weights_path)
 
     # 2. 테스트용 이미지 경로 설정
@@ -214,7 +214,7 @@ if __name__ == "__main__":
     else:
         # 3. 비전 분석 및 HPO 추출 테스트
         print("\n🔎 [STEP 1] HPO 추출 테스트 시작...")
-        vision_results = engine.extract_vision_hpos(test_image_path, threshold=0.3)
+        vision_results = engine.extract_vision_hpos(test_image_path, threshold=0.4)
 
         if vision_results:
             # 4. Grad-CAM 시각화 테스트
