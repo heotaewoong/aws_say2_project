@@ -242,8 +242,13 @@ def train(args):
     TRAIN_CSV = os.path.join(args.csv_dir, "mimic_cxr_aug_train.csv")
     VAL_CSV = os.path.join(args.csv_dir, "mimic_cxr_aug_validate.csv")
     CHEXPERT_CSV = os.path.join(args.csv_dir, "mimic-cxr-2.0.0-chexpert.csv")
+    
+    # 최고 성능 모델 저장 경로
     SAVE_MODEL_NAME = os.path.join(args.model_dir, "chexnet_unet_crop_best.pth")
     
+    # 💡 [여기!] 타임캡슐(체크포인트) 백업 파일 경로
+    CHECKPOINT_PATH = os.path.join(args.model_dir, "last_checkpoint.pth")
+
     train_df = prepare_mimic_df(TRAIN_CSV, CHEXPERT_CSV, IMG_ROOT)
     val_df = prepare_mimic_df(VAL_CSV, CHEXPERT_CSV, IMG_ROOT)
     
@@ -273,22 +278,48 @@ def train(args):
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=args.lr_patience)
 
+    start_epoch = 1
     best_auroc = 0.0
-    for epoch in range(1, args.epochs + 1):
+
+    if os.path.exists(CHECKPOINT_PATH):
+        print(f"\n🔄 중단된 학습 기록을 발견했습니다! 복구를 시도합니다...")
+        try:
+            checkpoint = torch.load(CHECKPOINT_PATH, map_location=device)
+            model.load_state_dict(checkpoint['model_state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+            best_auroc = checkpoint['best_auroc']
+
+            # 💡 [수정됨] 완벽한 이어달리기 에포크 계산
+            saved_epoch = checkpoint['epoch']
+            is_end = checkpoint.get('is_end_of_epoch', False)
+            
+            # 끝까지 다 돌고 저장된 거면 다음 에포크부터, 절반에서 튕긴 거면 현재 에포크 처음부터!
+            start_epoch = saved_epoch + 1 if is_end else saved_epoch
+            start_epoch = max(1, start_epoch) # 혹시 모를 0 에포크 방지
+
+            print(f"✅ 복구 완료! Epoch {start_epoch}부터 이어 달립니다! (기존 Best: {best_auroc:.4f})\n")
+        except Exception as e:
+            print(f"⚠️ 체크포인트 파일이 손상되었습니다. 처음부터 시작합니다: {e}\n")
+
+    # =====================================================================
+    # 🚀 메인 학습 & Sub-epoch 검증 루프
+    # =====================================================================
+    total_batches = len(train_loader)
+    half_batch = total_batches // 2  # 💡 정확히 1/2 지점 계산
+
+    for epoch in range(start_epoch, args.epochs + 1):
         model.train()
         epoch_loss = 0
         
         for i, (imgs, lbls) in enumerate(train_loader):
             imgs, lbls = imgs.to(device), lbls.to(device)
             
-            # 💡 1. U-Net으로 마스크 추출
             with torch.no_grad():
                 masks = unet(imgs)
             
-            # 💡 2. 마스크 기반 크롭 및 TXV 변환
             txv_imgs = process_unet_crops(imgs, masks, target_size=(448, 448))
             
-            # 💡 3. DenseNet 추론
             outputs = model(txv_imgs)
             loss = criterion(outputs, lbls)
             
@@ -298,78 +329,106 @@ def train(args):
             
             epoch_loss += loss.item()
             if (i+1) % 50 == 0:
-                print(f"Batch [{i+1}/{len(train_loader)}] Loss: {loss.item():.4f}")
+                print(f"Batch [{i+1}/{total_batches}] Loss: {loss.item():.4f}")
 
-        # === 검증(Validation) ===
-        model.eval()
-        all_preds, all_labels = [], []
-        
-        with torch.no_grad():
-            for imgs, lbls in val_loader:
-                imgs = imgs.to(device)
-                
-                # 검증 시에도 U-Net 크롭 수행
-                masks = unet(imgs)
-                txv_imgs = process_unet_crops(imgs, masks, target_size=(448, 448))
-                
-                outputs = torch.sigmoid(model(txv_imgs)) 
-                all_preds.append(outputs.cpu().numpy())
-                all_labels.append(lbls.numpy())
-        
-        val_preds = np.vstack(all_preds)
-        val_labels = np.vstack(all_labels)
-        
-        print(f"\n📊 --- Epoch {epoch} Validation Report ---")
-        print(f"{'Disease':<27s} | {'AUROC':<6s} | {'Best_Th':<7s} | {'Prec':<6s} | {'Recall':<6s} | {'F1':<6s}")
-        print("-" * 75)
+            # =================================================================
+            # 💡 [핵심] 1/2 지점 또는 에포크 끝 지점 도달 시 검증 및 저장 발동!
+            # =================================================================
+            is_halfway = (i + 1) == half_batch
+            is_end_of_epoch = (i + 1) == total_batches
 
-        val_auroc_list, val_f1_list = [], []
+            if is_halfway or is_end_of_epoch:
+                # 상태 표시용 이름 (예: Epoch 1.5 또는 Epoch 1.0)
+                step_name = f"{epoch}.5 (Halfway)" if is_halfway else f"{epoch}.0 (End)"
+                print(f"\n⏳ [Epoch {step_name}] 검증 및 체크포인트 저장을 시작합니다...")
 
-        for c, class_name in enumerate(LABEL_ORDER): 
-            if len(np.unique(val_labels[:, c])) > 1:
-                auroc = roc_auc_score(val_labels[:, c], val_preds[:, c])
-                val_auroc_list.append(auroc)
+                model.eval()
+                all_preds, all_labels = [], []
                 
-                precisions, recalls, thresholds = precision_recall_curve(val_labels[:, c], val_preds[:, c])
-                precisions, recalls = precisions[:-1], recalls[:-1]
+                with torch.no_grad():
+                    # ⚠️ 주의: 학습 배치 변수(imgs, lbls)와 겹치지 않게 val_ 접두사 사용
+                    for val_imgs, val_lbls in val_loader:
+                        val_imgs = val_imgs.to(device)
+                        val_masks = unet(val_imgs)
+                        val_txv = process_unet_crops(val_imgs, val_masks, target_size=(448, 448))
+                        
+                        val_outputs = torch.sigmoid(model(val_txv)) 
+                        all_preds.append(val_outputs.cpu().numpy())
+                        all_labels.append(val_lbls.numpy())
                 
-                numerator = 2 * recalls * precisions
-                denominator = recalls + precisions
-                f1_scores = np.divide(numerator, denominator, out=np.zeros_like(numerator), where=(denominator!=0))
+                val_preds = np.vstack(all_preds)
+                val_labels = np.vstack(all_labels)
                 
-                best_idx = np.argmax(f1_scores)
-                best_threshold = thresholds[best_idx]
-                
-                opt_preds = (val_preds[:, c] >= best_threshold).astype(int)
-                val_prec = precision_score(val_labels[:, c], opt_preds, zero_division=0)
-                val_rec = recall_score(val_labels[:, c], opt_preds, zero_division=0)
-                val_f1 = f1_score(val_labels[:, c], opt_preds, zero_division=0)
-                
-                val_f1_list.append(val_f1)
-                
-                print(f"{class_name:<27s} | {auroc:.4f} | {best_threshold:.4f}  | {val_prec:.4f} | {val_rec:.4f} | {val_f1:.4f}")
-            else:
-                print(f"{class_name:<27s} |  N/A   |  N/A     |  N/A   |  N/A   |  N/A")
-        
-        print("-" * 75)
-        
-        avg_auroc = np.mean(val_auroc_list) if len(val_auroc_list) > 0 else 0.0
-        avg_f1 = np.mean(val_f1_list) if len(val_f1_list) > 0 else 0.0
-            
-        print(f"✅ Epoch [{epoch}/{args.epochs}] Avg Loss: {epoch_loss/len(train_loader):.4f} | Macro AUROC: {avg_auroc:.4f} | Macro F1: {avg_f1:.4f}\n")
-        
-        plot_and_save_curves(val_labels, val_preds, epoch, args.plot_dir)
-        
-        scheduler.step(avg_auroc)
+                print(f"\n📊 --- Epoch {step_name} Validation Report ---")
+                print(f"{'Disease':<27s} | {'AUROC':<6s} | {'Best_Th':<7s} | {'Prec':<6s} | {'Recall':<6s} | {'F1':<6s}")
+                print("-" * 75)
 
-        if avg_auroc > best_auroc:
-            best_auroc = avg_auroc
-            torch.save(model.state_dict(), SAVE_MODEL_NAME)
-            print(f"💾 Best Model Saved: {SAVE_MODEL_NAME} (AUROC: {avg_auroc:.4f})")
+                val_auroc_list, val_f1_list = [], []
+
+                for c, class_name in enumerate(LABEL_ORDER): 
+                    if len(np.unique(val_labels[:, c])) > 1:
+                        auroc = roc_auc_score(val_labels[:, c], val_preds[:, c])
+                        val_auroc_list.append(auroc)
+                        
+                        precisions, recalls, thresholds = precision_recall_curve(val_labels[:, c], val_preds[:, c])
+                        precisions, recalls = precisions[:-1], recalls[:-1]
+                        
+                        numerator = 2 * recalls * precisions
+                        denominator = recalls + precisions
+                        f1_scores = np.divide(numerator, denominator, out=np.zeros_like(numerator), where=(denominator!=0))
+                        
+                        best_idx = np.argmax(f1_scores)
+                        best_threshold = thresholds[best_idx]
+                        
+                        opt_preds = (val_preds[:, c] >= best_threshold).astype(int)
+                        val_prec = precision_score(val_labels[:, c], opt_preds, zero_division=0)
+                        val_rec = recall_score(val_labels[:, c], opt_preds, zero_division=0)
+                        val_f1 = f1_score(val_labels[:, c], opt_preds, zero_division=0)
+                        
+                        val_f1_list.append(val_f1)
+                        
+                        print(f"{class_name:<27s} | {auroc:.4f} | {best_threshold:.4f}  | {val_prec:.4f} | {val_rec:.4f} | {val_f1:.4f}")
+                    else:
+                        print(f"{class_name:<27s} |  N/A   |  N/A     |  N/A   |  N/A   |  N/A")
+                
+                print("-" * 75)
+                
+                avg_auroc = np.mean(val_auroc_list) if len(val_auroc_list) > 0 else 0.0
+                avg_f1 = np.mean(val_f1_list) if len(val_f1_list) > 0 else 0.0
+                    
+                print(f"✅ [Epoch {step_name}] Macro AUROC: {avg_auroc:.4f} | Macro F1: {avg_f1:.4f}\n")
+                
+                scheduler.step(avg_auroc)
+
+                # 💡 타임캡슐 저장 (절반 지점이든 끝이든 무조건 백업)
+                checkpoint = {
+                    'epoch': epoch, 
+                    'is_end_of_epoch': is_end_of_epoch, # 💡 끝났는지 여부도 함께 메모표로 남깁니다.
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'scheduler_state_dict': scheduler.state_dict(),
+                    'best_auroc': best_auroc
+                }
+                torch.save(checkpoint, CHECKPOINT_PATH)
+                print(f"💾 진행 상황 백업 완료 -> {CHECKPOINT_PATH}")
+
+                # 🏆 신기록 경신 시 Best Model 별도 저장
+                if avg_auroc > best_auroc:
+                    best_auroc = avg_auroc
+                    torch.save(model.state_dict(), SAVE_MODEL_NAME)
+                    print(f"🏆 신기록 경신! Best Model Saved: {SAVE_MODEL_NAME} (AUROC: {avg_auroc:.4f})")
+                
+                # 💡 [아주 중요!] 검증이 끝나면 멈춰 있던 학습 모드를 다시 켭니다.
+                model.train() 
+
+    # 전체 학습 종료 후 딱 한 번 그래프 출력
+    print("\n🎉 모든 학습이 완료되었습니다! 최종 시각화 그래프를 생성합니다...")
+    plot_and_save_curves(val_labels, val_preds, "Final", args.plot_dir)
+    print(f"✅ 최종 시각화 지표가 '{args.plot_dir}' 폴더에 저장되었습니다!")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model-dir', type=str, default='./model')
+    parser.add_argument('--model-dir', type=str, default=r'E:\Programming\aws_say2_project\model')
     parser.add_argument('--plot-dir', type=str, default='./plots')
     
     # 🚨 주의: U-Net을 돌리기 위해 반드시 .pt가 아닌 .jpg가 위치한 원본 폴더 경로를 입력하세요!
