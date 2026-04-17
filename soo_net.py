@@ -16,7 +16,7 @@ class SooNetEngine:
         self.device = torch.device("mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu"))
         
         # 모델 구조 정의
-        self.model = models.densenet121(weights=None if model_path else 'IMAGENET1K_V1')
+        self.model = models.densenet121(weights=None)
 
         # 3 channels -> 1 channel / first layer modified
         self.model.features.conv0 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False) 

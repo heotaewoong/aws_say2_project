@@ -13,6 +13,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, random_split
 
+
 # 🚀 파트너님이 작성하신 U-Net 클래스를 불러옵니다.
 # (파일 이름이 unet_model.py 라면 아래와 같이 임포트하세요)
 from unet_lung_model import UNet 
@@ -273,7 +274,6 @@ def train_unet():
         # 정기 스냅샷 (5 에폭마다)
         if (epoch + 1) % 5 == 0:
             torch.save(model.state_dict(), f"unet_lung_heart_ep{epoch+1}.pth")
-
 
 if __name__ == "__main__":
     train_unet()

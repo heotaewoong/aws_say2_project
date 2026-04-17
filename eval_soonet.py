@@ -21,7 +21,7 @@ LABEL_ORDER = [
 # =====================================================================
 # ⚙️ [평가 환경 설정]
 # =====================================================================
-USE_MIMIC = True  # 평가할 데이터셋 선택 (True: MIMIC, False: CheXpert)
+USE_MIMIC = False  # 평가할 데이터셋 선택 (True: MIMIC, False: CheXpert)
 
 TARGET_SIZE = (448, 448)    
 BATCH_SIZE = 32             
