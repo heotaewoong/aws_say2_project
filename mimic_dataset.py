@@ -18,28 +18,31 @@ def prepare_mimic_df(aug_csv_path, chexpert_csv_path, img_root):
     aug_df = pd.read_csv(aug_csv_path)
     
     flat_data = []
-    print(f"🔍 MIMIC 데이터 파싱 중: {aug_csv_path}")
+    print(f"🔍 MIMIC 전체 데이터 파싱 중: {aug_csv_path}")
     missing_count = 0 
 
     for _, row in aug_df.iterrows():
         for view_col in ['AP', 'PA']:
             raw_string = str(row[view_col])
-            if raw_string == 'nan' or not any(folder in raw_string for folder in ('p10', 'p11', 'p12', 'p13')):
+            
+            # 🚀 [수정 포인트 1] 폴더 제한(p10~p13)을 풀고, 결측치('nan', '[]')만 깔끔하게 걸러냅니다.
+            if raw_string == 'nan' or raw_string == '[]':
                 continue
                 
             try:
                 img_list = ast.literal_eval(raw_string)
                 for img_path in img_list:
-                    if not any(folder in img_path for folder in ('p10', 'p11', 'p12', 'p13')):
-                        continue
+                    # 🚀 [수정 포인트 2] img_path 내부의 폴더명 검사 로직 삭제 완료
                     
                     img_full_path = os.path.join(img_root, img_path)
+                    
                     if not os.path.exists(img_full_path):
                         missing_count += 1
                         continue
 
                     study_id = int(img_path.split('/')[-2][1:])
                     label_row = labels_df[labels_df['study_id'] == study_id]
+                    
                     if not label_row.empty:
                         flat_data.append({
                             'path': img_full_path,
@@ -49,7 +52,7 @@ def prepare_mimic_df(aug_csv_path, chexpert_csv_path, img_root):
                 continue
                 
     final_df = pd.DataFrame(flat_data)
-    print(f"✅ MIMIC 파싱 완료: 총 {len(final_df)}장 (누락 {missing_count}장)")
+    print(f"✅ MIMIC 전체 파싱 완료: 총 {len(final_df)}장 (누락 {missing_count}장)")
     return final_df
 
 class MimicDataset(Dataset):
