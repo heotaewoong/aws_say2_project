@@ -21,14 +21,14 @@ from visualizer import MedicalVisualizer
 
 LABEL_ORDER = [
     "Atelectasis", "Cardiomegaly", "Consolidation", "Edema", 
-    "Enlarged Cardiomediastinum", "Fracture", "Lung Lesion", 
+    "Enlarged Cardiomediastinum", "Lung Lesion", 
     "Lung Opacity", "No Finding", "Pleural Effusion", 
-    "Pleural Other", "Pneumonia", "Pneumothorax", "Support Devices"
+    "Pleural Other", "Pneumonia", "Pneumothorax"
 ]
 
 def prepare_chexpert_df(csv_path, img_root):
     df = pd.read_csv(csv_path)
-    df[LABEL_ORDER] = df[LABEL_ORDER].fillna(0).replace(-1, 0)
+    df[LABEL_ORDER] = df[LABEL_ORDER].fillna(0).replace(-1, 1)
     
     if 'Frontal/Lateral' in df.columns:
         df = df[df['Frontal/Lateral'] == 'Frontal']
@@ -217,7 +217,7 @@ def train(args):
     
     # 데이터 로더 (기존 코드 그대로 유지 - Cloud 환경 분기 포함)
     if args.use_mimic:
-        IMG_ROOT = args.data_dir 
+        IMG_ROOT = os.path.join(args.data_dir, "official_data_iccv_final")
         TRAIN_CSV = os.path.join(args.data_dir, "mimic_cxr_aug_train.csv")
         VAL_CSV = os.path.join(args.data_dir, "mimic_cxr_aug_validate.csv")
         CHEXPERT_CSV = os.path.join(args.data_dir, "mimic-cxr-2.0.0-chexpert.csv")
@@ -246,13 +246,19 @@ def train(args):
 
     # --- U-Net 초기화 ---
     print("✂️ U-Net 모델 로드 중...")
-    unet = UNet(n_channels=3, n_classes=2).to(device)
-    unet.load_state_dict(torch.load(args.unet_weight_path, map_location=device))
+    unet = UNet(n_channels=3, n_classes=3).to(device)
+    # 1. 일단 파일을 불러옵니다 (상자를 가져옴)
+    checkpoint = torch.load(args.unet_weight_path, map_location=device)
+
+    # 2. 상자 안에서 진짜 가중치(model_state_dict)만 꺼내서 모델에 넣습니다.
+    unet.load_state_dict(checkpoint['model_state_dict'])
+
+    print(f"✅ U-Net 가중치 로드 완료! (Best Dice: {checkpoint['dice_score']:.4f})")
     unet.eval() 
 
     # --- AnatomySooNet 초기화 ---
     print("🧠 AnatomySooNet (A^3 + PWAP) 로드 중...")
-    engine = SooNetEngine(model_path=None) 
+    engine = SooNetEngine(model_path=None, num_classes=len(LABEL_ORDER)) 
     model = engine.model 
     model.to(device)
 
@@ -272,6 +278,7 @@ def train(args):
             
             with torch.no_grad():
                 raw_masks = torch.sigmoid(unet(imgs))
+                raw_masks = raw_masks[:, 1:, :, :] # (B, 2, 512, 512)
             
             txv_imgs, final_masks = process_unet_crops_with_masks(imgs, raw_masks, target_size=(512, 512))
             
@@ -300,6 +307,7 @@ def train(args):
                 imgs, lbls = imgs.to(device), lbls.to(device)
                 
                 raw_masks = torch.sigmoid(unet(imgs))
+                raw_masks = raw_masks[:, 1:, :, :] # (B, 2, 512, 512)
                 txv_imgs, final_masks = process_unet_crops_with_masks(imgs, raw_masks, target_size=(512, 512))
                 
                 # 💡 Loss 계산을 위해 Sigmoid 전의 원본(Logits)을 먼저 받습니다.
@@ -310,7 +318,7 @@ def train(args):
                 # 💡 확률값으로 변환하여 예측 리스트에 추가
                 probs = torch.sigmoid(outputs)
                 all_preds.append(probs.cpu().numpy())
-                all_labels.append(lbls.numpy())
+                all_labels.append(lbls.cpu().numpy())
         
         # 💡 4. Val Loss 기록
         history['val_loss'].append(val_epoch_loss / len(val_loader))
@@ -383,6 +391,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--model-dir', type=str, default=os.environ.get('SM_MODEL_DIR', './model'))
     parser.add_argument('--data-dir', type=str, default=os.environ.get('SM_CHANNEL_TRAIN', './data'))
+
+    parser.add_argument('--plot-dir', type=str, default='./plots')
     
     parser.add_argument('--epochs', type=int, default=15)
     parser.add_argument('--batch-size', type=int, default=16)
@@ -392,7 +402,11 @@ if __name__ == "__main__":
     parser.add_argument('--use-mimic', type=lambda x: (str(x).lower() == 'true'), default=True)
     
     # 💡 [추가] U-Net 가중치 파일 이름 (SageMaker source_dir 폴더 안에 같이 올려주세요!)
-    parser.add_argument('--unet-weight-path', type=str, default='unet_lung_mask_ep10.pth')
+    parser.add_argument('--unet-weight-path', type=str, default='aws_say2_project/unet_lung_heart_best.pth')
 
     args = parser.parse_args()
+
+    os.makedirs(args.model_dir, exist_ok=True)
+    os.makedirs(args.plot_dir, exist_ok=True)
+
     train(args)

@@ -7,9 +7,9 @@ from PIL import Image
 
 LABEL_ORDER = [
     "Atelectasis", "Cardiomegaly", "Consolidation", "Edema", 
-    "Enlarged Cardiomediastinum", "Fracture", "Lung Lesion", 
+    "Enlarged Cardiomediastinum", "Lung Lesion", 
     "Lung Opacity", "No Finding", "Pleural Effusion", 
-    "Pleural Other", "Pneumonia", "Pneumothorax", "Support Devices"
+    "Pleural Other", "Pneumonia", "Pneumothorax"
 ]
 
 def prepare_mimic_df(aug_csv_path, chexpert_csv_path, img_root):

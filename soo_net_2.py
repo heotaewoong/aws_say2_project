@@ -84,11 +84,11 @@ class AnatomySooNet(nn.Module):
 
 
 class SooNetEngine:
-    def __init__(self, model_path=None, unet_path="unet_lung_mask_ep10.pth"):
+    def __init__(self, model_path=None, num_classes=14, unet_path="aws_say2_project/unet_lung_heart_best.pth"):
         self.device = torch.device("mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu"))
         
         # 💡 [핵심 1] AnatomySooNet 장착
-        self.model = AnatomySooNet(num_classes=14) 
+        self.model = AnatomySooNet(num_classes) 
         if model_path and os.path.exists(model_path):
             self.model.load_state_dict(torch.load(model_path, map_location=self.device))
             print(f"✅ Anatomy-SooNet 가중치 로드 완료")
