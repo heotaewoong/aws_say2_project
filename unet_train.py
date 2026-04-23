@@ -18,94 +18,91 @@ from torch.utils.data import Dataset, DataLoader, random_split
 # (파일 이름이 unet_model.py 라면 아래와 같이 임포트하세요)
 from unet_lung_model import UNet 
 
+
+def rle_decode(mask_rle, shape):
+    '''
+    mask_rle: RLE string (example: '1 3 10 5')
+    shape: (height, width) of array to return 
+    Returns numpy array, 1 - mask, 0 - background
+    '''
+    if pd.isna(mask_rle) or mask_rle == '':
+        return np.zeros(shape, dtype=np.uint8)
+        
+    s = mask_rle.split()
+    starts, lengths = [np.asarray(x, dtype=int) for x in (s[0:][::2], s[1:][::2])]
+    starts -= 1
+    ends = starts + lengths
+    img = np.zeros(shape[0] * shape[1], dtype=np.uint8)
+    for lo, hi in zip(starts, ends):
+        img[lo:hi] = 1
+    return img.reshape(shape)
+
 # =====================================================================
-# 1. 커스텀 Dataset (X-ray와 Mask를 1:1 쌍으로 묶어주는 역할)
+# 2. CheXmask + 로컬 메타데이터 통합 Dataset
 # =====================================================================
-class LungSegmentationDataset(Dataset):
-    def __init__(self, csv_path, image_root, mask_root, target_size=(512, 512), is_train=True):
+class CheXmaskDataset(Dataset):
+    def __init__(self, chexmask_csv, local_metadata_csv, image_root, target_size=(512, 512), is_train=True):
         self.image_root = image_root
-        self.mask_root = mask_root
         self.target_size = target_size
         self.is_train = is_train
+
+        # 🚀 [수정] 멀티라인 필드(Landmarks)를 제대로 인식하도록 설정
+        print("📖 CheXmask CSV 로드 중... (멀티라인 파싱 적용)")
+        df_mask = pd.read_csv(
+            chexmask_csv, 
+            engine='python',    # 멀티라인 처리에 더 유연한 파이썬 엔진 사용
+            quotechar='"',      # 따옴표로 감싸진 필드 안의 줄바꿈 허용
+            on_bad_lines='skip' # 만약 정말 데이터가 깨진 줄이 있다면 건너뜀
+        )
         
-        # 🚀 강력한 증강 파이프라인 구성
+        # 💡 메모리 절약을 위해 필요한 컬럼만 남깁니다. (Landmarks는 학습에 불필요)
+        df_mask = df_mask[['dicom_id', 'Left Lung', 'Right Lung', 'Heart', 'Height', 'Width']]
+
+        df_meta = pd.read_csv(local_metadata_csv)
+        self.df = pd.merge(df_mask, df_meta, on='dicom_id', how='inner')
+        
+        print(f"✅ 데이터 준비 완료: 총 {len(self.df)}장의 이미지를 사용합니다.")
+
+        # 🚀 강력한 증강 파이프라인
         self.transform = A.Compose([
             A.Resize(target_size[0], target_size[1]),
-            A.CLAHE(clip_limit=2.0, tile_grid_size=(8, 8), p=0.5),
-            # 훈련 데이터일 때만 적용하는 증강
+            A.CLAHE(clip_limit=2.0, p=0.5),
             A.OneOf([
                 A.HorizontalFlip(p=0.5),
                 A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=15, p=0.5),
             ], p=1.0) if is_train else A.NoOp(),
-            A.RandomBrightnessContrast(p=0.2),
-            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)), # 표준화
+            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             ToTensorV2()
         ])
-        # 1. CSV 로드
-        df = pd.read_csv(csv_path)
-        
-        valid_rows = []
-        print("🔍 파일 존재 여부 확인 중... (Mask Extension: .png 대응)")
-        for _, row in df.iterrows():
-            # 💡 1. 엑스레이 이미지 경로 처리 (.dcm -> .jpg)
-            img_rel_path = row['MIMIC-CXR_path'].replace('.dcm', '.jpg')
-            img_path = os.path.join(self.image_root, img_rel_path)
-            
-            # 💡 2. 마스크 경로 처리 (.jpg -> .png로 강제 변경)
-            # CSV에 'heart/101.jpg'라고 적혀 있어도 'heart/101.png'를 찾도록 합니다.
-            lung_rel_path = row['lungs_mask_path'].replace('.jpg', '.png')
-            heart_rel_path = row['heart_mask_path'].replace('.jpg', '.png')
-            
-            lung_path = os.path.join(self.mask_root, lung_rel_path)
-            heart_path = os.path.join(self.mask_root, heart_rel_path)
-            
-            # 🚀 [디버깅] 첫 번째 데이터만 경로가 맞는지 출력해봅니다.
-            if len(valid_rows) == 0:
-                print(f"--- 첫 번째 데이터 경로 테스트 ---")
-                print(f"Image: {img_path} ({os.path.exists(img_path)})")
-                print(f"Lung : {lung_path} ({os.path.exists(lung_path)})")
-                print(f"Heart: {heart_path} ({os.path.exists(heart_path)})")
-            
-            if os.path.exists(img_path) and os.path.exists(lung_path) and os.path.exists(heart_path):
-                valid_rows.append({
-                    'image': img_path,
-                    'lung': lung_path,
-                    'heart': heart_path
-                })
-        
-        self.data = valid_rows
-        print(f"✅ 최종 학습 가능 데이터: {len(self.data)}장 (확장자 매칭 성공!)")
 
     def __len__(self):
-        return len(self.data)
+        return len(self.df)
 
     def __getitem__(self, idx):
-        item = self.data[idx]
+        row = self.df.iloc[idx]
         
-        # 1. 이미지 및 마스크 로드 (PIL)
-        image_pil = Image.open(item['image']).convert("RGB")
-        lung_pil = Image.open(item['lung']).convert("L")
-        heart_pil = Image.open(item['heart']).convert("L")
+        # 1. 이미지 로드 (relative_path 활용)
+        img_path = os.path.join(self.image_root, row['relative_path'])
+        image = cv2.imread(img_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        
+        # 원본 이미지 크기
+        h, w = int(row['Height']), int(row['Width'])
 
-        # 🚀 [핵심 수정] Albumentations에 넣기 전, 동일한 크기로 1차 리사이즈
-        # 이렇게 해야 'Height and Width should be equal' 에러가 사라집니다.
-        image_pil = image_pil.resize(self.target_size, Image.BILINEAR)
-        lung_pil = lung_pil.resize(self.target_size, Image.NEAREST)
-        heart_pil = heart_pil.resize(self.target_size, Image.NEAREST)
+        # 2. RLE 마스크 생성 및 병합 (1: Lung, 2: Heart)
+        mask_combined = np.zeros((h, w), dtype=np.uint8)
+        
+        # 폐 영역 (좌/우 합산)
+        l_lung = rle_decode(row['Left Lung'], (h, w))
+        r_lung = rle_decode(row['Right Lung'], (h, w))
+        mask_combined[(l_lung > 0) | (r_lung > 0)] = 1
+        
+        # 심장 영역
+        heart = rle_decode(row['Heart'], (h, w))
+        mask_combined[heart > 0] = 2
 
-        # 2. Numpy 배열로 변환
-        image_np = np.array(image_pil)
-        lung_np = np.array(lung_pil)
-        heart_np = np.array(heart_pil)
-
-        # 3. 마스크 병합 (0, 1, 2)
-        mask_combined = np.zeros(self.target_size[::-1], dtype=np.uint8) # (H, W)
-        mask_combined[lung_np > 127] = 1
-        mask_combined[heart_np > 127] = 2
-
-        # 4. 🚀 이미지와 마스크를 동시에 변형!
-        # 이제 두 입력의 크기가 target_size로 동일하므로 에러가 나지 않습니다.
-        transformed = self.transform(image=image_np, mask=mask_combined)
+        # 3. 전처리 적용
+        transformed = self.transform(image=image, mask=mask_combined)
         
         return transformed['image'], transformed['mask'].long()
     
@@ -177,27 +174,21 @@ def train_unet():
     epochs = 20
     device = torch.device("mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
     
-    # 🎯 경로 설정
-    CSV_PATH = "data/mimic_masks/MIMIC_links.csv"
-    IMAGE_ROOT = "data/official_data_iccv_final"
-    MASK_ROOT = "data/mimic_masks"
+    # 🎯 경로 설정 (Gitae님의 환경에 맞춤)
+    CHEXMASK_CSV = "/Users/skku_aws2_15/med/data/MIMIC-CXR-JPG.csv" # CheXmask 공식 CSV
+    MY_METADATA_CSV = "/Users/skku_aws2_15/med/data/my_mimic_metadata.csv"           # 방금 생성하신 파일
+    IMAGE_ROOT = "/Users/skku_aws2_15/med/data/official_data_iccv_final/files"
     
-    # 전체 데이터셋 로드 후 8:2 비율로 분할 (검증 성능 확인을 위해 필수)
-    full_dataset = LungSegmentationDataset(CSV_PATH, IMAGE_ROOT, MASK_ROOT, target_size=(512, 512))
-   
-    # 🚀 디버깅용 로그 추가: 실제로 몇 장이 로드되었는지 꼭 확인하세요.
-    if len(full_dataset) == 0:
-        print("❌ 에러: 데이터를 찾지 못했습니다. IMAGE_ROOT와 MASK_ROOT 경로를 다시 확인하세요!")
-        print(f"현재 설정된 IMAGE_ROOT: {os.path.abspath(IMAGE_ROOT)}")
-        print(f"현재 설정된 MASK_ROOT: {os.path.abspath(MASK_ROOT)}")
-        return # 학습 중단
+    # 데이터셋 로드
+    full_dataset = CheXmaskDataset(CHEXMASK_CSV, MY_METADATA_CSV, IMAGE_ROOT)
     
     train_size = int(0.8 * len(full_dataset))
     val_size = len(full_dataset) - train_size
     train_sub, val_sub = random_split(full_dataset, [train_size, val_size])
     
-    train_loader = DataLoader(train_sub, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_sub, batch_size=batch_size, shuffle=False)
+    # RLE 연산 속도를 위해 num_workers 설정을 권장합니다.
+    train_loader = DataLoader(train_sub, batch_size=batch_size, shuffle=True, num_workers=4)
+    val_loader = DataLoader(val_sub, batch_size=batch_size, shuffle=False, num_workers=4)
     
     model = UNet(n_channels=3, n_classes=3).to(device)
     criterion = CombinedLoss(device=device)
@@ -220,6 +211,7 @@ def train_unet():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+
             train_loss += loss.item() * images.size(0)
 
         # --- Validation Phase (지표 계산) ---
