@@ -1,0 +1,15 @@
+# Large MIMIC data files (exceed GitHub 100MB limit)
+data/chartevents.csv
+data/labevents.csv
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
