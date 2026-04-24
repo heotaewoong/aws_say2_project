@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global zoom · 80% (rem 기반 모든 사이즈 0.8x) */
+html { font-size: 80%; }
+
+/* Base resets for Rare-Link AI */
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans KR', 'IBM Plex Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #0A1628;
+  background: #F8FAFC;
+}
+
+* { box-sizing: border-box; }
