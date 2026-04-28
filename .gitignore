@@ -13,3 +13,11 @@ __pycache__/
 # IDE
 .vscode/
 .idea/
+node_modules
+
+# Claude Code session cache
+.claude/
+
+# Vite build artifacts
+frontend/dist/
+frontend/.vite/
