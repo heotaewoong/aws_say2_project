@@ -164,6 +164,7 @@ class RareLinkPipeline:
             "negative_hpo": neg_clean,
             "xray_detail":  xray_preds,
             "symptom_text": symptom_text,
+            "lab_results":  lab_results,   # Lab raw 수치 (LLM 인풋용)
         }
 
     # ════════════════════════════════════════════════════════════════
@@ -238,6 +239,8 @@ class RareLinkPipeline:
         positive_hpo = hpo_data["positive_hpo"]
         negative_hpo = hpo_data["negative_hpo"]
         symptom_text = hpo_data["symptom_text"]
+        lab_results  = hpo_data.get("lab_results", {})
+        xray_detail  = hpo_data.get("xray_detail", {})
 
         # ── Soft data ①: PubCaseFinder (타임아웃 시 재시도 1회) ──
         print(f"  [PubCaseFinder] {len(positive_hpo)}개 HPO로 질환 매칭 중...")
@@ -296,6 +299,20 @@ class RareLinkPipeline:
                 f"  유전자: {', '.join(d.get('genes', [])) or '정보 없음'}\n"
             )
 
+        # ── X-ray Top10 스코어 텍스트 변환 ──────────────────────────
+        xray_score_text = "\n".join(
+            f"  {label}: {prob:.3f} → HPO={hpo}"
+            for label, (prob, hpo) in sorted(
+                xray_detail.items(), key=lambda x: x[1][0], reverse=True
+            )
+        ) if xray_detail else "X-ray 데이터 없음"
+
+        # ── Lab raw 수치 텍스트 변환 ──────────────────────────────
+        lab_raw_text = "\n".join(
+            f"  {k}: {v}"
+            for k, v in lab_results.items()
+        ) if lab_results else "Lab 데이터 없음"
+
         # ── 개선된 프롬프트 (Evidence-bound + JSON + Safety) ──────
         prompt = f"""당신은 희귀 폐질환 진단 보조 AI 시스템입니다. 이 시스템은 반드시 근거 기반(Evidence-based)으로만 판단해야 합니다.
 
@@ -308,11 +325,20 @@ class RareLinkPipeline:
 ────────────────────────────
 [INPUT DATA]
 
+[임상 소견 (Symptom Raw)]
+{symptom_text}
+
 [환자 HPO]
 Positive: {', '.join(positive_hpo) or '없음'}
 Negative: {', '.join(negative_hpo) or '없음'}
 
-[질환 랭킹 — Orphanet Hard data]
+[X-ray 분석 결과 (SooNet Top10 확률)]
+{xray_score_text}
+
+[혈액·폐기능 검사 수치 (Lab Raw)]
+{lab_raw_text}
+
+[질환 랭킹 — Orphanet LR 스코어링]
 {ranking_text}
 
 [Top 3 질환 상세]
