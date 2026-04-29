@@ -32,7 +32,26 @@ SCORE_RATIO_THRESH  = 3.0    # 1등/2등 LR 비율 < 이 값이면 불확실 →
                               # ※ 회의록: 미확정. 팀 협의 후 조정 필요
 PUBCASE_MAX         = 5      # PubCaseFinder 검색 케이스 최대 수
 REPORT_MODEL        = "apac.anthropic.claude-3-5-sonnet-20241022-v2:0"
-REPORT_MAX_TOKENS   = 2000
+REPORT_MAX_TOKENS   = 4000  # JSON + Markdown 이중 출력 고려 (2000 → 4000)
+
+# ── 시스템 프롬프트 (역할 정의 + 절대 규칙) ──────────────────────
+# 유저 프롬프트와 분리해서 Bedrock "system" 파라미터로 전달
+# → LLM이 역할 규칙을 데이터보다 강하게 적용
+SYSTEM_PROMPT = """당신은 Rare-Link AI 진단 보조 시스템의 임상 추론 엔진입니다.
+
+[역할]
+희귀 폐질환 감별진단 보조 시스템으로, Evidence-based Medicine(EBM) 원칙을 엄격히 준수합니다.
+최종 진단 권한은 없으며, 담당 의사의 임상 판단을 보조하는 도구입니다.
+
+[절대 규칙 — 위반 시 출력 무효]
+1. 제공된 Context(INPUT DATA)에 없는 정보 생성 = 환각 → 절대 금지
+2. PMID 인용 시 반드시 Context에 실존하는 것만 사용 (없으면 "논문 없음" 명시)
+3. Negative HPO는 해당 질환의 전형 증상이 없음을 의미 → 반드시 감별진단 근거로 활용
+   예: Negative에 HP:0002206(흉막삼출)이 있으면 → 흉막삼출이 필수인 질환의 confidence 하향
+4. Lab 수치가 정상 범위 밖이면 반드시 임상적 의미 언급
+5. confidence="HIGH"는 evidence가 2개 이상일 때만 허용
+6. 확신도 낮으면 반드시 "LOW" + 이유 명시
+7. 출력 순서 엄수: JSON 먼저, Markdown 다음"""
 AWS_REGION          = "ap-northeast-2"
 
 # Orphanet CSV 기본 탐색 경로 목록
@@ -313,50 +332,55 @@ class RareLinkPipeline:
             for k, v in lab_results.items()
         ) if lab_results else "Lab 데이터 없음"
 
-        # ── 개선된 프롬프트 (Evidence-bound + JSON + Safety) ──────
-        prompt = f"""당신은 희귀 폐질환 진단 보조 AI 시스템입니다. 이 시스템은 반드시 근거 기반(Evidence-based)으로만 판단해야 합니다.
+        # ── 업그레이드된 유저 프롬프트 (v2) ─────────────────────────
+        # 시스템 프롬프트는 Bedrock "system" 파라미터로 분리 전달
+        # 유저 프롬프트: 환자 데이터 + 출력 형식 지시만 담당
+        user_prompt = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[A. 환자 원시 데이터 (Raw Input)]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚠️ 절대 규칙:
-- 제공된 Context 밖의 정보는 절대 사용 금지
-- PMID / ORPHA 코드 없는 정보는 "불확실"로 표시
-- 추측 금지 / 환각 금지
-- 반드시 의사 보조 시스템임을 명시
-
-────────────────────────────
-[INPUT DATA]
-
-[임상 소견 (Symptom Raw)]
+A1. 임상 소견 (의사 기록 원문):
 {symptom_text}
 
-[환자 HPO]
-Positive: {', '.join(positive_hpo) or '없음'}
-Negative: {', '.join(negative_hpo) or '없음'}
-
-[X-ray 분석 결과 (SooNet Top10 확률)]
+A2. X-ray AI 분석 결과 (SooNet DenseNet-121, 확률 내림차순):
 {xray_score_text}
 
-[혈액·폐기능 검사 수치 (Lab Raw)]
+A3. 혈액·폐기능 검사 수치 (정상 범위 벗어난 항목에 주목):
 {lab_raw_text}
 
-[질환 랭킹 — Orphanet LR 스코어링]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[B. HPO 변환 결과]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+B1. Positive HPO (환자에게 있는 증상 — 진단 지지 근거):
+{', '.join(positive_hpo) or '없음'}
+
+B2. Negative HPO (환자에게 없는 증상 — 감별진단 핵심):
+{', '.join(negative_hpo) or '없음'}
+※ Negative HPO에 해당하는 증상이 필수인 질환은 confidence를 반드시 하향하세요.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[C. 질환 랭킹 (LIRICAL LR 스코어링 — Orphanet 4335개 질환 기반)]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 {ranking_text}
 
-[Top 3 질환 상세]
 {top3_detail}
 
-[Context — PubCaseFinder + PubMed]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[D. 외부 검색 결과 (RAG Context) — 이 섹션의 정보만 인용 가능]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 {rag_context}
 
-────────────────────────────
-[작업 목표]
-1. Top 3 질환에 대해 근거 기반 분석
-2. 유전자 검사 제안
-3. 치료 가이드라인 요약
-4. 최신 연구 기반 인사이트 제공
-5. 다음 임상 단계 제안
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[E. 출력 지시]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-────────────────────────────
-[출력 형식 — JSON 먼저]
+위 데이터만을 근거로 아래 형식에 맞춰 출력하세요.
+D 섹션에 없는 PMID는 절대 인용하지 마세요.
+
+[출력 형식 1 — JSON 먼저]
 
 반드시 아래 JSON 구조로 먼저 출력:
 
@@ -364,8 +388,10 @@ Negative: {', '.join(negative_hpo) or '없음'}
 {{
   "diagnosis": [
     {{
+      "rank": 1,
       "disease": "",
       "orpha_code": "",
+      "lr_score": 0.0,
       "likelihood_reason": "",
       "positive_hpo_used": [],
       "negative_hpo_used": [],
@@ -387,65 +413,63 @@ Negative: {', '.join(negative_hpo) or '없음'}
   "treatment": {{
     "guideline": "",
     "contraindications": [],
-    "evidence_level": ""
+    "evidence_level": "A | B | C"
   }},
   "insight": {{
     "recent_findings": [],
     "clinical_notes": []
   }},
-  "next_steps": [""],
-  "uncertainty": [
-    "데이터 부족",
-    "근거 부족",
-    "추가 검사 필요"
-  ]
+  "next_steps": [],
+  "uncertainty": [],
+  "self_check": {{
+    "all_pmids_in_context": true,
+    "negative_hpo_reflected": true,
+    "high_confidence_has_evidence": true
+  }}
 }}
 ```
 
-────────────────────────────
-[그 다음 Markdown 출력]
+[출력 형식 2 — Markdown 리포트]
 
 ## ⚠️ AI 진단 보조 리포트 — 최종 진단은 반드시 담당 의사가 내려야 합니다
 
 ### 1. 질환 평가 (Top 3)
-각 질환별: 질환명 + ORPHA 코드 + LR 점수 해석 + 근거(PMID 인용, 없으면 "근거 없음" 명시)
+각 질환별: 질환명 + ORPHA 코드 + LR 점수 + 신뢰도 + 근거(PMID 인용, 없으면 "근거 없음")
+Negative HPO가 해당 질환 감별에 미치는 영향 반드시 명시
 
 ### 2. 유전자 검사 권고
 관련 유전자: {gene_text}
 검사 방법 및 권고 이유 (ORPHA {top_orpha} 기반)
 
 ### 3. 치료 가이드라인
-1순위 질환({top_disease}) 치료 원칙 + 금기사항
+1순위 질환({top_disease}) 치료 원칙 + 금기사항 + 근거 수준
 
 ### 4. 최신 동향
-Context에 있는 PMID 인용 논문만 사용. 없으면 "최신 논문 없음" 명시.
+D 섹션에 있는 PMID 인용 논문만 사용. 없으면 "최신 논문 없음" 명시.
 
 ### 5. 다음 단계
 즉시 시행 권고 검사 + 의뢰 과 + 재평가 시점
 
-────────────────────────────
-[중요 제약 조건]
-- Evidence에 없는 내용 절대 생성 금지
-- PMID 없는 연구 언급 금지
-- 모르면 반드시 "정보 없음" 표시
-- Negative HPO 반드시 감별진단에 반영
-- 과도한 확신 표현 금지 ("가능성 있음" 사용)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[F. 출력 전 자체 검증]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[Self-Check]
-출력 생성 후 아래 확인:
-- 모든 근거가 context에 있는가?
-- PMID가 실제 context에 존재하는가?
-- 추측이 포함되어 있는가?
-문제 있으면 수정 후 출력."""
+JSON self_check 필드를 반드시 채우세요:
+- all_pmids_in_context: D 섹션에 없는 PMID를 인용했는가? (없으면 true)
+- negative_hpo_reflected: Negative HPO가 감별진단에 반영됐는가?
+- high_confidence_has_evidence: HIGH confidence에 evidence 2개 이상인가?
 
-        # ── Bedrock API 호출 (temperature=0.2, top_p=0.9) ─────────
+false가 있으면 해당 부분 수정 후 출력하세요."""
+
+        # ── Bedrock API 호출 (system/user 분리, temperature=0.2) ────
         print(f"  [Claude] {REPORT_MODEL} 소견서 생성 중...")
         try:
             resp = self.bedrock.invoke_model(
                 modelId=REPORT_MODEL,
                 body=json.dumps({
                     "anthropic_version": "bedrock-2023-05-31",
-                    "messages": [{"role": "user", "content": prompt}],
+                    "system": SYSTEM_PROMPT,
+                    "messages": [{"role": "user", "content": user_prompt}],
                     "max_tokens": REPORT_MAX_TOKENS,
                     "temperature": 0.2,
                     "top_p": 0.9,
