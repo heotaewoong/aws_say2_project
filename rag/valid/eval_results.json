@@ -1,0 +1,181 @@
+{
+  "level1": {
+    "total": 4293,
+    "recall@1": 0.8164,
+    "recall@3": 0.9415,
+    "recall@5": 0.9639,
+    "recall@10": 0.9828,
+    "mrr": 0.8825,
+    "failed_count": 35,
+    "failed_samples": [
+      {
+        "orpha_code": "ORPHA:713",
+        "disease_name": "Glycogen storage disease due to phosphoglycerate kinase 1 deficiency",
+        "test_hpos": [
+          "HP:0000750",
+          "HP:0001249",
+          "HP:0001251"
+        ],
+        "rank": 11,
+        "hit@1": false,
+        "hit@3": false,
+        "hit@5": false,
+        "hit@10": false
+      },
+      {
+        "orpha_code": "ORPHA:77293",
+        "disease_name": "Chronic visceral acid sphingomyelinase deficiency",
+        "test_hpos": [
+          "HP:0000823",
+          "HP:0000938",
+          "HP:0000939"
+        ],
+        "rank": 11,
+        "hit@1": false,
+        "hit@3": false,
+        "hit@5": false,
+        "hit@10": false
+      },
+      {
+        "orpha_code": "ORPHA:96173",
+        "disease_name": "Ring chromosome 9 syndrome",
+        "test_hpos": [
+          "HP:0000252",
+          "HP:0000343",
+          "HP:0000431"
+        ],
+        "rank": 11,
+        "hit@1": false,
+        "hit@3": false,
+        "hit@5": false,
+        "hit@10": false
+      },
+      {
+        "orpha_code": "ORPHA:99967",
+        "disease_name": "Myxoid/round cell liposarcoma",
+        "test_hpos": [
+          "HP:0001482",
+          "HP:0002027",
+          "HP:0002579"
+        ],
+        "rank": 11,
+        "hit@1": false,
+        "hit@3": false,
+        "hit@5": false,
+        "hit@10": false
+      },
+      {
+        "orpha_code": "ORPHA:206599",
+        "disease_name": "Isolated asymptomatic elevation of creatine phosphokinase",
+        "test_hpos": [
+          "HP:0003236",
+          "HP:0003198",
+          "HP:0008331"
+        ],
+        "rank": 11,
+        "hit@1": false,
+        "hit@3": false,
+        "hit@5": false,
+        "hit@10": false
+      }
+    ]
+  },
+  "level2": [
+    {
+      "case": "Lymphangioleiomyomatosis (LAM)",
+      "target_orpha": "ORPHA:538",
+      "target_rank": 1,
+      "hit@1": true,
+      "hit@3": true,
+      "hit@5": true,
+      "hit@10": true,
+      "top3_diseases": [
+        "Lymphangioleiomyomatosis",
+        "Idiopathic acute eosinophilic pneumonia",
+        "Legionnaires disease"
+      ],
+      "pubmed_count": 3,
+      "pmid_valid_rate": 1.0,
+      "faithfulness": 0.8,
+      "answer_relevancy": 0.8
+    },
+    {
+      "case": "Idiopathic Pulmonary Fibrosis (IPF)",
+      "target_orpha": "ORPHA:2032",
+      "target_rank": 1,
+      "hit@1": true,
+      "hit@3": true,
+      "hit@5": true,
+      "hit@10": true,
+      "top3_diseases": [
+        "Idiopathic pulmonary fibrosis",
+        "Pulmonary capillary hemangiomatosis",
+        "Asbestos intoxication"
+      ],
+      "pubmed_count": 3,
+      "pmid_valid_rate": 1.0,
+      "faithfulness": 0.8,
+      "answer_relevancy": 0.9
+    },
+    {
+      "case": "Sarcoidosis",
+      "target_orpha": "ORPHA:797",
+      "target_rank": 1,
+      "hit@1": true,
+      "hit@3": true,
+      "hit@5": true,
+      "hit@10": true,
+      "top3_diseases": [
+        "Sarcoidosis",
+        "Kaposiform lymphangiomatosis",
+        "Fanconi anemia"
+      ],
+      "pubmed_count": 3,
+      "pmid_valid_rate": 0.6666666666666666,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9
+    },
+    {
+      "case": "Pulmonary Arterial Hypertension (PAH)",
+      "target_orpha": "ORPHA:422",
+      "target_rank": 1,
+      "hit@1": true,
+      "hit@3": true,
+      "hit@5": true,
+      "hit@10": true,
+      "top3_diseases": [
+        "Idiopathic/heritable pulmonary arterial hypertension",
+        "Hughes-Stovin syndrome",
+        "Idiopathic pulmonary arterial hypertension"
+      ],
+      "pubmed_count": 3,
+      "pmid_valid_rate": 0.6666666666666666,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.8
+    },
+    {
+      "case": "Cryptogenic Organizing Pneumonia (COP)",
+      "target_orpha": "ORPHA:1302",
+      "target_rank": 2,
+      "hit@1": false,
+      "hit@3": true,
+      "hit@5": true,
+      "hit@10": true,
+      "top3_diseases": [
+        "Staphylococcal necrotizing pneumonia",
+        "Cryptogenic organizing pneumonia",
+        "Idiopathic chronic eosinophilic pneumonia"
+      ],
+      "pubmed_count": 3,
+      "pmid_valid_rate": 1.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9
+    }
+  ],
+  "level3": {
+    "primary_diagnosis": "Worsening ABD distension and pain",
+    "pipeline_top1": "Diffuse alveolar hemorrhage",
+    "keyword_match_rank": null,
+    "clinical_note": "MIMIC 환자는 일반 입원 환자 — 희귀질환이 아닐 가능성 높음. LIRICAL 랭킹과 실제 진단 불일치는 시스템 설계 범위(희귀질환 특화) 내에서 정상."
+  }
+}

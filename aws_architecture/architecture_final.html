@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>희귀질환 다모달 RAG 진단 보조 시스템 — AWS 최종 아키텍처</title>
+<style>
+:root {
+  --bg:        #F0F2F5;
+  --vpc-bg:    #E8F4FD;
+  --vpc-bd:    #1A73C8;
+  --pub-bg:    #FFF3E0;
+  --pub-bd:    #E65100;
+  --pri-bg:    #E8F5E9;
+  --pri-bd:    #2E7D32;
+  --mlo-bg:    #F3E5F5;
+  --mlo-bd:    #6A1B9A;
+  --ext-bg:    #ECEFF1;
+  --ext-bd:    #546E7A;
+  --sec-bg:    #FFF8E1;
+  --sec-bd:    #F57F17;
+
+  /* Service colours */
+  --c-route53:   #8C4FFF;
+  --c-waf:       #DD344C;
+  --c-cf:        #8C4FFF;
+  --c-s3:        #3F9142;
+  --c-apigw:     #E7157B;
+  --c-cognito:   #DD344C;
+  --c-sf:        #E7157B;
+  --c-alb:       #FF9900;
+  --c-nat:       #8C4FFF;
+  --c-sm:        #01A88D;
+  --c-lambda:    #FF9900;
+  --c-bedrock:   #01A88D;
+  --c-redis:     #C7131F;
+  --c-rds:       #3B48CC;
+  --c-dynamo:    #3B48CC;
+  --c-ecr:       #FF9900;
+  --c-eb:        #E7157B;
+  --c-iam:       #DD344C;
+  --c-cw:        #E7157B;
+  --c-ds:        #3F9142;
+  --c-pubmed:    #546E7A;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); font-family:'Segoe UI',Arial,sans-serif; color:#1a1a1a; }
+.page { width:1760px; margin:0 auto; padding:24px 20px 40px; }
+
+h1 { font-size:19px; font-weight:800; text-align:center; color:#1a1a2e; margin-bottom:4px; }
+.sub { font-size:11.5px; text-align:center; color:#546E7A; margin-bottom:22px; }
+
+/* ── service card ── */
+.svc {
+  display:inline-flex; flex-direction:column; align-items:center; justify-content:center;
+  border-radius:8px; padding:6px 9px; font-size:10px; font-weight:700; line-height:1.35;
+  text-align:center; border:2px solid; min-width:88px; background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.1);
+}
+.svc .ico { font-size:20px; margin-bottom:2px; }
+.svc .lbl { font-size:9.5px; font-weight:800; }
+.svc .sub2{ font-size:8.5px; font-weight:400; color:#555; line-height:1.3; margin-top:1px; }
+.svc .tag { font-size:8px; font-weight:700; padding:1px 5px; border-radius:3px;
+            display:inline-block; margin-top:3px; }
+
+/* arrow helpers */
+.arrow-h { display:flex; align-items:center; gap:0; }
+.arr { font-size:18px; color:#90A4AE; line-height:1; padding:0 3px; flex-shrink:0; }
+.arr-d { font-size:18px; color:#90A4AE; text-align:center; line-height:1; }
+.arr-label { font-size:8px; color:#78909C; text-align:center; }
+
+/* ── layout rows ── */
+.row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.row-center { justify-content:center; }
+.col { display:flex; flex-direction:column; align-items:center; gap:6px; }
+
+/* ── boundary boxes ── */
+.vpc-box {
+  background:var(--vpc-bg); border:2.5px solid var(--vpc-bd);
+  border-radius:12px; padding:12px 14px; position:relative; margin:8px 0;
+}
+.pub-box {
+  background:var(--pub-bg); border:2px dashed var(--pub-bd);
+  border-radius:8px; padding:10px 12px; position:relative;
+}
+.pri-box {
+  background:var(--pri-bg); border:2px dashed var(--pri-bd);
+  border-radius:8px; padding:10px 12px; position:relative;
+}
+.mlo-box {
+  background:var(--mlo-bg); border:2px dashed var(--mlo-bd);
+  border-radius:8px; padding:10px 12px; position:relative;
+}
+.ext-box {
+  background:var(--ext-bg); border:2px dashed var(--ext-bd);
+  border-radius:8px; padding:10px 12px; position:relative;
+}
+.sec-box {
+  background:var(--sec-bg); border:2px solid var(--sec-bd);
+  border-radius:8px; padding:10px 12px; position:relative;
+}
+.box-label {
+  position:absolute; top:-11px; left:12px;
+  background:#fff; padding:0 6px; font-size:9px; font-weight:800;
+  border-radius:3px; white-space:nowrap;
+}
+.box-label-pub  { color:var(--pub-bd); border:1px solid var(--pub-bd); }
+.box-label-pri  { color:var(--pri-bd); border:1px solid var(--pri-bd); }
+.box-label-mlo  { color:var(--mlo-bd); border:1px solid var(--mlo-bd); }
+.box-label-vpc  { color:var(--vpc-bd); border:1px solid var(--vpc-bd); font-size:10px; }
+.box-label-ext  { color:var(--ext-bd); border:1px solid var(--ext-bd); }
+.box-label-sec  { color:var(--sec-bd); border:1px solid var(--sec-bd); }
+
+/* divider */
+.divider-v { width:1.5px; background:#CFD8DC; align-self:stretch; margin:0 6px; }
+.divider-h { height:1.5px; background:#CFD8DC; margin:6px 0; }
+
+/* note badge */
+.note {
+  font-size:8.5px; font-weight:700; padding:2px 7px; border-radius:10px;
+  display:inline-block; white-space:nowrap;
+}
+.note-green  { background:#C8E6C9; color:#2E7D32; }
+.note-blue   { background:#BBDEFB; color:#1565C0; }
+.note-orange { background:#FFE0B2; color:#E65100; }
+.note-red    { background:#FFCDD2; color:#C62828; }
+.note-purple { background:#E1BEE7; color:#6A1B9A; }
+.note-gray   { background:#ECEFF1; color:#37474F; }
+
+/* outside-vpc badge */
+.outside-badge {
+  font-size:8.5px; font-weight:800; background:#FFF3E0; color:#E65100;
+  border:1px solid #E65100; padding:2px 8px; border-radius:10px;
+  display:inline-block; margin-left:6px;
+}
+
+/* main 3-col grid inside VPC */
+.vpc-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.vpc-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* pipeline step */
+.pipe { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+
+/* specific service colours */
+.c-route53  { border-color:var(--c-route53); }  .ico-route53  { color:var(--c-route53); }
+.c-waf      { border-color:var(--c-waf);     }  .ico-waf      { color:var(--c-waf);     }
+.c-cf       { border-color:var(--c-cf);      }  .ico-cf       { color:var(--c-cf);      }
+.c-s3       { border-color:var(--c-s3);      }  .ico-s3       { color:var(--c-s3);      }
+.c-apigw    { border-color:var(--c-apigw);   }  .ico-apigw    { color:var(--c-apigw);   }
+.c-cognito  { border-color:var(--c-cognito); }  .ico-cognito  { color:var(--c-cognito); }
+.c-sf       { border-color:var(--c-sf);      }  .ico-sf       { color:var(--c-sf);      }
+.c-alb      { border-color:var(--c-alb);     }  .ico-alb      { color:var(--c-alb);     }
+.c-nat      { border-color:var(--c-nat);     }  .ico-nat      { color:var(--c-nat);     }
+.c-sm       { border-color:var(--c-sm);      }  .ico-sm       { color:var(--c-sm);      }
+.c-lambda   { border-color:var(--c-lambda);  }  .ico-lambda   { color:var(--c-lambda);  }
+.c-bedrock  { border-color:var(--c-bedrock); }  .ico-bedrock  { color:var(--c-bedrock); }
+.c-redis    { border-color:var(--c-redis);   }  .ico-redis    { color:var(--c-redis);   }
+.c-rds      { border-color:var(--c-rds);     }  .ico-rds      { color:var(--c-rds);     }
+.c-dynamo   { border-color:var(--c-dynamo);  }  .ico-dynamo   { color:var(--c-dynamo);  }
+.c-ecr      { border-color:var(--c-ecr);     }  .ico-ecr      { color:var(--c-ecr);     }
+.c-eb       { border-color:var(--c-eb);      }  .ico-eb       { color:var(--c-eb);      }
+.c-iam      { border-color:var(--c-iam);     }  .ico-iam      { color:var(--c-iam);     }
+.c-cw       { border-color:var(--c-cw);      }  .ico-cw       { color:var(--c-cw);      }
+.c-ds       { border-color:var(--c-ds);      }  .ico-ds       { color:var(--c-ds);      }
+.c-pubmed   { border-color:var(--c-pubmed);  }  .ico-pubmed   { color:var(--c-pubmed);  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ══ TITLE ══════════════════════════════════════════════════════ -->
+<h1>희귀질환 다모달 RAG 진단 보조 시스템 — AWS 최종 아키텍처</h1>
+<p class="sub">Fully optimized · Error-free · ap-northeast-2 (Seoul) · Tag: pre-{service}-2-2-team</p>
+
+<!-- ══ TOP BAR: Security & Monitoring ═══════════════════════════ -->
+<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+  <div class="sec-box" style="display:inline-flex;gap:10px;align-items:center;">
+    <span class="box-label box-label-sec">Security, Monitoring &amp; Governance</span>
+    <div class="svc c-iam" style="min-width:72px;">
+      <div class="ico ico-iam">🔐</div>
+      <div class="lbl">AWS IAM</div>
+      <div class="sub2">최소 권한<br>역할 정책</div>
+    </div>
+    <div class="svc c-cw" style="min-width:72px;">
+      <div class="ico ico-cw">📊</div>
+      <div class="lbl">CloudWatch</div>
+      <div class="sub2">메트릭·알람<br>로그·대시보드</div>
+    </div>
+    <div class="svc c-waf" style="min-width:72px;">
+      <div class="ico ico-waf">🛡️</div>
+      <div class="lbl">AWS WAF</div>
+      <div class="sub2">CloudFront &<br>API GW 보호</div>
+    </div>
+    <div class="svc c-cw" style="min-width:72px;">
+      <div class="ico ico-cw">🔍</div>
+      <div class="lbl">X-Ray</div>
+      <div class="sub2">분산 추적<br>Tracing</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- LAYER 1: CLIENT + EDGE                                       -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="row" style="margin-bottom:0;">
+
+  <!-- Client -->
+  <div class="col" style="min-width:90px;">
+    <div class="svc" style="border-color:#37474F; min-width:82px;">
+      <div class="ico">🖥️</div>
+      <div class="lbl">Client</div>
+      <div class="sub2">Doctor / Patient<br>Web Browser</div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="arr-label">HTTPS</div>
+    <div class="arr">→</div>
+  </div>
+
+  <!-- Route 53 -->
+  <div class="col">
+    <div class="svc c-route53">
+      <div class="ico ico-route53">🌐</div>
+      <div class="lbl">Route 53</div>
+      <div class="sub2">DNS 라우팅</div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="arr-label">DNS A-record</div>
+    <div class="arr">→</div>
+  </div>
+
+  <!-- WAF Global -->
+  <div class="col">
+    <div class="svc c-waf">
+      <div class="ico ico-waf">🛡️</div>
+      <div class="lbl">AWS WAF</div>
+      <div class="sub2">Global<br>(CloudFront 전)</div>
+      <span class="tag" style="background:#FFCDD2;color:#C62828;">Global</span>
+    </div>
+  </div>
+
+  <div class="arr">→</div>
+
+  <!-- CloudFront -->
+  <div class="col">
+    <div class="svc c-cf">
+      <div class="ico ico-cf">⚡</div>
+      <div class="lbl">CloudFront</div>
+      <div class="sub2">CDN · HTTPS<br>정적 캐싱</div>
+    </div>
+  </div>
+
+  <div class="arr">→</div>
+
+  <!-- S3 React -->
+  <div class="col">
+    <div class="svc c-s3">
+      <div class="ico ico-s3">🗂️</div>
+      <div class="lbl">Amazon S3</div>
+      <div class="sub2">React Static<br>App Hosting</div>
+      <span class="tag" style="background:#C8E6C9;color:#2E7D32;">SPA Frontend</span>
+    </div>
+  </div>
+
+  <div class="divider-v"></div>
+
+  <!-- S3 Medical Images -->
+  <div class="col">
+    <div class="svc c-s3">
+      <div class="ico ico-s3">🩻</div>
+      <div class="lbl">Amazon S3</div>
+      <div class="sub2">Medical Images<br>say2-2team-bucket</div>
+      <span class="tag" style="background:#C8E6C9;color:#2E7D32;">X-ray 저장</span>
+    </div>
+    <div class="note note-gray">PutObject (실시간)</div>
+  </div>
+
+  <div class="divider-v"></div>
+
+  <!-- DataSync -->
+  <div class="col">
+    <div class="svc c-ds">
+      <div class="ico ico-ds">🔄</div>
+      <div class="lbl">DataSync</div>
+      <div class="sub2">초기 배치 마이그레이션<br>ONLY</div>
+      <span class="tag" style="background:#C8E6C9;color:#2E7D32;">Batch Only</span>
+    </div>
+  </div>
+
+</div><!-- end layer1 row -->
+
+<!-- Arrow down to API layer -->
+<div style="text-align:center; margin:4px 0 2px 120px;">
+  <div class="arr-label">API 요청</div>
+  <div class="arr-d">↓</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- LAYER 2: API + AUTH + STEP FUNCTIONS (모두 VPC 외부)         -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="ext-box" style="margin-bottom:8px;">
+  <span class="box-label box-label-ext">AWS Regional Services — VPC 외부 (Outside VPC)</span>
+
+  <div class="row row-center" style="flex-wrap:wrap; gap:10px;">
+
+    <!-- WAF Regional -->
+    <div class="svc c-waf">
+      <div class="ico ico-waf">🛡️</div>
+      <div class="lbl">AWS WAF</div>
+      <div class="sub2">Regional<br>(API GW 전)</div>
+      <span class="tag" style="background:#FFCDD2;color:#C62828;">Regional</span>
+    </div>
+
+    <div class="arr">→</div>
+
+    <!-- API Gateway -->
+    <div class="svc c-apigw">
+      <div class="ico ico-apigw">🔌</div>
+      <div class="lbl">API Gateway</div>
+      <div class="sub2">REST · 5 endpoints<br>Rate limit · Logs</div>
+    </div>
+
+    <div class="arr">→</div>
+
+    <!-- Cognito -->
+    <div class="svc c-cognito">
+      <div class="ico ico-cognito">🔑</div>
+      <div class="lbl">Cognito</div>
+      <div class="sub2">Authorizer<br>JWT 검증 (MD role)</div>
+      <span class="tag" style="background:#FFCDD2;color:#C62828;">Auth</span>
+    </div>
+
+    <div class="col">
+      <div class="arr-label" style="font-size:9px;color:#E65100;font-weight:700;">Service Integration<br>(직접 통합)</div>
+      <div class="arr">→</div>
+    </div>
+
+    <!-- Step Functions — OUTSIDE VPC -->
+    <div class="svc c-sf" style="min-width:130px; background:#FFF8E1; border-width:2.5px;">
+      <div class="ico ico-sf">⚙️</div>
+      <div class="lbl">AWS Step Functions</div>
+      <div class="sub2">Orchestrator<br>Parallel State (Map)</div>
+      <span class="note note-orange" style="margin-top:4px; font-size:8px;">⚠ Regional Service · Outside VPC</span>
+    </div>
+
+    <div class="divider-v"></div>
+
+    <!-- Endpoints list -->
+    <div style="font-size:9px; color:#37474F; line-height:1.9;">
+      <strong style="color:#E7157B;">API Endpoints</strong><br>
+      POST /api/v1/diagnose<br>
+      POST /api/v1/xray/analyze<br>
+      POST /api/v1/rare/screen<br>
+      GET &nbsp;/api/v1/patient/{mrn}<br>
+      GET &nbsp;/api/v1/health
+    </div>
+
+  </div>
+</div>
+
+<!-- Arrow down into VPC -->
+<div style="text-align:center; margin:2px 0;">
+  <div class="arr-label">Step Functions → VPC 내 Lambda 호출 (Parallel State)</div>
+  <div class="arr-d">↓</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- VPC MAIN BODY                                                 -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="vpc-box">
+  <span class="box-label box-label-vpc">🔒 Amazon VPC — ap-northeast-2 (Virtual Private Cloud)</span>
+
+  <!-- PUBLIC SUBNETS -->
+  <div class="pub-box" style="margin-bottom:10px;">
+    <span class="box-label box-label-pub">Public Subnets (AZ1 &amp; AZ2)</span>
+    <div class="row" style="gap:16px; justify-content:center;">
+
+      <div class="col" style="align-items:center; gap:4px;">
+        <div class="note note-orange">Availability Zone 1</div>
+        <div class="svc c-nat">
+          <div class="ico ico-nat">🌍</div>
+          <div class="lbl">NAT Gateway</div>
+          <div class="sub2">AZ1 아웃바운드<br>외부 API 접근</div>
+        </div>
+      </div>
+
+      <div class="divider-v"></div>
+
+      <div class="col" style="align-items:center; gap:4px;">
+        <div class="note note-orange">Availability Zone 2</div>
+        <div class="svc c-nat">
+          <div class="ico ico-nat">🌍</div>
+          <div class="lbl">NAT Gateway</div>
+          <div class="sub2">AZ2 아웃바운드<br>HA 이중화</div>
+        </div>
+      </div>
+
+      <div class="divider-v"></div>
+
+      <div class="col" style="font-size:9px; color:#546E7A; max-width:220px; line-height:1.6;">
+        <strong style="color:#E65100;">NAT Gateway 역할</strong><br>
+        • Private Subnet → PubMed API (NCBI)<br>
+        • Private Subnet → 기타 외부 인터넷<br>
+        • Bedrock·S3·DynamoDB는 <strong>VPC Endpoint</strong> 사용<br>
+        &nbsp;&nbsp;(NAT 불필요 — 비용 절감 + 보안)
+      </div>
+
+    </div>
+  </div><!-- end public -->
+
+  <!-- PRIVATE SUBNETS — 3 columns -->
+  <div class="vpc-grid" style="margin-bottom:10px;">
+
+    <!-- ── COLUMN 1: Input Agents ── -->
+    <div class="pri-box">
+      <span class="box-label box-label-pri">Private Subnet — Input Agents (Phase 1)</span>
+
+      <!-- Vision Agent -->
+      <div style="background:#fff; border:1.5px solid var(--c-sm); border-radius:8px; padding:8px; margin-bottom:8px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-sm); margin-bottom:6px;">
+          🧠 Phase 1A — Vision Agent
+        </div>
+        <div class="svc c-sm" style="width:100%; flex-direction:row; gap:8px; padding:7px 10px;">
+          <div style="font-size:22px;">🩻</div>
+          <div style="text-align:left;">
+            <div class="lbl" style="font-size:10px;">SageMaker Endpoint</div>
+            <div class="sub2">SooNet (DenseNet-121)<br>ml.g4dn.xlarge · GPU T4<br>입력: 448×448 1ch Gray<br>출력: 14-class sigmoid + Grad-CAM<br>전처리: U-Net 폐 세그멘테이션</div>
+            <span class="note note-green" style="margin-top:3px;">GPU Inference ✅</span>
+          </div>
+        </div>
+        <div style="font-size:8.5px;color:#546E7A;margin-top:4px;">
+          S3(X-ray) → SageMaker Endpoint → 14 HPO 코드 + 확률값
+        </div>
+      </div>
+
+      <!-- NLP Agent -->
+      <div style="background:#fff; border:1.5px solid var(--c-lambda); border-radius:8px; padding:8px; margin-bottom:8px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-lambda); margin-bottom:6px;">
+          📝 Phase 1B — NLP Agent
+        </div>
+        <div class="row" style="gap:6px; align-items:center;">
+          <div class="svc c-lambda" style="min-width:75px;">
+            <div class="ico ico-lambda">λ</div>
+            <div class="lbl">Lambda</div>
+            <div class="sub2">NLP Agent<br>Timeout:300s</div>
+          </div>
+          <div class="arr">→</div>
+          <div class="col" style="gap:2px;">
+            <div class="note note-blue" style="font-size:8px;">VPC Endpoint<br>(PrivateLink)</div>
+            <div class="arr-d" style="font-size:12px;">↓</div>
+            <div class="svc c-bedrock" style="min-width:75px;">
+              <div class="ico ico-bedrock">✨</div>
+              <div class="lbl">Bedrock</div>
+              <div class="sub2">Claude 3 Haiku<br>HPO 추출</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:8.5px;color:#546E7A;margin-top:4px;">
+          임상문(한/영) → HPO positive/negative 분리
+        </div>
+      </div>
+
+      <!-- Lab Agent -->
+      <div style="background:#fff; border:1.5px solid var(--c-lambda); border-radius:8px; padding:8px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-lambda); margin-bottom:6px;">
+          🩸 Phase 1C — Lab Agent
+        </div>
+        <div class="svc c-lambda" style="width:100%;">
+          <div class="ico ico-lambda">λ</div>
+          <div class="lbl">Lambda (Lab Rules)</div>
+          <div class="sub2">CBC·PFT·Markers 14종<br>Rule-based HPO mapping<br>WBC·HGB·PLT·SpO2·DLCO 등</div>
+        </div>
+        <div style="font-size:8.5px;color:#546E7A;margin-top:4px;">
+          혈액검사 수치 → 임계값 기반 HPO 코드 매핑
+        </div>
+      </div>
+
+    </div><!-- end col1 -->
+
+    <!-- ── COLUMN 2: Sync + RAG Logic ── -->
+    <div class="pri-box">
+      <span class="box-label box-label-pri">Private Subnet — Sync &amp; RAG (Phase 2·3·4)</span>
+
+      <!-- ElastiCache -->
+      <div style="background:#fff; border:1.5px solid var(--c-redis); border-radius:8px; padding:8px; margin-bottom:8px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-redis); margin-bottom:5px;">
+          ⚡ Phase 2 — HPO 집계 버퍼
+        </div>
+        <div class="svc c-redis" style="width:100%;">
+          <div class="ico ico-redis">🗄️</div>
+          <div class="lbl">ElastiCache (Redis)</div>
+          <div class="sub2">HPO Cache &amp; Buffer<br>Step Functions가 동기화 담당<br>Redis = 캐싱/버퍼 목적만</div>
+          <span class="note note-red" style="font-size:8px;margin-top:3px;">❌ 동기화 주체 아님 (Step Functions 담당)</span>
+        </div>
+        <div style="font-size:8.5px;color:#546E7A;margin-top:4px;">
+          3개 에이전트 완료 후 Step Functions → Redis 집계 기록
+        </div>
+      </div>
+
+      <!-- Phase 2: LIRICAL -->
+      <div style="background:#fff; border:1.5px solid #7B1FA2; border-radius:8px; padding:8px; margin-bottom:8px;">
+        <div style="font-size:9px;font-weight:800;color:#7B1FA2; margin-bottom:5px;">
+          🔬 Phase 2 — LIRICAL Scoring
+        </div>
+        <div class="svc" style="border-color:#7B1FA2; width:100%;">
+          <div class="ico" style="color:#7B1FA2;">🧬</div>
+          <div class="lbl">Lambda: LIRICAL Scorer</div>
+          <div class="sub2">Orphanet 528 희귀질환<br>LR = ∏(sensitivity/bg_freq)<br>빈도 가중: 1.0→0.9→0.5→0.1→0.3<br>출력: Top 10 + ORPHA코드 + LR점수</div>
+        </div>
+      </div>
+
+      <!-- Phase 3: RAG Trigger -->
+      <div style="background:#fff; border:1.5px solid #1565C0; border-radius:8px; padding:8px; margin-bottom:8px;">
+        <div style="font-size:9px;font-weight:800;color:#1565C0; margin-bottom:5px;">
+          🎯 Phase 3 — RAG 트리거 판단
+        </div>
+        <div style="font-size:9px; color:#37474F; line-height:1.7;">
+          <strong>RAG 실행 조건 (OR)</strong><br>
+          ① Top 질환 = 희귀 (Orphanet flag)<br>
+          ② Score ratio (1위/2위) &lt; 3.0<br>
+          <span class="note note-green" style="margin-top:4px;display:block;">→ True: Phase 4 RAG 실행</span>
+          <span class="note note-gray" style="margin-top:2px;display:block;">→ False: 기본 리포트 반환</span>
+        </div>
+      </div>
+
+      <!-- Phase 4: RAG Logic -->
+      <div style="background:#fff; border:1.5px solid var(--c-lambda); border-radius:8px; padding:8px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-lambda); margin-bottom:5px;">
+          📋 Phase 4 — RAG &amp; Report Agent
+        </div>
+        <div class="svc c-lambda" style="width:100%;">
+          <div class="ico ico-lambda">λ</div>
+          <div class="lbl">Lambda (RAG Logic)</div>
+          <div class="sub2">지식 수집 + Bedrock Sonnet<br>진단 리포트 생성<br>Timeout: 600s · 2048MB</div>
+        </div>
+        <div style="font-size:8.5px;color:#546E7A;margin-top:4px;">
+          → RDS pgvector (Orphanet 의미 검색)<br>
+          → PubMed API (NAT GW 경유)<br>
+          → Bedrock Sonnet (VPC Endpoint)
+        </div>
+      </div>
+
+    </div><!-- end col2 -->
+
+    <!-- ── COLUMN 3: Knowledge + Output ── -->
+    <div class="pri-box">
+      <span class="box-label box-label-pri">Private Subnet — 지식베이스 &amp; 출력 (Phase 4·5)</span>
+
+      <!-- RDS pgvector -->
+      <div style="background:#fff; border:1.5px solid var(--c-rds); border-radius:8px; padding:8px; margin-bottom:8px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-rds); margin-bottom:5px;">
+          🗃️ 벡터 지식베이스
+        </div>
+        <div class="svc c-rds" style="width:100%;">
+          <div class="ico ico-rds">🛢️</div>
+          <div class="lbl">RDS PostgreSQL</div>
+          <div class="sub2">pgvector 확장<br>Orphanet ORDO 임베딩<br>528 희귀질환 의미 검색<br>OpenSearch 대비 비용 1/10</div>
+          <span class="note note-blue" style="font-size:8px;margin-top:3px;">Replace OpenSearch ✅</span>
+        </div>
+      </div>
+
+      <!-- External knowledge -->
+      <div style="background:#fff; border:1.5px solid #546E7A; border-radius:8px; padding:8px; margin-bottom:8px;">
+        <div style="font-size:9px;font-weight:800;color:#546E7A; margin-bottom:5px;">
+          🌐 외부 지식 API (NAT GW 경유)
+        </div>
+        <div style="font-size:9px; color:#37474F; line-height:1.8;">
+          <strong>PubCaseFinder</strong> (DBCLS Japan)<br>
+          &nbsp;HPO → 유사 증례 + 관련 유전자<br>
+          &nbsp;Timeout: 15s · fallback on 502<br>
+          <strong>PubMed E-utilities</strong> (NCBI)<br>
+          &nbsp;질환명 → 최신 논문 PMID + abstract<br>
+          &nbsp;Rate: 3 req/s
+        </div>
+      </div>
+
+      <!-- Bedrock Sonnet -->
+      <div style="background:#fff; border:1.5px solid var(--c-bedrock); border-radius:8px; padding:8px; margin-bottom:8px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-bedrock); margin-bottom:5px;">
+          ✨ 리포트 생성 (VPC Endpoint)
+        </div>
+        <div class="svc c-bedrock" style="width:100%;">
+          <div class="ico ico-bedrock">🤖</div>
+          <div class="lbl">Bedrock Claude 3.5 Sonnet</div>
+          <div class="sub2">RAG Context-only 리포트<br>Max: 2000 tokens · Temp: 0.2<br>Top10 질환+치료+유전자 가이드</div>
+          <span class="note note-blue" style="font-size:8px;margin-top:3px;">VPC PrivateLink ✅</span>
+        </div>
+      </div>
+
+      <!-- DynamoDB -->
+      <div style="background:#fff; border:1.5px solid var(--c-dynamo); border-radius:8px; padding:8px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-dynamo); margin-bottom:5px;">
+          💾 진단 이력 저장 (Phase 5)
+        </div>
+        <div class="svc c-dynamo" style="width:100%;">
+          <div class="ico ico-dynamo">⚡</div>
+          <div class="lbl">Amazon DynamoDB</div>
+          <div class="sub2">diagnosis-history<br>PK: MRN · SK: timestamp<br>rare-case-collection<br>(재학습 트리거용)</div>
+          <span class="note note-blue" style="font-size:8px;margin-top:3px;">Gateway Endpoint ✅</span>
+        </div>
+      </div>
+
+    </div><!-- end col3 -->
+
+  </div><!-- end vpc-grid -->
+
+  <!-- MLOPS SUBNET -->
+  <div class="mlo-box">
+    <span class="box-label box-label-mlo">MLOps Subnet — 자동 재학습 파이프라인</span>
+    <div class="pipe" style="justify-content:center; align-items:stretch; gap:6px;">
+
+      <!-- EventBridge Trigger -->
+      <div style="background:#fff; border:1.5px solid var(--c-eb); border-radius:8px; padding:8px; min-width:130px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-eb); margin-bottom:4px;">① 트리거</div>
+        <div class="svc c-eb" style="width:100%;">
+          <div class="ico ico-eb">📅</div>
+          <div class="lbl">EventBridge</div>
+          <div class="sub2">DynamoDB Streams<br>케이스 100건 임계치<br>→ 학습 파이프라인 시작</div>
+        </div>
+      </div>
+
+      <div class="col" style="justify-content:center;">
+        <div class="arr-label">시작</div>
+        <div class="arr">→</div>
+      </div>
+
+      <!-- ECR -->
+      <div style="background:#fff; border:1.5px solid var(--c-ecr); border-radius:8px; padding:8px; min-width:120px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-ecr); margin-bottom:4px;">② 컨테이너</div>
+        <div class="svc c-ecr" style="width:100%;">
+          <div class="ico ico-ecr">📦</div>
+          <div class="lbl">Amazon ECR</div>
+          <div class="sub2">SooNet 학습<br>Docker Image<br>(코드+의존성)</div>
+          <span class="note note-orange" style="font-size:8px;margin-top:2px;">Container Image</span>
+        </div>
+      </div>
+
+      <div class="col" style="justify-content:center;">
+        <div class="arr-label">이미지 제공</div>
+        <div class="arr">→</div>
+      </div>
+
+      <!-- SageMaker Training -->
+      <div style="background:#fff; border:1.5px solid var(--c-sm); border-radius:8px; padding:8px; min-width:145px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-sm); margin-bottom:4px;">③ 학습</div>
+        <div class="svc c-sm" style="width:100%;">
+          <div class="ico ico-sm">🚀</div>
+          <div class="lbl">SageMaker Training</div>
+          <div class="sub2">ml.g4dn.16xlarge GPU<br>DenseNet-121<br>Batch:16·LR:1e-4·Adam<br>CheXpert + MIMIC-CXR</div>
+        </div>
+      </div>
+
+      <div class="col" style="justify-content:center;">
+        <div class="arr-label">가중치 저장</div>
+        <div class="arr">→</div>
+      </div>
+
+      <!-- S3 Model Weights -->
+      <div style="background:#fff; border:1.5px solid var(--c-s3); border-radius:8px; padding:8px; min-width:130px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-s3); margin-bottom:4px;">④ 산출물</div>
+        <div class="svc c-s3" style="width:100%;">
+          <div class="ico ico-s3">🗂️</div>
+          <div class="lbl">Amazon S3</div>
+          <div class="sub2">모델 가중치 (.pth)<br>models/mimic-only/<br>chexnet_unet_crop_best.pth</div>
+          <span class="note note-green" style="font-size:8px;margin-top:2px;">Model Weights</span>
+        </div>
+      </div>
+
+      <div class="col" style="justify-content:center;">
+        <div class="arr-label">버저닝</div>
+        <div class="arr">→</div>
+      </div>
+
+      <!-- Model Versioning -->
+      <div style="background:#fff; border:1.5px solid #7B1FA2; border-radius:8px; padding:8px; min-width:110px;">
+        <div style="font-size:9px;font-weight:800;color:#7B1FA2; margin-bottom:4px;">⑤ 검증</div>
+        <div class="svc" style="border-color:#7B1FA2; width:100%;">
+          <div class="ico" style="color:#7B1FA2;">📋</div>
+          <div class="lbl">Model Versioning</div>
+          <div class="sub2">AUROC ≥ 0.80<br>F1 품질 게이트<br>통과 시 배포 진행</div>
+        </div>
+      </div>
+
+      <div class="col" style="justify-content:center;">
+        <div class="arr-label">배포</div>
+        <div class="arr">→</div>
+      </div>
+
+      <!-- Deployment Pipeline -->
+      <div style="background:#fff; border:1.5px solid var(--c-sm); border-radius:8px; padding:8px; min-width:145px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-sm); margin-bottom:4px;">⑥ 무중단 배포</div>
+        <div class="svc c-sm" style="width:100%;">
+          <div class="ico ico-sm">🔄</div>
+          <div class="lbl">SageMaker Endpoint</div>
+          <div class="sub2">Blue/Green Deploy<br>Canary → Full<br>ml.g4dn.xlarge 업데이트<br>다운타임 0</div>
+          <span class="note note-green" style="font-size:8px;margin-top:2px;">Zero-downtime ✅</span>
+        </div>
+      </div>
+
+    </div><!-- end pipe -->
+  </div><!-- end mlops -->
+
+</div><!-- end VPC -->
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- BOTTOM: VPC ENDPOINTS 설명                                    -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div style="margin-top:10px; background:#E8EAF6; border:1.5px solid #3949AB; border-radius:8px; padding:10px 14px;">
+  <div style="font-size:10px; font-weight:800; color:#1A237E; margin-bottom:6px;">
+    🔗 VPC Endpoint 연결 (인터넷 우회 — 보안·비용 최적화)
+  </div>
+  <div style="display:flex; gap:20px; flex-wrap:wrap; font-size:9px; color:#37474F; line-height:1.8;">
+    <div>
+      <strong style="color:#1A237E;">PrivateLink (Interface Endpoint)</strong><br>
+      • NLP Lambda → Amazon Bedrock (Haiku)<br>
+      • RAG Lambda → Amazon Bedrock (Sonnet)<br>
+      • Lambda → SageMaker Endpoint API
+    </div>
+    <div>
+      <strong style="color:#1A237E;">Gateway Endpoint (무료)</strong><br>
+      • Lambda → Amazon S3<br>
+      • Lambda → Amazon DynamoDB
+    </div>
+    <div>
+      <strong style="color:#E65100;">NAT Gateway 경유 (인터넷 필요)</strong><br>
+      • RAG Lambda → PubMed E-utilities (NCBI)<br>
+      • RAG Lambda → PubCaseFinder API (DBCLS)
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- FULL DATA FLOW SUMMARY                                        -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div style="margin-top:12px; background:#FAFAFA; border:1.5px solid #90A4AE; border-radius:8px; padding:12px 14px;">
+  <div style="font-size:10px; font-weight:800; color:#37474F; margin-bottom:8px;">
+    📋 완전한 요청 데이터 흐름 (5단계 파이프라인)
+  </div>
+  <div class="pipe" style="justify-content:center; flex-wrap:wrap; gap:6px; font-size:9.5px;">
+    <div style="background:#E3F2FD; border:1px solid #1565C0; border-radius:6px; padding:6px 10px; text-align:center;">
+      <strong style="color:#1565C0;">Phase 1A</strong><br>X-ray → S3<br>→ SageMaker GPU<br>→ 14 HPO
+    </div>
+    <div style="color:#90A4AE; font-size:16px; align-self:center;">+</div>
+    <div style="background:#E8F5E9; border:1px solid #2E7D32; border-radius:6px; padding:6px 10px; text-align:center;">
+      <strong style="color:#2E7D32;">Phase 1B</strong><br>임상문 → Lambda<br>→ Bedrock Haiku<br>→ HPO 추출
+    </div>
+    <div style="color:#90A4AE; font-size:16px; align-self:center;">+</div>
+    <div style="background:#FFF3E0; border:1px solid #E65100; border-radius:6px; padding:6px 10px; text-align:center;">
+      <strong style="color:#E65100;">Phase 1C</strong><br>혈액검사 → Lambda<br>→ Lab Rules<br>→ HPO 매핑
+    </div>
+    <div style="color:#90A4AE; font-size:16px; align-self:center;">→</div>
+    <div style="background:#EDE7F6; border:1px solid #6A1B9A; border-radius:6px; padding:6px 10px; text-align:center;">
+      <strong style="color:#6A1B9A;">Phase 2</strong><br>HPO 집계<br>→ LIRICAL LR<br>→ Top 10 질환
+    </div>
+    <div style="color:#90A4AE; font-size:16px; align-self:center;">→</div>
+    <div style="background:#FCE4EC; border:1px solid #C62828; border-radius:6px; padding:6px 10px; text-align:center;">
+      <strong style="color:#C62828;">Phase 3</strong><br>RAG 트리거<br>희귀? ratio&lt;3?<br>조건 판단
+    </div>
+    <div style="color:#90A4AE; font-size:16px; align-self:center;">→</div>
+    <div style="background:#E0F2F1; border:1px solid #004D40; border-radius:6px; padding:6px 10px; text-align:center;">
+      <strong style="color:#004D40;">Phase 4</strong><br>PubCase+PubMed<br>→ Bedrock Sonnet<br>→ 진단 리포트
+    </div>
+    <div style="color:#90A4AE; font-size:16px; align-self:center;">→</div>
+    <div style="background:#F1F8E9; border:1px solid #33691E; border-radius:6px; padding:6px 10px; text-align:center;">
+      <strong style="color:#33691E;">Phase 5</strong><br>DynamoDB 저장<br>→ API 응답<br>→ React UI
+    </div>
+  </div>
+</div>
+
+<!-- TAG REMINDER -->
+<div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;
+            background:#FFF8E1; border:1.5px solid #F57F17; border-radius:8px; padding:8px 14px;">
+  <div style="font-size:10px; font-weight:800; color:#E65100;">
+    ⚠️ AWS 리소스 태그 — 모든 리소스 필수 (크레딧 판별 기준)
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <span style="font-size:9px; background:#FFF3E0; border:1px solid #E65100; padding:2px 8px; border-radius:4px; color:#E65100; font-weight:700;">pre-sagemaker-2-2-team</span>
+    <span style="font-size:9px; background:#FFF3E0; border:1px solid #E65100; padding:2px 8px; border-radius:4px; color:#E65100; font-weight:700;">pre-lambda-2-2-team</span>
+    <span style="font-size:9px; background:#FFF3E0; border:1px solid #E65100; padding:2px 8px; border-radius:4px; color:#E65100; font-weight:700;">pre-s3-2-2-team</span>
+    <span style="font-size:9px; background:#FFF3E0; border:1px solid #E65100; padding:2px 8px; border-radius:4px; color:#E65100; font-weight:707;">pre-dynamodb-2-2-team</span>
+    <span style="font-size:9px; background:#FFF3E0; border:1px solid #E65100; padding:2px 8px; border-radius:4px; color:#E65100; font-weight:700;">pre-bedrock-2-2-team</span>
+    <span style="font-size:9px; background:#FFF3E0; border:1px solid #E65100; padding:2px 8px; border-radius:4px; color:#E65100; font-weight:700;">pre-apigateway-2-2-team</span>
+  </div>
+</div>
+
+<p style="text-align:center; font-size:9px; color:#90A4AE; margin-top:10px;">
+  Rare-Link AI · AWS ap-northeast-2 (Seoul) · 최종 오류 수정 완료 버전 · 2026-04-29
+</p>
+
+</div><!-- end .page -->
+</body>
+</html>

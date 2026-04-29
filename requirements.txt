@@ -1,0 +1,26 @@
+# Rare-Link AI — 의존성 패키지
+# 설치: pip install -r requirements.txt
+
+# ── 핵심 (반드시 설치) ────────────────────────────────────────────
+boto3>=1.34.0              # AWS SDK (Bedrock, SageMaker)
+pandas>=2.0.0              # 데이터 처리
+requests>=2.31.0           # PubCaseFinder / PubMed API 호출
+
+# ── 비전 모델 ────────────────────────────────────────────────────
+torch>=2.0.0               # PyTorch (SooNet, U-Net)
+torchvision>=0.15.0        # DenseNet-121 백본
+Pillow>=10.0.0             # 이미지 로드·전처리
+matplotlib>=3.7.0          # Grad-CAM 시각화
+
+# ── RAG / 벡터 DB (선택, PubMed 캐싱 활성화 시) ──────────────────
+chromadb>=0.4.0            # 벡터 DB (ChromaDB)
+sentence-transformers>=2.7.0  # all-MiniLM-L6-v2 임베딩
+
+# ── API 서버 (프론트엔드 연결 시) ────────────────────────────────
+fastapi>=0.111.0           # HTTP API 서버
+uvicorn[standard]>=0.29.0  # ASGI 서버
+python-multipart>=0.0.9    # 파일 업로드 (X-ray 이미지)
+
+# ── 검증 (RAGAS 평가 시) ─────────────────────────────────────────
+ragas>=0.1.0               # RAG 자동 평가
+datasets>=2.19.0           # RAGAS 의존성
