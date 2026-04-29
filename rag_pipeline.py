@@ -24,6 +24,7 @@ from rag.pubcasefinder import get_ranked_diseases, format_pcf_for_llm
 # ── PubMed 논문 검색 ──────────────────────────────────────────────
 from rag.pubmed_fetcher import PubMedFetcher
 from rag.clinicaltrials_fetcher import get_clinical_trials, format_trials_for_llm
+from rag.monarch_fetcher import format_hpo_for_prompt
 _PUBMED_AVAILABLE = True
 
 # ── 상수 ──────────────────────────────────────────────────────────
@@ -349,14 +350,10 @@ A3. 혈액·폐기능 검사 수치 (정상 범위 벗어난 항목에 주목):
 {lab_raw_text}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[B. HPO 변환 결과]
+[B. HPO 변환 결과 (코드 + 증상명)]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-B1. Positive HPO (환자에게 있는 증상 — 진단 지지 근거):
-{', '.join(positive_hpo) or '없음'}
-
-B2. Negative HPO (환자에게 없는 증상 — 감별진단 핵심):
-{', '.join(negative_hpo) or '없음'}
+{format_hpo_for_prompt(positive_hpo, negative_hpo)}
 ※ Negative HPO에 해당하는 증상이 필수인 질환은 confidence를 반드시 하향하세요.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
