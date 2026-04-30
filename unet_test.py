@@ -24,7 +24,7 @@ class UNetEvaluator:
         checkpoint = torch.load(model_path, map_location=device, weights_only=False)
         if 'model_state_dict' in checkpoint:
             self.model.load_state_dict(checkpoint['model_state_dict'])
-            print(f"✅ Best 가중치 로드 완료 (Epoch: {checkpoint['epoch']}, Dice: {checkpoint['dice_score']:.4f})")
+            print(f"✅ Best 가중치 로드 완료 (Epoch: {checkpoint['epoch']}, Dice: {checkpoint['best_dice']:.4f})")
         else:
             self.model.load_state_dict(checkpoint)
             print("✅ 가중치 로드 완료")
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     
     # 🎯 설정
-    BEST_MODEL_PATH = "aws_say2_project/unet_lung_heart_best.pth"
+    BEST_MODEL_PATH = "aws_say2_project/unet_chexmask_best.pth"
     # 기태님이 말씀하신 CheXpert 이미지 경로
     TEST_IMAGE_PATH = "data/files/p13/p13001519/s51844642/6512b578-3174975a-e596785d-97bd0065-6e6bbb6c.jpg"
     

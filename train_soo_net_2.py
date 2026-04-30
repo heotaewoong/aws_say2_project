@@ -114,7 +114,7 @@ class ChexpertDataset(Dataset):
 # 🚀 1. 전처리 클래스 (U-Net을 위해 3채널 RGB 텐서 반환)
 # =====================================================================
 class ChestXrayPreprocess:
-    def __init__(self, target_size=(448, 448), clip_limit=2.0):
+    def __init__(self, target_size=(512, 512), clip_limit=2.0):
         self.target_size = target_size
         self.clip_limit = clip_limit
 
@@ -127,7 +127,7 @@ class ChestXrayPreprocess:
         return img_padded
 
 class Base_Transform:
-    def __init__(self, target_size=(448, 448), is_train=False):
+    def __init__(self, target_size=(512, 512), is_train=False):
         self.target_size = target_size
         self.is_train = is_train
         self.clahe_preprocess = ChestXrayPreprocess(target_size=target_size, clip_limit=2.0)
