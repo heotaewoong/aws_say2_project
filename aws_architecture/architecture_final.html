@@ -403,6 +403,8 @@ h1 { font-size:19px; font-weight:800; text-align:center; color:#1a1a2e; margin-b
       <div class="col" style="font-size:9px; color:#546E7A; max-width:220px; line-height:1.6;">
         <strong style="color:#E65100;">NAT Gateway 역할</strong><br>
         • Private Subnet → PubMed API (NCBI)<br>
+        • Private Subnet → ClinicalTrials.gov (NIH)<br>
+        • Private Subnet → Monarch Initiative (EMBL-EBI)<br>
         • Private Subnet → 기타 외부 인터넷<br>
         • Bedrock·S3·DynamoDB는 <strong>VPC Endpoint</strong> 사용<br>
         &nbsp;&nbsp;(NAT 불필요 — 비용 절감 + 보안)
@@ -573,7 +575,13 @@ h1 { font-size:19px; font-weight:800; text-align:center; color:#1a1a2e; margin-b
           &nbsp;Timeout: 15s · fallback on 502<br>
           <strong>PubMed E-utilities</strong> (NCBI)<br>
           &nbsp;질환명 → 최신 논문 PMID + abstract<br>
-          &nbsp;Rate: 3 req/s
+          &nbsp;Rate: 3 req/s<br>
+          <strong>ClinicalTrials.gov v2</strong> (NIH)<br>
+          &nbsp;질환명 → 모집 중 임상시험 3건<br>
+          &nbsp;NCT ID · Phase · 기관 · 요약문<br>
+          <strong>Monarch Initiative</strong> (EMBL-EBI)<br>
+          &nbsp;HPO 코드 → 증상명 변환<br>
+          &nbsp;로컬 폴백 사전 30개 내장
         </div>
       </div>
 
@@ -585,7 +593,7 @@ h1 { font-size:19px; font-weight:800; text-align:center; color:#1a1a2e; margin-b
         <div class="svc c-bedrock" style="width:100%;">
           <div class="ico ico-bedrock">🤖</div>
           <div class="lbl">Bedrock Claude 3.5 Sonnet</div>
-          <div class="sub2">RAG Context-only 리포트<br>Max: 2000 tokens · Temp: 0.2<br>Top10 질환+치료+유전자 가이드</div>
+          <div class="sub2">RAG Context-only 리포트<br>Max: 4000 tokens · Temp: 0.2<br>System/User 프롬프트 분리<br>Top10 질환+치료+유전자 가이드</div>
           <span class="note note-blue" style="font-size:8px;margin-top:3px;">VPC PrivateLink ✅</span>
         </div>
       </div>
@@ -727,7 +735,9 @@ h1 { font-size:19px; font-weight:800; text-align:center; color:#1a1a2e; margin-b
     <div>
       <strong style="color:#E65100;">NAT Gateway 경유 (인터넷 필요)</strong><br>
       • RAG Lambda → PubMed E-utilities (NCBI)<br>
-      • RAG Lambda → PubCaseFinder API (DBCLS)
+      • RAG Lambda → PubCaseFinder API (DBCLS)<br>
+      • RAG Lambda → ClinicalTrials.gov v2 (NIH)<br>
+      • RAG Lambda → Monarch Initiative (EMBL-EBI)
     </div>
   </div>
 </div>
@@ -761,7 +771,7 @@ h1 { font-size:19px; font-weight:800; text-align:center; color:#1a1a2e; margin-b
     </div>
     <div style="color:#90A4AE; font-size:16px; align-self:center;">→</div>
     <div style="background:#E0F2F1; border:1px solid #004D40; border-radius:6px; padding:6px 10px; text-align:center;">
-      <strong style="color:#004D40;">Phase 4</strong><br>PubCase+PubMed<br>→ Bedrock Sonnet<br>→ 진단 리포트
+      <strong style="color:#004D40;">Phase 4</strong><br>PubCase+PubMed<br>+ClinicalTrials+Monarch<br>→ Bedrock Sonnet<br>→ 진단 리포트
     </div>
     <div style="color:#90A4AE; font-size:16px; align-self:center;">→</div>
     <div style="background:#F1F8E9; border:1px solid #33691E; border-radius:6px; padding:6px 10px; text-align:center;">

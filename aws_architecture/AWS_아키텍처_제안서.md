@@ -108,7 +108,6 @@ GET  /api/v1/health            — 헬스체크
 | **DynamoDB** | 환자 진단 이력, 메타데이터 | 온디맨드 과금 |
 | **DynamoDB** | 희귀질환 케이스 축적 DB | 새 케이스 수집용 |
 | **로컬 파일** (Orphanet XML) | 희귀질환-HPO 매핑 DB | `en_product4.xml` 사전 다운로드 필요 → `rag/knowledge_base.py` 실행으로 CSV 생성 |
-| **로컬 ChromaDB** | PubMed 논문 벡터 캐시 | `rag/data/chroma_db/` — chromadb 패키지 필요 |
 
 DynamoDB 테이블 설계:
 ```
@@ -128,9 +127,9 @@ DynamoDB 테이블 설계:
 | 서비스/API | 용도 | 호출 방식 | 키 필요 |
 |------------|------|-----------|---------|
 | **PubCaseFinder API** | 희귀질환 유사 케이스 검색 (LIRICAL 교차검증) | Lambda → HTTPS | 불필요 (비영리 공개 API, 간헐적 다운 주의) |
-| **PubMed E-utilities** | 최신 논문 검색 + ChromaDB 캐싱 | Lambda → HTTPS | 불필요 (선택: NCBI API Key로 10 req/s 향상) |
-| **Monarch Initiative** | HPO 코드 검증 및 질환-유전자 연결 | Lambda → HTTPS | 불필요 |
-| **ClinicalTrials.gov v2** | 희귀질환 임상시험 정보 | Lambda → HTTPS | 불필요 |
+| **PubMed E-utilities** | 최신 논문 검색 | Lambda → HTTPS | 불필요 (선택: NCBI API Key로 10 req/s 향상) |
+| **Monarch Initiative** | HPO 코드 → 증상명 변환 (가독성 향상) | Lambda → HTTPS | 불필요 — **구현 완료** (`rag/monarch_fetcher.py`) |
+| **ClinicalTrials.gov v2** | 희귀질환 임상시험 정보 | Lambda → HTTPS | 불필요 — **구현 완료** (`rag/clinicaltrials_fetcher.py`) |
 | **Bedrock Knowledge Base** | RAG 벡터 검색 (선택) | Bedrock API | AWS 자격증명 |
 
 ---
@@ -347,7 +346,7 @@ FHIR 클라이언트 라이브러리: [SMART Health IT](https://github.com/smart
 │   └────────────────────────────────────────────────────────────┘                  │
 │                                                                                   │
 │   ┌───────────────────── 외부 API 연동 ──────────────────────┐                    │
-│   │  PubCaseFinder │ PubMed │ ClinicalTrials.gov (향후)      │                    │
+│   │  PubCaseFinder │ PubMed │ ClinicalTrials.gov │ Monarch Initiative │
 │   └──────────────────────────────────────────────────────────┘                    │
 │                                                                                   │
 │   ┌───────────────────── EMR 브릿징 ─────────────────────────┐                    │
@@ -392,7 +391,134 @@ FHIR 클라이언트 라이브러리: [SMART Health IT](https://github.com/smart
 
 ---
 
-## 12. 태그 규칙 (필수)
+## 12. AWS 아키텍처 초보자용 설명
+
+### AWS가 뭔가요?
+
+AWS(Amazon Web Services)는 아마존이 운영하는 클라우드 서비스예요.
+쉽게 말하면 **"인터넷으로 빌려 쓰는 컴퓨터 + 저장소 + 소프트웨어"** 묶음이에요.
+
+우리가 직접 서버를 사서 병원에 설치하는 대신, AWS에서 필요한 만큼만 빌려서 쓰는 거예요.
+쓴 만큼만 돈 내고, 안 쓸 때는 꺼두면 돼요.
+
+---
+
+### 우리 시스템에서 각 AWS 서비스가 하는 일
+
+#### 1단계: 의사가 브라우저에서 접속하면
+
+```
+의사가 주소 입력
+    ↓
+Route 53 — 전화번호부. "이 주소가 어디 있는지" 알려줌
+    ↓
+CloudFront — 전 세계 어디서 접속해도 빠르게 보여주는 CDN
+    ↓
+S3 (정적 호스팅) — React로 만든 웹 화면 파일이 저장된 곳
+    ↓
+의사 화면에 웹앱 표시
+```
+
+#### 2단계: 의사가 환자 데이터를 입력하면
+
+```
+API Gateway — 우리 시스템의 정문. 외부 요청을 받아서 안으로 전달
+    ↓
+WAF — 해킹 시도 차단 (방화벽)
+Cognito — 로그인 확인 (인증)
+    ↓
+Lambda (오케스트레이터) — 각 단계를 순서대로 실행하는 지휘자
+```
+
+**Lambda가 뭔가요?**
+Lambda는 "코드를 실행하는 서버인데, 서버를 직접 관리 안 해도 되는 것"이에요.
+우리 `rag_pipeline.py`가 Lambda 위에서 실행된다고 생각하면 돼요.
+요청이 올 때만 켜지고, 끝나면 자동으로 꺼져요. 그래서 비용이 저렴해요.
+
+#### 3단계: AI 모델이 실행되는 곳
+
+```
+SageMaker Endpoint — SooNet(X-ray 분석 AI)이 항상 켜져 있는 GPU 서버
+    → 의사가 X-ray 올리면 여기서 분석
+
+Bedrock (Claude Haiku) — 소견서 텍스트를 HPO 코드로 변환하는 AI
+    → bedrock_extractor.py가 여기 연결됨
+
+Bedrock (Claude Sonnet) — 최종 진단 보조 리포트를 생성하는 AI
+    → rag_pipeline.py step4가 여기 연결됨
+```
+
+#### 4단계: 데이터가 저장되는 곳
+
+```
+S3 — 파일 저장소. X-ray 이미지, 모델 가중치(.pth) 파일 저장
+    → 우리 say2-2team-bucket이 여기 있음
+
+DynamoDB — 환자 진단 이력 저장
+    → "이 환자 지난번에 뭐라고 나왔지?" 조회 가능
+
+ElastiCache (Redis) — 자주 쓰는 결과를 임시 저장
+    → 같은 HPO 조합이면 API 재호출 안 함 → 속도 빠름
+```
+
+#### 5단계: 모델이 자동으로 업데이트되는 과정
+
+```
+새 환자 진단 결과 → DynamoDB에 저장
+    ↓ (100건 쌓이면)
+EventBridge — 조건 충족 시 자동으로 다음 단계 실행하는 타이머/트리거
+    ↓
+SageMaker Training Job — 새 데이터로 SooNet 모델 재학습
+    ↓
+S3에 새 모델 가중치 저장
+    ↓
+SageMaker Endpoint 업데이트 — 무중단으로 새 모델로 교체 (Blue/Green)
+```
+
+#### 6단계: 외부 API들은 어디서 호출되나요?
+
+Lambda 안에서 직접 HTTP 요청으로 호출해요.
+
+```
+Lambda
+  ├── PubCaseFinder API → 희귀질환 매칭 (서버 장애 시 로컬 폴백)
+  ├── PubMed API → 최신 논문 3편
+  ├── ClinicalTrials.gov API → 모집 중 임상시험 3건
+  └── Monarch Initiative API → HPO 코드 → 증상명 변환
+```
+
+#### 7단계: 모니터링
+
+```
+CloudWatch — 모든 Lambda, SageMaker, API Gateway 로그를 한 곳에서 봄
+    → 에러 나면 알림 오게 설정 가능
+    → 비용 얼마 쓰는지도 여기서 확인
+
+AWS IAM — 누가 어떤 서비스에 접근할 수 있는지 권한 관리
+    → Lambda가 S3에 접근하려면 IAM 권한 필요
+    → 보안의 핵심
+```
+
+---
+
+### 지금 코드 vs AWS 배포 — 뭐가 다른가요?
+
+| 지금 코드 (로컬) | AWS 배포 시 |
+|-----------------|-------------|
+| `python rag_pipeline.py` 직접 실행 | Lambda가 자동으로 실행 |
+| 로컬 파일에 결과 저장 | DynamoDB에 저장 |
+| 터미널에 print() 출력 | CloudWatch에 로그 저장 |
+| 인증 없음 | Cognito 로그인 필요 |
+| 한 번에 하나씩 처리 | 여러 환자 동시 처리 가능 |
+| 서버 항상 켜져 있어야 함 | Lambda는 요청 올 때만 켜짐 |
+| ChromaDB 없음 (제거됨) | ElastiCache Redis로 캐싱 |
+
+지금은 "내 컴퓨터에서 돌아가는 프로토타입"이고,
+AWS 아키텍처는 "실제 병원에서 수천 명 환자를 처리할 수 있는 서비스"예요.
+
+---
+
+## 13. 태그 규칙 (필수)
 
 모든 AWS 리소스 생성 시:
 ```
@@ -408,7 +534,7 @@ Region: ap-northeast-2
 
 ---
 
-## 13. 요약
+## 14. 요약
 
 이 아키텍처는 두 가지 버전을 동시에 제공합니다:
 
@@ -417,3 +543,65 @@ Region: ap-northeast-2
 2. **온프레미스 버전** (현실 배포): FastAPI + 로컬 GPU + PostgreSQL. 환경변수 전환만으로 동일 파이프라인 동작. "병원 내부에 설치해서 바로 쓸 수 있습니다"를 보여주는 실체.
 
 핵심 차별점은 **EMR 브릿징 API Gateway**입니다. 어떤 EMR 시스템이든 FHIR R4 호환 API를 통해 연동 가능하므로, 기존 EMR 업체와 경쟁이 아닌 협력 관계를 만들 수 있습니다.
+
+---
+
+## 15. 아키텍처 구현을 위한 실행 전략 (How to Implement)
+
+초기 프로토타입을 넘어 상용화 수준으로 AWS 인프라를 구축하려면 다음 단계로 접근해야 합니다.
+
+### 15-1. IaC (Infrastructure as Code) 기반 인프라 구축
+
+VPC, 프라이빗 서브넷, 보안 그룹, VPC 엔드포인트 등 복잡한 네트워크 환경을 수동으로 구성하면 재현성이 떨어집니다. AWS CDK나 Terraform을 사용하여 인프라를 코드로 정의하고 배포해야 합니다.
+
+```
+# AWS CDK 예시 구조
+cdk/
+├── app.py
+├── stacks/
+│   ├── vpc_stack.py          # VPC, 서브넷, NAT GW, VPC Endpoint
+│   ├── api_stack.py          # API Gateway, Lambda, Cognito
+│   ├── ml_stack.py           # SageMaker Endpoint, ECR
+│   ├── data_stack.py         # DynamoDB, S3, ElastiCache
+│   └── mlops_stack.py        # EventBridge, SageMaker Training
+```
+
+### 15-2. API 계층 및 EMR 연동 로직 구현
+
+API Gateway를 통해 들어오는 요청을 처리할 때, SMART on FHIR 규격(Patient, Observation, DiagnosticReport 리소스 등)에 맞춰 데이터를 변환하는 인터페이스(어댑터) 계층을 Lambda에 구현해야 합니다.
+
+```python
+# Lambda FHIR 어댑터 예시
+def fhir_to_pipeline_input(fhir_bundle: dict) -> dict:
+    patient = fhir_bundle.get("Patient", {})
+    observations = fhir_bundle.get("Observation", [])
+    return {
+        "symptom_text": extract_clinical_notes(observations),
+        "lab_results":  extract_lab_values(observations),
+        "patient_mrn":  patient.get("id"),
+    }
+```
+
+### 15-3. 자동화된 MLOps 파이프라인 구축
+
+DynamoDB `rare-case-collection` 테이블에 새 케이스가 축적되면 EventBridge가 이를 감지하여 SageMaker Training Job을 트리거하는 구조를 만들어야 합니다. 이 파이프라인은 최종적으로 다운타임 없이(Zero-downtime) Blue/Green 배포 방식으로 SageMaker Endpoint를 업데이트하도록 구성해야 합니다.
+
+```
+DynamoDB Stream → EventBridge Rule (100건 도달 시)
+    → SageMaker Training Job (새 데이터 + 기존 데이터)
+    → S3 모델 가중치 저장
+    → SageMaker Endpoint Blue/Green 업데이트 (Downtime 0초)
+```
+
+---
+
+## 16. 현재 아키텍처의 한계점 및 설계 개선안 (Critique & Polish)
+
+논문 게재나 실제 의료 현장 도입을 위해서는 시스템의 안정성(Fault Tolerance)과 데이터 보안 측면에서 다음 사항들을 반드시 보완해야 합니다.
+
+| 한계점 (Risk) | 원인 및 현상 | 설계 개선안 (Solution) |
+|--------------|-------------|----------------------|
+| **외부 API 장애 취약성** | PubCaseFinder API는 비영리 공개 API로 간헐적인 502 Bad Gateway 에러가 발생합니다. 외부 API가 멈추면 파이프라인 전체가 실패할 위험이 있습니다. | **Circuit Breaker 패턴 및 캐싱 도입**: 외부 API 호출 실패 시 즉시 로컬 Orphanet CSV 내부 검색 결과만으로 폴백(Fallback)하는 로직을 구현해야 합니다. 또한, ElastiCache(Redis)를 단순 HPO 버퍼가 아닌 API 응답 캐싱용으로도 적극 활용해야 합니다. |
+| **네트워크 병목 및 지연** | Step Functions(오케스트레이터)는 VPC 외부에 위치하고, 작업을 수행하는 Lambda들은 VPC 프라이빗 서브넷 내부에 있습니다. 이로 인한 통신 오버헤드와 ENI(탄력적 네트워크 인터페이스) 콜드 스타트가 발생할 수 있습니다. | **Express Workflows 전환**: 응답 속도가 중요한 실시간 진단 API이므로, Step Functions를 Standard 대신 지연 시간이 짧은 Express Workflows로 구성하거나, 오케스트레이션 역할을 전담하는 VPC 내부의 마스터 Lambda를 두어 최적화해야 합니다. |
+| **개인정보보호(HIPAA) 위반 위험** | MLOps 재학습을 위해 DynamoDB에 환자의 진단 결과와 MRN(환자 등록 번호)을 원본 그대로 축적하는 구조입니다. | **데이터 비식별화 파이프라인 추가**: 진단 이력을 `rare-case-collection` 테이블로 넘기기 전에, 환자 식별 정보를 익명화(De-identification) 처리하는 Lambda 함수를 파이프라인 중간에 반드시 추가해야 법적 문제를 방지할 수 있습니다. |
+| **단순 벡터 검색의 한계** | RDS pgvector를 사용하여 희귀질환을 의미 기반(Vector)으로 검색합니다. 그러나 의료 도메인에서는 특정 유전자 기호나 HPO 코드가 정확히 일치해야 하는 경우가 많습니다. | **하이브리드 검색(Hybrid Search) 적용**: 벡터 유사도 검색과 키워드 정확도 일치(Exact Match) 검색을 결합하여, 두 점수를 혼합해 문서의 연관성을 평가하는 하이브리드 검색 방식으로 고도화해야 논문 수준의 검색 정확도(Retrieval Accuracy)를 입증할 수 있습니다. |
