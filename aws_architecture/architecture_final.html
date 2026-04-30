@@ -530,15 +530,28 @@ window.onload = function() { showTab('arch'); };
         </div>
       </div>
 
-      <!-- Phase 2: LIRICAL -->
+      <!-- Phase 2: LIRICAL + 일반 질환 스코어링 -->
       <div style="background:#fff; border:1.5px solid #7B1FA2; border-radius:8px; padding:8px; margin-bottom:8px;">
         <div style="font-size:9px;font-weight:800;color:#7B1FA2; margin-bottom:5px;">
-          🔬 Phase 2 — LIRICAL Scoring
+          🔬 Phase 2A — LIRICAL Scoring (희귀질환)
         </div>
         <div class="svc" style="border-color:#7B1FA2; width:100%;">
           <div class="ico" style="color:#7B1FA2;">🧬</div>
           <div class="lbl">Lambda: LIRICAL Scorer</div>
-          <div class="sub2">Orphanet 528 희귀질환<br>LR = ∏(sensitivity/bg_freq)<br>빈도 가중: 1.0→0.9→0.5→0.1→0.3<br>출력: Top 10 + ORPHA코드 + LR점수</div>
+          <div class="sub2">Orphanet 4335 희귀질환<br>LR = ∏(sensitivity/bg_freq)<br>빈도 가중: 1.0→0.9→0.5→0.1→0.3<br>출력: Top 10 + ORPHA코드 + LR점수</div>
+        </div>
+      </div>
+
+      <!-- Phase 2B: 일반 질환 스코어링 -->
+      <div style="background:#fff; border:1.5px solid #2E7D32; border-radius:8px; padding:8px; margin-bottom:8px;">
+        <div style="font-size:9px;font-weight:800;color:#2E7D32; margin-bottom:5px;">
+          📊 Phase 2B — 일반 질환 Scoring (Rule-based)
+        </div>
+        <div class="svc" style="border-color:#2E7D32; width:100%;">
+          <div class="ico" style="color:#2E7D32;">🫁</div>
+          <div class="lbl">Lambda: General Disease Scorer</div>
+          <div class="sub2">lung_disease_profiles_v2.yaml<br>HPO + X-ray + Lab 가중치 합산<br>일반 폐질환 Top 10 랭킹<br>general_disease_scorer.py</div>
+          <span class="note note-green" style="font-size:8px;margin-top:3px;">✅ 구현 완료</span>
         </div>
       </div>
 
@@ -569,6 +582,8 @@ window.onload = function() { showTab('arch'); };
         <div style="font-size:8.5px;color:#546E7A;margin-top:4px;">
           → RDS pgvector (Orphanet 의미 검색)<br>
           → PubMed API (NAT GW 경유)<br>
+          → ClinicalTrials.gov (NAT GW 경유)<br>
+          → Monarch Initiative (HPO 증상명 변환)<br>
           → Bedrock Sonnet (VPC Endpoint)
         </div>
       </div>
@@ -626,16 +641,28 @@ window.onload = function() { showTab('arch'); };
         </div>
       </div>
 
-      <!-- DynamoDB -->
-      <div style="background:#fff; border:1.5px solid var(--c-dynamo); border-radius:8px; padding:8px;">
+      <!-- DynamoDB — 두 테이블 분리 -->
+      <div style="background:#fff; border:1.5px solid var(--c-dynamo); border-radius:8px; padding:8px; margin-bottom:6px;">
         <div style="font-size:9px;font-weight:800;color:var(--c-dynamo); margin-bottom:5px;">
           💾 진단 이력 저장 (Phase 5)
         </div>
         <div class="svc c-dynamo" style="width:100%;">
           <div class="ico ico-dynamo">⚡</div>
-          <div class="lbl">Amazon DynamoDB</div>
-          <div class="sub2">diagnosis-history<br>PK: MRN · SK: timestamp<br>rare-case-collection<br>(재학습 트리거용)</div>
-          <span class="note note-blue" style="font-size:8px;margin-top:3px;">Gateway Endpoint ✅</span>
+          <div class="lbl">DynamoDB — diagnosis-history</div>
+          <div class="sub2">환자 진단 이력<br>PK: patient_mrn · SK: timestamp<br>top_diseases · confidence · report_url</div>
+          <span class="note note-orange" style="font-size:8px;margin-top:3px;">⚠️ 미생성 (구현 예정)</span>
+        </div>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid var(--c-dynamo); border-radius:8px; padding:8px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-dynamo); margin-bottom:5px;">
+          🧬 희귀 케이스 축적 (MLOps 트리거)
+        </div>
+        <div class="svc c-dynamo" style="width:100%;">
+          <div class="ico ico-dynamo">⚡</div>
+          <div class="lbl">DynamoDB — rare-case-collection</div>
+          <div class="sub2">희귀질환 케이스 축적 DB<br>PK: orpha_id · SK: case_id<br>100건 도달 → EventBridge 트리거</div>
+          <span class="note note-orange" style="font-size:8px;margin-top:3px;">⚠️ 미생성 (구현 예정)</span>
         </div>
       </div>
 
