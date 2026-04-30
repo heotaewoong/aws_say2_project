@@ -25,6 +25,7 @@ from rag.pubcasefinder import get_ranked_diseases, format_pcf_for_llm
 from rag.pubmed_fetcher import PubMedFetcher
 from rag.clinicaltrials_fetcher import get_clinical_trials, format_trials_for_llm
 from rag.monarch_fetcher import format_hpo_for_prompt
+from rag.general_disease_scorer import rank_general_diseases, format_general_ranking_for_llm
 _PUBMED_AVAILABLE = True
 
 # ── 상수 ──────────────────────────────────────────────────────────
@@ -188,7 +189,7 @@ class RareLinkPipeline:
         }
 
     # ════════════════════════════════════════════════════════════════
-    # ② SCORE
+    # ② SCORE — LIRICAL LR 스코어링 (희귀질환)
     # ════════════════════════════════════════════════════════════════
     def step2_score(self, hpo_data: dict) -> list:
         """LIRICAL LR 스코어링 → Top 10 질환 랭킹"""
@@ -213,6 +214,23 @@ class RareLinkPipeline:
             tag = "[희귀]" if d["is_rare"] else "[일반]"
             print(f"  {i:2d}. {tag} {d['disease_name']:<40} LR={d['score']:.4f}")
 
+        return ranking
+
+    # ════════════════════════════════════════════════════════════════
+    # ②-B SCORE — 일반 질환 스코어링 (Rule-based)
+    # ════════════════════════════════════════════════════════════════
+    def step2b_general_score(self, hpo_data: dict) -> list:
+        """일반 폐질환 Top10 랭킹 — HPO + X-ray + Lab 가중치 합산"""
+        print("\n" + "─" * 50)
+        print("②-B SCORE — 일반 질환 스코어링 (Rule-based)")
+        print("─" * 50)
+
+        ranking = rank_general_diseases(
+            positive_hpos=hpo_data["positive_hpo"],
+            xray_preds=hpo_data.get("xray_detail", {}),
+            lab_results=hpo_data.get("lab_results", {}),
+            top_k=10,
+        )
         return ranking
 
     # ════════════════════════════════════════════════════════════════
@@ -242,7 +260,7 @@ class RareLinkPipeline:
     # ════════════════════════════════════════════════════════════════
     # ④ GEN — RAG + LLM 소견서 생성
     # ════════════════════════════════════════════════════════════════
-    def step4_rag_generate(self, hpo_data: dict, ranking: list) -> str:
+    def step4_rag_generate(self, hpo_data: dict, ranking: list, general_ranking: list = None) -> str:
         """
         Evidence-bound RAG 리포트 생성
         - JSON 구조화 출력 + Markdown 사람용 출력
@@ -363,6 +381,12 @@ A3. 혈액·폐기능 검사 수치 (정상 범위 벗어난 항목에 주목):
 {ranking_text}
 
 {top3_detail}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[C2. 일반 폐질환 랭킹 (HPO + X-ray + Lab 가중치 합산)]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{format_general_ranking_for_llm(general_ranking) if general_ranking else '일반 질환 랭킹: 데이터 없음'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [D. 외부 검색 결과 (RAG Context) — 이 섹션의 정보만 인용 가능]
@@ -518,12 +542,13 @@ false가 있으면 해당 부분 수정 후 출력하세요."""
         print("🏥  Rare-Link AI 진단 보조 파이프라인 시작")
         print("=" * 60)
 
-        hpo_data = self.step1_get_hpo(xray_path, symptom_text, lab_results)
-        ranking  = self.step2_score(hpo_data)
-        use_rag  = self.step3_rag_trigger(ranking)
+        hpo_data         = self.step1_get_hpo(xray_path, symptom_text, lab_results)
+        ranking          = self.step2_score(hpo_data)          # 희귀질환 LIRICAL LR
+        general_ranking  = self.step2b_general_score(hpo_data) # 일반 질환 Rule-based
+        use_rag          = self.step3_rag_trigger(ranking)
 
         if use_rag:
-            report = self.step4_rag_generate(hpo_data, ranking)
+            report = self.step4_rag_generate(hpo_data, ranking, general_ranking)
         else:
             top    = ranking[0]
             report = (
