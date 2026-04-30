@@ -166,6 +166,34 @@ h1 { font-size:19px; font-weight:800; text-align:center; color:#1a1a2e; margin-b
 </style>
 </head>
 <body>
+<!-- ══ TAB NAVIGATION ══════════════════════════════════════════ -->
+<div style="background:#1a1a2e; padding:0; position:sticky; top:0; z-index:999; border-bottom:2px solid #333;">
+  <div style="max-width:1760px; margin:0 auto; display:flex; gap:0;">
+    <button onclick="showTab('arch')" id="tab-arch"
+      style="padding:12px 24px; background:#1a1a2e; color:#90A4AE; border:none; cursor:pointer; font-size:13px; font-weight:700; border-bottom:3px solid transparent; transition:all 0.2s;">
+      🏗️ AWS 아키텍처
+    </button>
+    <button onclick="showTab('beginner')" id="tab-beginner"
+      style="padding:12px 24px; background:#1a1a2e; color:#90A4AE; border:none; cursor:pointer; font-size:13px; font-weight:700; border-bottom:3px solid transparent; transition:all 0.2s;">
+      📖 초보자 설명
+    </button>
+  </div>
+</div>
+
+<script>
+function showTab(name) {
+  document.getElementById('panel-arch').style.display = name === 'arch' ? 'block' : 'none';
+  document.getElementById('panel-beginner').style.display = name === 'beginner' ? 'block' : 'none';
+  document.getElementById('tab-arch').style.borderBottomColor = name === 'arch' ? '#4FC3F7' : 'transparent';
+  document.getElementById('tab-arch').style.color = name === 'arch' ? '#4FC3F7' : '#90A4AE';
+  document.getElementById('tab-beginner').style.borderBottomColor = name === 'beginner' ? '#4FC3F7' : 'transparent';
+  document.getElementById('tab-beginner').style.color = name === 'beginner' ? '#4FC3F7' : '#90A4AE';
+}
+window.onload = function() { showTab('arch'); };
+</script>
+
+<!-- ══ PANEL: AWS 아키텍처 ══════════════════════════════════════ -->
+<div id="panel-arch">
 <div class="page">
 
 <!-- ══ TITLE ══════════════════════════════════════════════════════ -->
@@ -799,7 +827,346 @@ h1 { font-size:19px; font-weight:800; text-align:center; color:#1a1a2e; margin-b
 <p style="text-align:center; font-size:9px; color:#90A4AE; margin-top:10px;">
   Rare-Link AI · AWS ap-northeast-2 (Seoul) · 최종 오류 수정 완료 버전 · 2026-04-29
 </p>
-
 </div><!-- end .page -->
+</div><!-- end #panel-arch -->
+
+<!-- ══ PANEL: 초보자 설명 ══════════════════════════════════════ -->
+<div id="panel-beginner" style="display:none; background:#0d1117; min-height:100vh; padding:32px 24px; font-family:'Segoe UI',Arial,sans-serif; color:#e6edf3;">
+<div style="max-width:900px; margin:0 auto;">
+
+<h1 style="font-size:22px; font-weight:800; color:#58a6ff; margin-bottom:6px;">📖 Rare-Link AI — 초보자용 동작 원리 설명</h1>
+<p style="font-size:13px; color:#8b949e; margin-bottom:28px;">의사가 X-ray + 혈액검사 + 증상을 입력하면, AI가 자동으로 HPO 코드로 변환 → 희귀질환 후보 랭킹 → 외부 논문 검색 → Claude가 소견서 작성 → 의사에게 전달.</p>
+
+<!-- 전체 흐름 요약 -->
+<div style="background:#161b22; border:1px solid #30363d; border-radius:10px; padding:18px 22px; margin-bottom:24px;">
+  <div style="font-size:13px; font-weight:800; color:#f0f6fc; margin-bottom:10px;">⚡ 전체 흐름 한 줄 요약</div>
+  <div style="font-size:13px; color:#8b949e; line-height:1.8;">
+    의사가 X-ray + 혈액검사 + 증상을 입력하면,<br>
+    AI가 자동으로 <strong style="color:#58a6ff;">HPO 코드로 변환</strong> → <strong style="color:#3fb950;">희귀질환 후보 랭킹</strong> → <strong style="color:#d2a8ff;">외부 논문 검색</strong> → <strong style="color:#ffa657;">Claude가 소견서 작성</strong> → 의사에게 전달.
+  </div>
+</div>
+
+<!-- STEP 1 -->
+<div style="background:#161b22; border:1.5px solid #1f6feb; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#1f6feb; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">1</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">의사가 브라우저에서 입력</span>
+    </div>
+    <span style="font-size:10px; background:#1f6feb22; border:1px solid #1f6feb; color:#58a6ff; padding:2px 10px; border-radius:4px;">CloudFront + S3</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    의사가 웹 화면(React 앱)에서 X-ray 사진, 혈액검사 수치, 증상 텍스트를 입력합니다.<br>
+    이 웹 앱은 <strong style="color:#3fb950;">S3 버킷</strong>에 파일로 올라가 있고, <strong style="color:#58a6ff;">CloudFront</strong>가 전 세계 어디서 접속해도 빠르게 불러옵니다.
+  </p>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>왜 필요한가:</strong> S3+CloudFront가 없으면 서버가 있어야 하는데, 이 방식은 서버 없이 정적 파일만으로 전세계 배포 가능합니다.
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div style="background:#161b22; border:1.5px solid #e7157b; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#e7157b; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">2</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">요청이 API Gateway로 전달</span>
+    </div>
+    <span style="font-size:10px; background:#e7157b22; border:1px solid #e7157b; color:#e7157b; padding:2px 10px; border-radius:4px;">API Gateway</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    브라우저가 보낸 HTTP 요청이 <strong style="color:#e7157b;">API Gateway</strong>로 들어옵니다.<br>
+    API Gateway는 <strong>문지기</strong> 역할: 인증 확인, 초당 요청 수 제한, 요청을 뒤에 있는 Lambda로 전달합니다.<br>
+    FHIR R4 표준을 따르면 BESTCare 같은 기존 EMR 시스템과도 바로 연동 가능합니다.
+  </p>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>왜 필요한가:</strong> API Gateway 없이 Lambda를 직접 노출하면 보안/인증/속도 제한을 모두 직접 구현해야 합니다.
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div style="background:#161b22; border:1.5px solid #3fb950; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#3fb950; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">3</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">Lambda가 파이프라인 5단계 실행</span>
+    </div>
+    <span style="font-size:10px; background:#3fb95022; border:1px solid #3fb950; color:#3fb950; padding:2px 10px; border-radius:4px;">Lambda (rag_pipeline.py)</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    <strong style="color:#3fb950;">Lambda</strong>는 서버 없이 코드만 실행하는 서비스입니다. <code style="background:#0d1117; padding:1px 5px; border-radius:3px; color:#ffa657;">rag_pipeline.py</code>의 RareLinkPipeline 클래스가 여기서 실행됩니다.
+  </p>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#58a6ff;">① INPUT</strong> — X-ray는 SooNet(AI 모델)으로, 증상 텍스트는 Bedrock Haiku(Claude)로, 혈액검사는 규칙으로 HPO 코드 변환
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#58a6ff;">② SCORE</strong> — Orphanet 4335개 희귀질환 데이터와 비교해서 가능성 높은 질환 순위 계산 (LIRICAL)
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#58a6ff;">②-B SCORE</strong> — lung_disease_profiles.yaml 기반으로 일반 폐질환 Top10 랭킹 계산 (Rule-based)
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#58a6ff;">③ TRIG</strong> — 희귀질환이거나 1/2위 차이가 작으면 RAG 심화 분석 실행
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#58a6ff;">④ GEN</strong> — 외부 논문/케이스 검색 후 Claude Sonnet으로 소견서 생성
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#58a6ff;">⑤ OUT</strong> — 결과를 DynamoDB에 저장하고 의사에게 반환
+    </div>
+  </div>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>왜 필요한가:</strong> Lambda는 요청이 없을 때 비용이 0원. 서버를 24시간 켜두지 않아도 됩니다.
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div style="background:#161b22; border:1.5px solid #d2a8ff; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#d2a8ff; color:#0d1117; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">4</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">X-ray 분석 — SageMaker</span>
+    </div>
+    <span style="font-size:10px; background:#d2a8ff22; border:1px solid #d2a8ff; color:#d2a8ff; padding:2px 10px; border-radius:4px;">SageMaker Endpoint</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    X-ray 이미지는 <strong style="color:#d2a8ff;">SageMaker Endpoint</strong>에 배포된 SooNet 모델이 분석합니다.<br>
+    SooNet은 DenseNet-121 기반 AI로, 14가지 폐 소견(폐렴, 흉막삼출, 기흉 등)의 확률값을 반환합니다.<br>
+    각 소견은 HPO 코드로 변환되어 다음 단계로 전달됩니다.
+  </p>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>왜 SageMaker인가:</strong> GPU가 필요한 딥러닝 추론을 Lambda에서 직접 실행하면 메모리 초과. SageMaker는 GPU 서버를 별도로 관리해줍니다.
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div style="background:#161b22; border:1.5px solid #ffa657; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#ffa657; color:#0d1117; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">5</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">HPO 코드 변환 — Bedrock Haiku</span>
+    </div>
+    <span style="font-size:10px; background:#ffa65722; border:1px solid #ffa657; color:#ffa657; padding:2px 10px; border-radius:4px;">Bedrock Claude Haiku</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    의사가 쓴 소견서 텍스트("호흡곤란과 흉통이 있습니다")를 <strong style="color:#ffa657;">Claude Haiku</strong>가 읽고<br>
+    표준 HPO 코드(HP:0002094 = 호흡곤란, HP:0002202 = 흉막삼출)로 변환합니다.<br>
+    Positive(있는 증상)와 Negative(없는 증상)를 분리해서 반환합니다.<br>
+    Monarch Initiative API로 HPO 코드를 한국어 증상명으로 변환해 LLM 가독성을 높입니다.
+  </p>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>HPO가 뭔가요:</strong> Human Phenotype Ontology. 전 세계 의사들이 공통으로 쓰는 증상 코드 체계입니다. "호흡곤란"을 HP:0002094로 표준화해서 어떤 언어든 같은 의미로 처리 가능합니다.
+  </div>
+</div>
+
+<!-- STEP 6 -->
+<div style="background:#161b22; border:1.5px solid #58a6ff; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#58a6ff; color:#0d1117; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">6</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">질환 랭킹 계산 — LIRICAL + Rule-based</span>
+    </div>
+    <span style="font-size:10px; background:#58a6ff22; border:1px solid #58a6ff; color:#58a6ff; padding:2px 10px; border-radius:4px;">Lambda (lirical_scorer.py)</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    두 가지 방식으로 질환 랭킹을 계산합니다:
+  </p>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#58a6ff;">희귀질환 LIRICAL</strong><br>
+      Orphanet 4335개 희귀질환 DB와 환자 HPO를 비교.<br>
+      각 질환에서 이 증상이 얼마나 자주 나타나는지 통계로 LR 점수 계산.<br>
+      Top 10 희귀질환 랭킹 반환.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#3fb950;">일반 질환 Rule-based</strong><br>
+      lung_disease_profiles_v2.yaml 기반.<br>
+      HPO + X-ray 소견 + Lab 수치를 가중치 합산.<br>
+      COPD, 폐렴 등 일반 폐질환 Top 10 랭킹 반환.
+    </div>
+  </div>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>LR이 뭔가요:</strong> Likelihood Ratio(가능도비). "이 증상 조합이 이 질환에서 얼마나 자주 나타나는가"를 수치화한 것. 높을수록 그 질환일 가능성이 높습니다.
+  </div>
+</div>
+
+<!-- STEP 7 -->
+<div style="background:#161b22; border:1.5px solid #f85149; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#f85149; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">7</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">RAG 트리거 판단</span>
+    </div>
+    <span style="font-size:10px; background:#f8514922; border:1px solid #f85149; color:#f85149; padding:2px 10px; border-radius:4px;">step3_rag_trigger()</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    두 조건 중 하나라도 해당하면 RAG(심화 분석)를 실행합니다:
+  </p>
+  <div style="display:flex; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; flex:1;">
+      <strong style="color:#f85149;">조건 1</strong> — 1위 질환이 희귀질환인 경우<br>(Orphanet에 등록된 질환 = 희귀질환)
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; flex:1;">
+      <strong style="color:#f85149;">조건 2</strong> — 1위/2위 LR 점수 비율이 3.0 미만인 경우<br>(점수 차이가 작으면 불확실 → 더 조사 필요)
+    </div>
+  </div>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>RAG가 뭔가요:</strong> Retrieval-Augmented Generation. AI가 답변을 만들 때 외부 자료를 실시간으로 검색해서 근거로 사용하는 방식입니다.
+  </div>
+</div>
+
+<!-- STEP 8 -->
+<div style="background:#161b22; border:1.5px solid #d2a8ff; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#d2a8ff; color:#0d1117; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">8</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">외부 API 검색 — 4개 소스</span>
+    </div>
+    <span style="font-size:10px; background:#d2a8ff22; border:1px solid #d2a8ff; color:#d2a8ff; padding:2px 10px; border-radius:4px;">NAT Gateway 경유</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    RAG가 실행되면 4개 외부 API에서 근거 자료를 수집합니다:
+  </p>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#d2a8ff;">PubCaseFinder</strong> (일본 DBCLS)<br>
+      HPO 코드 → 유사 희귀질환 케이스 + 관련 유전자<br>
+      서버 장애 시 로컬 Orphanet CSV로 자동 폴백
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#d2a8ff;">PubMed E-utilities</strong> (NIH)<br>
+      1위 질환명 → 최신 논문 3편 (PMID, 제목, Abstract)<br>
+      PMID 실존 여부 자동 검증 (환각 방지)
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#d2a8ff;">ClinicalTrials.gov</strong> (NIH)<br>
+      1위 질환명 → 현재 모집 중인 임상시험 3건<br>
+      NCT ID, 단계(Phase), 기관, 요약문 포함
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#d2a8ff;">Monarch Initiative</strong> (EMBL-EBI)<br>
+      HPO 코드 → 한국어/영어 증상명 변환<br>
+      로컬 폴백 사전 30개 내장 (API 실패 시 대비)
+    </div>
+  </div>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>NAT Gateway가 뭔가요:</strong> VPC 내부(프라이빗 서브넷)에 있는 Lambda가 외부 인터넷(PubMed 등)에 접근할 때 거치는 출구입니다. 보안을 유지하면서 외부 통신 가능.
+  </div>
+</div>
+
+<!-- STEP 9 -->
+<div style="background:#161b22; border:1.5px solid #01a88d; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#01a88d; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">9</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">최종 소견서 생성 — Claude Sonnet</span>
+    </div>
+    <span style="font-size:10px; background:#01a88d22; border:1px solid #01a88d; color:#01a88d; padding:2px 10px; border-radius:4px;">Bedrock Claude Sonnet 3.5</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    수집된 모든 데이터를 <strong style="color:#01a88d;">Claude Sonnet 3.5</strong>에게 전달해서 최종 진단 보조 리포트를 생성합니다.
+  </p>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8; margin-bottom:10px;">
+    <strong style="color:#58a6ff;">LLM 인풋 (유저 프롬프트):</strong><br>
+    A. Symptom Raw (소견서 원문) + X-ray Top10 확률값 + Lab Raw 수치<br>
+    B. HPO 코드 + 증상명 (Positive/Negative)<br>
+    C. 희귀질환 LIRICAL 랭킹 Top5 + 일반 질환 Rule-based 랭킹 Top10<br>
+    D. API 검색 결과 (PubCaseFinder + PubMed + ClinicalTrials)<br><br>
+    <strong style="color:#58a6ff;">출력 형식:</strong> JSON (구조화 데이터) + Markdown (의사용 소견서) 이중 출력<br>
+    <strong style="color:#58a6ff;">파라미터:</strong> temperature=0.2 (낮은 창의성, 일관성 중시), max_tokens=4000
+  </div>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>왜 VPC Endpoint인가:</strong> Lambda → Bedrock 통신이 인터넷을 거치지 않고 AWS 내부 네트워크로만 이동. 보안 강화 + 속도 향상.
+  </div>
+</div>
+
+<!-- STEP 10 -->
+<div style="background:#161b22; border:1.5px solid #3b48cc; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#3b48cc; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">10</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">결과 저장 — DynamoDB</span>
+    </div>
+    <span style="font-size:10px; background:#3b48cc22; border:1px solid #3b48cc; color:#8b9cf7; padding:2px 10px; border-radius:4px;">DynamoDB</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    생성된 리포트와 진단 이력을 <strong style="color:#8b9cf7;">DynamoDB</strong>에 저장합니다.<br>
+    두 가지 테이블을 사용합니다:
+  </p>
+  <div style="display:flex; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; flex:1;">
+      <strong style="color:#8b9cf7;">diagnosis-history</strong><br>
+      환자별 진단 이력 저장<br>
+      PK: 환자 MRN, SK: 진단 시각
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; flex:1;">
+      <strong style="color:#8b9cf7;">rare-case-collection</strong><br>
+      희귀 케이스 축적 (재학습용)<br>
+      100건 쌓이면 자동 재학습 트리거
+    </div>
+  </div>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>왜 DynamoDB인가:</strong> RDS(관계형 DB)보다 빠르고 서버리스. 환자 수가 늘어도 자동으로 확장됩니다.
+  </div>
+</div>
+
+<!-- STEP 11 -->
+<div style="background:#161b22; border:1.5px solid #6a1b9a; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#6a1b9a; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">11</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">모델 자동 재학습 — MLOps</span>
+    </div>
+    <span style="font-size:10px; background:#6a1b9a22; border:1px solid #6a1b9a; color:#ce93d8; padding:2px 10px; border-radius:4px;">EventBridge → SageMaker</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    새로운 희귀 케이스가 100건 이상 쌓이면 AI가 스스로 재학습합니다:
+  </p>
+  <div style="background:#0d1117; border-radius:6px; padding:12px 14px; font-size:12px; color:#8b949e; line-height:2; margin-bottom:10px;">
+    <span style="color:#ce93d8;">①</span> DynamoDB rare-case-collection에 케이스 축적<br>
+    <span style="color:#ce93d8;">②</span> EventBridge가 100건 도달 감지 → SageMaker Training Job 자동 실행<br>
+    <span style="color:#ce93d8;">③</span> 새 데이터 + 기존 데이터로 SooNet 모델 재학습<br>
+    <span style="color:#ce93d8;">④</span> S3에 새 모델 가중치 저장<br>
+    <span style="color:#ce93d8;">⑤</span> SageMaker Endpoint Blue/Green 배포 — <strong style="color:#3fb950;">다운타임 0초</strong>
+  </div>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>Blue/Green 배포가 뭔가요:</strong> 기존 모델(Blue)을 켜둔 채로 새 모델(Green)을 준비. 준비 완료되면 트래픽을 Green으로 전환. 서비스 중단 없이 모델 교체 가능.
+  </div>
+</div>
+
+<!-- 보안/모니터링 -->
+<div style="background:#161b22; border:1.5px solid #dd344c; border-radius:10px; padding:18px 22px; margin-bottom:24px;">
+  <div style="font-size:15px; font-weight:800; color:#f0f6fc; margin-bottom:10px;">🔐 보안 & 모니터링</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#dd344c;">AWS WAF</strong><br>
+      해킹 시도, SQL 인젝션, DDoS 공격 차단.<br>
+      CloudFront 앞단 + API Gateway 앞단 이중 보호.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#dd344c;">AWS IAM</strong><br>
+      누가 어떤 서비스에 접근할 수 있는지 권한 관리.<br>
+      Lambda가 S3에 접근하려면 IAM 권한 필요.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
+      <strong style="color:#dd344c;">CloudWatch</strong><br>
+      모든 Lambda, SageMaker, API Gateway 로그 수집.<br>
+      에러 발생 시 알림, 비용 모니터링.
+    </div>
+  </div>
+</div>
+
+<!-- 태그 규칙 -->
+<div style="background:#1c2128; border:1px solid #f57f17; border-radius:8px; padding:14px 18px; margin-bottom:16px;">
+  <div style="font-size:12px; font-weight:800; color:#ffa657; margin-bottom:8px;">⚠️ AWS 리소스 태그 규칙 — 모든 리소스 필수</div>
+  <div style="font-size:12px; color:#8b949e;">형식: <code style="background:#0d1117; padding:1px 6px; border-radius:3px; color:#ffa657;">pre-{서비스명}-2-2-team</code> &nbsp;|&nbsp; 예: pre-sagemaker-2-2-team, pre-lambda-2-2-team</div>
+</div>
+
+<p style="text-align:center; font-size:11px; color:#484f58; margin-top:20px;">
+  Rare-Link AI · 초보자용 설명 · 2026-04-29
+</p>
+
+</div><!-- end max-width -->
+</div><!-- end #panel-beginner -->
 </body>
 </html>
