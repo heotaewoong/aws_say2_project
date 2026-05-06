@@ -19,7 +19,9 @@ import os
 import hashlib
 import requests
 
-PCF_API        = "https://pubcasefinder.dbcls.jp/api/pcf_get_ranked_list"
+# 확정 문서 §2.2 — PubCaseFinder 공식 엔드포인트 (검증 완료 2026-05-04)
+# 파라미터: target=omim, format=json, phenotype=HPO코드(쉼표구분)
+PCF_API        = "https://pubcasefinder.dbcls.jp/api/get_diseases"
 REQUEST_TIMEOUT = 15  # 30 → 15초로 단축 (빠른 실패)
 
 # 캐시 디렉토리 (같은 HPO 조합은 재요청 없이 로컬에서 반환)
@@ -78,14 +80,22 @@ def _local_fallback(hpo_ids: list, top_k: int) -> list:
 
         results = []
         for _, row in scores.iterrows():
+            disease_id = f"ORPHA:{row['OrphaCode']}"
             results.append({
-                "orpha_id":    f"ORPHA:{row['OrphaCode']}",
-                "name":        row["DiseaseName"],
-                "score":       round(float(row["score"]), 3),
-                "genes":       [],
-                "description": f"로컬 Orphanet 매칭 (HPO {int(row['matched_count'])}개 일치)",
-                "matched_hpo": "",
-                "orpha_url":   f"https://www.orpha.net/en/disease/detail/{row['OrphaCode']}",
+                # 확정 스펙 §2.2 필드
+                "disease_id":   disease_id,
+                "disease_name": row["DiseaseName"],
+                "score":        round(float(row["score"]), 3),
+                "pmid_list":    [],
+                "hpo_list":     [],
+                # 추가 호환 필드
+                "orpha_id":     disease_id,
+                "name":         row["DiseaseName"],
+                "genes":        [],
+                "rank":         None,
+                "matched_hpo":  "",
+                "description":  f"로컬 Orphanet 매칭 (HPO {int(row['matched_count'])}개 일치)",
+                "orpha_url":    f"https://www.orpha.net/en/disease/detail/{row['OrphaCode']}",
             })
 
         print(f"  [로컬 폴백] Orphanet CSV에서 {len(results)}개 질환 매칭")
@@ -98,7 +108,7 @@ def _local_fallback(hpo_ids: list, top_k: int) -> list:
 
 def get_ranked_diseases(
     hpo_ids: list,
-    target: str = "orphanet",
+    target: str = "omim",   # 확정 문서 §2.2 — 기본 target은 "omim"
     top_k: int = 5,
 ) -> list:
     """
@@ -123,12 +133,17 @@ def get_ranked_diseases(
     list[dict]
         [
             {
-                "orpha_id":    "ORPHA:723",
+                "disease_id":   "OMIM:617300",    # 확정 스펙 §2.2 — OMIM ID (target=omim)
+                "disease_name": "Lymphangioleiomyomatosis",
+                "score":        0.95,             # PCF 유사도 점수 (0~1)
+                "pmid_list":    ["12345", ...],   # 관련 논문 PMID (enrich 후 채워짐)
+                "hpo_list":     ["HP:0002202", ...],  # 매칭된 HPO 코드 list
+                # 추가 호환 필드 (enrich_pcf_results() 후 보강)
+                "orpha_id":    "OMIM:617300",     # disease_id 와 동일 (target=omim 기준)
                 "name":        "Lymphangioleiomyomatosis",
-                "score":       0.95,              # PCF 유사도 점수 (0~1)
-                "genes":       ["TSC1", "TSC2"],  # 관련 유전자
-                "description": "...",             # 질환 설명
-                "orpha_url":   "https://..."
+                "genes":       ["GENEID:2050"],   # 원시 gene_id (심볼 변환은 enrich 단계)
+                "description": "",                # raw API에선 빈값, enrich 후 Monarch 보강
+                "orpha_url":   "",                # raw API에선 빈값 (target=omim)
             },
             ...
         ]
@@ -148,10 +163,11 @@ def get_ranked_diseases(
         print(f"  [PubCaseFinder] 캐시 히트 → {len(cached)}개 질환 반환")
         return cached[:top_k]
 
+    # 확정 문서 §2.2 — 파라미터: target, format, phenotype (HPO 코드 쉼표 구분)
     params = {
-        "format": "json",
-        "target": target,
-        "hpo_id": ",".join(hpo_ids),
+        "format":    "json",
+        "target":    target,
+        "phenotype": ",".join(hpo_ids),
     }
 
     try:
@@ -176,24 +192,105 @@ def get_ranked_diseases(
 
     results = []
     for item in raw[:top_k]:
-        genes = item.get("hgnc_gene_symbol", [])
-        if isinstance(genes, str):
-            genes = [genes]
+        # 확정 문서 §2.2 — 실제 API 응답 필드:
+        # id, score, matched_hpo_id, gene_id, rank, annotation_hp_num, annotation_hp_sum_ic
+        disease_id = item.get("id", "")  # 예: "OMIM:617300"
+
+        # gene_id 는 "GENEID:2050" 형식 → 심볼 변환은 후속 enrich 단계에서
+        gene_id_str = item.get("gene_id", "")
+        genes = [gene_id_str] if gene_id_str else []
+
+        # 확정 스펙 §2.2 — HPO 코드 list (매칭된 HPO)
+        matched_hpo = item.get("matched_hpo_id", "")
+        if isinstance(matched_hpo, str) and matched_hpo:
+            hpo_list = [h.strip() for h in matched_hpo.split(",") if h.strip()]
+        elif isinstance(matched_hpo, list):
+            hpo_list = matched_hpo
+        else:
+            hpo_list = []
+
+        # 확정 스펙 §2.2 — pmid_list (PubCaseFinder 응답엔 직접 없음 → 별도 케이스리포트
+        # 엔드포인트 또는 PubMed 보강이 필요. 응답에 있으면 그대로 사용)
+        pmid_list = item.get("pmid_list") or item.get("pmids") or []
+        if isinstance(pmid_list, str):
+            pmid_list = [p.strip() for p in pmid_list.split(",") if p.strip()]
+
+        # disease_name 은 PCF 응답엔 직접 없음 → Monarch get_disease_info 로 후속 보강
+        disease_name = item.get("disease_name") or item.get("orpha_disease_name_en") or ""
 
         results.append({
-            "orpha_id":    item.get("id", ""),
-            "name":        item.get("orpha_disease_name_en", "Unknown"),
-            "score":       float(item.get("score", 0)),
-            "genes":       genes,
-            "description": item.get("description", "")[:300],
-            "matched_hpo": item.get("matched_hpo_id", ""),
-            "orpha_url":   item.get("orpha_url", ""),
+            # 확정 스펙 필드 (그대로 유지)
+            "disease_id":   disease_id,
+            "disease_name": disease_name,
+            "score":        float(item.get("score", 0)),
+            "pmid_list":    pmid_list,
+            "hpo_list":     hpo_list,
+            # 추가 정보 (호환성 + enrich 용)
+            "orpha_id":     disease_id,
+            "name":         disease_name,
+            "genes":        genes,
+            "rank":         item.get("rank"),
+            "matched_hpo":  matched_hpo,
+            "description":  item.get("description", "")[:300] if item.get("description") else "",
+            "orpha_url":    item.get("orpha_url", ""),
         })
 
     print(f"  [PubCaseFinder] HPO {len(hpo_ids)}개 → 상위 {len(results)}개 질환 매칭")
     if results:
         _save_cache(ck, results)
     return results
+
+
+def enrich_pcf_results(pcf_results: list, fetch_pmids: bool = True) -> list:
+    """
+    확정 문서 §2.2 — PubCaseFinder 결과에 disease_name + pmid_list 보강
+
+    PCF API 응답에는 id, score, matched_hpo_id, gene_id 만 있고
+    disease_name과 pmid_list는 직접 반환되지 않는다.
+    이 함수는:
+      - disease_name : Monarch /entity/{disease_id} → name
+      - pmid_list    : PubMed eSearch (disease_name + "case reports") → idlist[:3]
+    를 호출하여 확정 스펙 §2.2 필드를 모두 채운다.
+
+    Parameters
+    ----------
+    pcf_results : list[dict]   get_ranked_diseases() 반환값
+    fetch_pmids : bool         PubMed eSearch 호출 여부 (False면 disease_name만 채움)
+    """
+    try:
+        from rag.monarch_fetcher import get_disease_info
+    except ImportError:
+        get_disease_info = None
+
+    enriched = []
+    for r in pcf_results:
+        new_r = dict(r)
+        disease_id = new_r.get("disease_id", "")
+
+        # 1) disease_name 보강 (Monarch)
+        if not new_r.get("disease_name") and disease_id and get_disease_info:
+            try:
+                info = get_disease_info(disease_id)
+                if info.get("name"):
+                    new_r["disease_name"] = info["name"]
+                    new_r["name"] = info["name"]
+                if info.get("description") and not new_r.get("description"):
+                    new_r["description"] = info["description"][:300]
+            except Exception:
+                pass
+
+        # 2) pmid_list 보강 (PubMed eSearch — 확정 §2.2 term: 질환명 + case reports)
+        if fetch_pmids and not new_r.get("pmid_list") and new_r.get("disease_name"):
+            try:
+                from rag.pubmed_fetcher import PubMedFetcher
+                fetcher = PubMedFetcher()
+                pmids = fetcher._search_pmids(new_r["disease_name"], max_results=3)
+                new_r["pmid_list"] = pmids
+            except Exception:
+                pass
+
+        enriched.append(new_r)
+    return enriched
 
 
 def format_pcf_for_llm(pcf_results: list, symptom_text: str = "") -> str:

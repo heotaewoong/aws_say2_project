@@ -70,7 +70,7 @@ class BedrockHPOExtractor:
             "messages": [
                 {"role": "user", "content": self._USER_TMPL.format(text=symptom_text)}
             ],
-            "max_tokens": 512,
+            "max_tokens": 1024,
             "temperature": 0.0,  # 재현성을 위해 0
         }
 

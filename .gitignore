@@ -1,7 +1,20 @@
 .env
 __pycache__/
+**/__pycache__/
 *.pyc
 *.pth
 data/
 models/
 cam_Atelectasis.png
+.DS_Store
+
+# 실행 결과 임시 파일
+rag/valid/output_structure_check.json
+rag/valid/rag_pipeline_mimic_results.json
+rag/valid/soonet_chexpert_results.csv
+rag/valid/soonet_chexpert_summary.json
+rag/valid/patient_reports/
+run_full_test_result.json
+
+# Kiro 내부 설정
+.claude/

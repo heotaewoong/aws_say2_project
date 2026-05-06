@@ -45,7 +45,7 @@ def get_clinical_trials(disease_name: str, top_k: int = 3) -> list:
         "filter.overallStatus": "RECRUITING",
         "pageSize":    top_k,
         "format":      "json",
-        "fields":      "NCTId,BriefTitle,OverallStatus,Phase,Condition,LocationFacility",
+        "fields":      "NCTId,BriefTitle,OverallStatus,Phase,Condition,LocationFacility,BriefSummary",
     }
 
     try:
@@ -67,19 +67,21 @@ def get_clinical_trials(disease_name: str, top_k: int = 3) -> list:
 
     for s in studies[:top_k]:
         proto = s.get("protocolSection", {})
-        id_mod      = proto.get("identificationModule", {})
-        status_mod  = proto.get("statusModule", {})
-        design_mod  = proto.get("designModule", {})
-        cond_mod    = proto.get("conditionsModule", {})
+        id_mod       = proto.get("identificationModule", {})
+        status_mod   = proto.get("statusModule", {})
+        design_mod   = proto.get("designModule", {})
+        cond_mod     = proto.get("conditionsModule", {})
         contacts_mod = proto.get("contactsLocationsModule", {})
+        desc_mod     = proto.get("descriptionModule", {})  # BriefSummary
 
-        nct_id = id_mod.get("nctId", "")
-        title  = id_mod.get("briefTitle", "")
-        status = status_mod.get("overallStatus", "")
-        phases = design_mod.get("phases", [])
-        phase  = phases[0] if phases else "N/A"
+        nct_id  = id_mod.get("nctId", "")
+        title   = id_mod.get("briefTitle", "")
+        status  = status_mod.get("overallStatus", "")
+        phases  = design_mod.get("phases", [])
+        phase   = phases[0] if phases else "N/A"
         conditions = cond_mod.get("conditions", [])
         condition  = conditions[0] if conditions else disease_name
+        summary = desc_mod.get("briefSummary", "")[:300]  # 요약문 (300자 제한)
 
         # 기관 목록 (최대 3개)
         locations = []
@@ -94,6 +96,7 @@ def get_clinical_trials(disease_name: str, top_k: int = 3) -> list:
             "status":    status,
             "phase":     phase,
             "condition": condition,
+            "summary":   summary,
             "locations": locations,
             "url":       f"https://clinicaltrials.gov/study/{nct_id}",
         })
@@ -126,10 +129,11 @@ def format_trials_for_llm(trials: list, disease_name: str = "") -> str:
 
     for i, t in enumerate(trials, 1):
         loc_str = ", ".join(t["locations"]) if t["locations"] else "기관 정보 없음"
+        summary_str = f"\n   요약: {t['summary']}" if t.get("summary") else ""
         lines.append(
             f"{i}. {t['title']}\n"
             f"   NCT ID: {t['nct_id']} | 단계: {t['phase']} | 상태: {t['status']}\n"
-            f"   기관: {loc_str}\n"
+            f"   기관: {loc_str}{summary_str}\n"
             f"   URL: {t['url']}"
         )
 

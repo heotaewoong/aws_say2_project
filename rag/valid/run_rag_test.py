@@ -19,9 +19,16 @@ sys.path.insert(0, ROOT)
 os.chdir(ROOT)
 
 os.environ.setdefault('AWS_DEFAULT_REGION', 'ap-northeast-2')
-# AWS 키는 환경변수로 설정하세요:
-# export AWS_ACCESS_KEY_ID="..."
-# export AWS_SECRET_ACCESS_KEY="..."
+
+# .env 파일 자동 로드
+_env_path = os.path.join(ROOT, ".env")
+if os.path.exists(_env_path):
+    with open(_env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
 
 from rag_pipeline import RareLinkPipeline
 from rag.ragas_eval import verify_pmids
@@ -88,20 +95,31 @@ def run_all_patients():
         # 파이프라인 실행
         try:
             report = pipeline.run(
+                patient_info={
+                    "name": "익명",
+                    "age": "",
+                    "sex": "",
+                    "visit_date": "",
+                    "visit_type": "외래",
+                    "chief_complaint": symptom_text[:100],
+                    "allergy": "없음",
+                },
                 xray_path=xray_path,
                 symptom_text=symptom_text,
+                negative_text="",
                 lab_results=lab_results,
             )
 
             # 리포트 저장
-            report_path = os.path.join(pdir, 'report.md')
-            with open(report_path, 'w') as f:
-                f.write(report)
+            report_path = os.path.join(pdir, 'report.json')
+            with open(report_path, 'w', encoding='utf-8') as f:
+                json.dump(report, f, ensure_ascii=False, indent=2)
             print(f'\n  📄 리포트 저장: {report_path}')
 
-            # PMID 검증
+            # PMID 검증 (clinical_notes의 rag_evidence에서 PMID 추출)
             print(f'\n  === PMID 검증 ===')
-            pmid_result = verify_pmids(report)
+            report_text = json.dumps(report, ensure_ascii=False)
+            pmid_result = verify_pmids(report_text)
 
             results.append({
                 'patient': patient_name,

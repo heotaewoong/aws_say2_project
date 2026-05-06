@@ -4,6 +4,7 @@ NIH/NLM 공식 API: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/
 
 질환명 → 최신 논문 Top K 반환 (제목 + abstract + PMID + URL)
 """
+import threading
 import time
 import requests
 
@@ -12,8 +13,10 @@ PUBMED_SUMMARY_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcg
 PUBMED_FETCH_URL   = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
 # NCBI 권장 rate limit: API key 없이 초당 3 req
+# 병렬 호출 시 동시에 여러 스레드가 PubMed를 치면 429 발생 → Semaphore(1)로 직렬화
 REQUEST_DELAY = 0.4
 TIMEOUT       = 15
+_PUBMED_LOCK  = threading.Semaphore(1)
 
 
 class PubMedFetcher:
@@ -22,14 +25,11 @@ class PubMedFetcher:
     질환명 → 최신 관련 논문 Top K 반환
     """
 
-    def _search_pmids(self, disease_name: str, max_results: int = 20) -> list:
+    def _search_pmids(self, disease_name: str, max_results: int = 3) -> list:
+        # 확정 문서 §2.2 — eSearch term: 질환명 + "case reports", retmax=3
         params = {
             "db":      "pubmed",
-            "term":    (
-                f'"{disease_name}"[Title/Abstract] AND '
-                "(treatment[Title/Abstract] OR diagnosis[Title/Abstract] "
-                "OR management[Title/Abstract])"
-            ),
+            "term":    f'"{disease_name}"[Title/Abstract] AND case reports[Title/Abstract]',
             "retmax":  max_results,
             "sort":    "date",
             "retmode": "json",
@@ -71,41 +71,52 @@ class PubMedFetcher:
             return []
 
     def _fetch_abstracts(self, pmid_list: list) -> dict:
-        """abstract 텍스트 → {pmid: abstract}"""
+        """abstract 텍스트 → {pmid: abstract}  (확정 문서 §2.2 — eFetch retmode=xml)"""
+        import xml.etree.ElementTree as ET
+
         if not pmid_list:
             return {}
         params = {
             "db":      "pubmed",
             "id":      ",".join(pmid_list),
             "rettype": "abstract",
-            "retmode": "text",
+            "retmode": "xml",    # 확정 문서 §2.2 스펙
         }
         try:
             resp = requests.get(PUBMED_FETCH_URL, params=params, timeout=20)
             resp.raise_for_status()
-            raw = resp.text
+            root = ET.fromstring(resp.text)
         except Exception as e:
             print(f"⚠️ PubMed fetch 오류: {e}")
             return {}
 
-        # PMID 마커로 분할
         abstract_map = {}
-        current_pmid, current_lines = None, []
-        for line in raw.splitlines():
-            stripped = line.strip()
-            if stripped.startswith("PMID-") or stripped.startswith("PMID:"):
-                if current_pmid and current_lines:
-                    abstract_map[current_pmid] = "\n".join(current_lines).strip()
-                current_pmid = stripped.split()[-1]
-                current_lines = []
+        for article in root.findall(".//PubmedArticle"):
+            pmid_elem = article.find(".//PMID")
+            if pmid_elem is None:
+                continue
+            pmid = pmid_elem.text
+
+            # 구조적 초록(Label 있는 경우)과 단일 초록 모두 처리
+            parts = article.findall(".//AbstractText")
+            if parts:
+                segments = []
+                for p in parts:
+                    label = p.get("Label", "")
+                    text  = (p.text or "").strip()
+                    if label and text:
+                        segments.append(f"{label}: {text}")
+                    elif text:
+                        segments.append(text)
+                abstract = " ".join(segments)
             else:
-                current_lines.append(line)
-        if current_pmid and current_lines:
-            abstract_map[current_pmid] = "\n".join(current_lines).strip()
+                abstract = ""
+
+            abstract_map[pmid] = abstract[:400]
 
         return abstract_map
 
-    def get_top_papers(self, disease_name: str, top_k: int = 5) -> list:
+    def get_top_papers(self, disease_name: str, top_k: int = 3) -> list:
         """
         질환명 → 최신 관련 논문 Top K
 
@@ -114,31 +125,42 @@ class PubMedFetcher:
         list[dict]:
             [{"pmid", "title", "pubdate", "url", "abstract"}, ...]
         """
-        print(f"  🔍 PubMed에서 '{disease_name}' 논문 검색 중...")
-        pmid_list = self._search_pmids(disease_name, max_results=top_k * 2)
+        # 병렬 호출 시 429를 막기 위해 PubMed 요청을 전역 Semaphore로 직렬화
+        with _PUBMED_LOCK:
+            print(f"  🔍 PubMed에서 '{disease_name}' 논문 검색 중...")
+            pmid_list = self._search_pmids(disease_name, max_results=top_k * 2)
 
-        if not pmid_list:
-            print(f"  ⚠️ '{disease_name}' 관련 논문 없음")
-            return []
+            if not pmid_list:
+                print(f"  ⚠️ '{disease_name}' 관련 논문 없음")
+                time.sleep(REQUEST_DELAY)
+                return []
 
-        time.sleep(REQUEST_DELAY)
-        summaries = self._fetch_summaries(pmid_list[:top_k])
+            time.sleep(REQUEST_DELAY)
+            summaries = self._fetch_summaries(pmid_list[:top_k])
 
-        time.sleep(REQUEST_DELAY)
-        abstract_map = self._fetch_abstracts(pmid_list[:top_k])
+            time.sleep(REQUEST_DELAY)
+            abstract_map = self._fetch_abstracts(pmid_list[:top_k])
 
-        results = []
-        for s in summaries[:top_k]:
-            results.append({
-                "pmid":     s["pmid"],
-                "title":    s["title"],
-                "pubdate":  s["pubdate"],
-                "url":      f"https://pubmed.ncbi.nlm.nih.gov/{s['pmid']}/",
-                "abstract": abstract_map.get(s["pmid"], "")[:600],
-            })
+            # 다음 호출과의 간격 확보 (Semaphore 해제 직전)
+            time.sleep(REQUEST_DELAY)
 
-        print(f"  ✅ PubMed 논문 {len(results)}편 수집 완료")
-        return results
+            results = []
+            for s in summaries[:top_k]:
+                results.append({
+                    "pmid":     s["pmid"],
+                    "title":    s["title"],
+                    "pubdate":  s["pubdate"],
+                    "url":      f"https://pubmed.ncbi.nlm.nih.gov/{s['pmid']}/",
+                    # 확정 문서 §2.2 — AbstractText (최대 400자)
+                    "abstract": abstract_map.get(s["pmid"], "")[:400],
+                    # 확정 문서 §2.2 — ArticleTitle (필드명 별칭 추가)
+                    "ArticleTitle": s["title"],
+                    "PMID":         s["pmid"],
+                    "AbstractText": abstract_map.get(s["pmid"], "")[:400],
+                })
+
+            print(f"  ✅ PubMed 논문 {len(results)}편 수집 완료")
+            return results
 
 
 if __name__ == "__main__":
