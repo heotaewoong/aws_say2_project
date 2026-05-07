@@ -1,14 +1,17 @@
-import os
 import torch
-import numpy as np
 import cv2
-from PIL import Image
+import numpy as np
 import matplotlib.pyplot as plt
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
+from unet_lung_model import UNet  # 기태님의 모델 클래스 파일
 
-from unet_lung_model import UNet # 기태님의 모델
+def test_single_image(model_path, img_path, device):
+    # 1. 모델 로드
+    model = UNet(n_channels=3, n_classes=3).to(device)
+    checkpoint = torch.load(model_path, map_location=device)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    model.eval()
 
+<<<<<<< Updated upstream
 # =====================================================================
 # 1. 평가용 엔진 클래스
 # =====================================================================
@@ -37,57 +40,61 @@ class UNetEvaluator:
             A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             ToTensorV2()
         ])
+=======
+    # 2. 이미지 및 마스크 로드 & 전처리
+    # 원본 이미지
+    orig_img = cv2.imread(img_path)
+    orig_img = cv2.cvtColor(orig_img, cv2.COLOR_BGR2RGB)
+>>>>>>> Stashed changes
     
-    def post_process_mask(self, mask, n_classes=3):
-        clean_mask = np.zeros_like(mask)
-        for cls in range(1, n_classes):
-            cls_mask = (mask == cls).astype(np.uint8)
-            # 덩어리(Label) 찾기
-            num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(cls_mask)
-            if num_labels > 1:
-                # 면적(stats[:, 4])이 가장 큰 순서대로 정렬
-                largest_indices = np.argsort(stats[1:, 4]) + 1 
-                
-                # 폐는 상위 2개, 심장은 상위 1개만 복원
-                keep_count = 2 if cls == 1 else 1
-                for i in range(min(keep_count, len(largest_indices))):
-                    idx = largest_indices[-(i+1)]
-                    clean_mask[labels == idx] = cls
-        return clean_mask
+    # 모델 입력용 전처리 (256x256, Normalization)
+    input_img = cv2.resize(orig_img, (256, 256))
+    input_tensor = torch.from_numpy(input_img).permute(2, 0, 1).unsqueeze(0).float() / 255.0
+    input_tensor = input_tensor.to(device)
 
-    def predict(self, image_path):
-        # 이미지 로드 및 전처리
-        image_pil = Image.open(image_path).convert("RGB")
-        image_np = np.array(image_pil)
-        transformed = self.transform(image=image_np)
-        input_tensor = transformed['image'].unsqueeze(0).to(self.device)
+    # 3. 추론 (Inference)
+    with torch.no_grad():
+        output = model(input_tensor)
+        # 확률이 가장 높은 클래스 선택 (0: 배경, 1: 폐, 2: 심장)
+        pred_mask = torch.argmax(output, dim=1).squeeze(0).cpu().numpy()
 
-        with torch.no_grad():
-            output = self.model(input_tensor)
-            pred_mask = torch.argmax(output, dim=1).squeeze(0).cpu().numpy()
-        
-        pred_mask = self.post_process_mask(pred_mask)
-            
-        return image_np, pred_mask
+    # 4. 시각화 (원본, 정답, 예측)
+    plt.figure(figsize=(18, 5))
+
+    # (1) 원본 이미지
+    plt.subplot(1, 3, 1)
+    plt.imshow(input_img)
+    plt.title("Original X-ray")
+    plt.axis('off')
+
+    # (3) Prediction (모델 예측)
+    plt.subplot(1, 3, 2)
+    plt.imshow(pred_mask, cmap='nipy_spectral')
+    plt.title("Model Prediction")
+    plt.axis('off')
+
+    # (4) Overlay (예측값을 원본에 투영)
+    overlay = input_img.copy()
+    overlay[pred_mask == 1] = [255, 0, 0] # Lung -> Red
+    overlay[pred_mask == 2] = [0, 0, 255] # Heart -> Blue
+    combined = cv2.addWeighted(input_img, 0.7, overlay, 0.3, 0)
     
-    
+    plt.subplot(1, 3, 3)
+    plt.imshow(combined)
+    plt.title("Overlay (R: Lung, B: Heart)")
+    plt.axis('off')
 
-    def visualize_result(self, image_np, pred_mask, save_path=None):
-        """ 시각적 평가: 원본 이미지 위에 폐(Cyan)와 심장(Magenta) 오버레이 """
-        h, w = image_np.shape[:2]
-        # 마스크를 원본 이미지 크기로 복원
-        mask_resized = cv2.resize(pred_mask.astype(np.uint8), (w, h), interpolation=cv2.INTER_NEAREST)
+    plt.tight_layout()
+    plt.show()
 
-        overlay = image_np.copy()
-        # 폐(1) 영역: Cyan색 (B:255, G:255, R:0)
-        overlay[mask_resized == 1] = [0, 255, 255] 
-        # 심장(2) 영역: Magenta색 (B:255, G:0, R:255)
-        overlay[mask_resized == 2] = [255, 0, 255]
+# --- 실행부 ---
+DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+MODEL_FILE = "aws_say2_project/unet_chexmask_best.pth" # 기태님의 베스트 모델 경로
 
-        # 투명도 조절하여 합성
-        alpha = 0.4
-        result = cv2.addWeighted(overlay, alpha, image_np, 1 - alpha, 0)
+# 데이터셋에서 샘플 한 장 경로 지정 (예시)
+SAMPLE_IMG = r"/Users/skku_aws2_15/med/data/Lung Segmentation Data/Test/COVID-19/images/covid_19.png"
 
+<<<<<<< Updated upstream
         plt.figure(figsize=(12, 6))
         plt.subplot(1, 2, 1)
         plt.title("Original X-ray")
@@ -122,3 +129,6 @@ if __name__ == "__main__":
         evaluator.visualize_result(img_np, mask, save_path="eval_result_chexpert.png")
     else:
         print(f"❌ 파일을 찾을 수 없습니다: {TEST_IMAGE_PATH}")
+=======
+test_single_image(MODEL_FILE, SAMPLE_IMG, DEVICE)
+>>>>>>> Stashed changes
