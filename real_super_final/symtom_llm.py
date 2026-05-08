@@ -19,7 +19,6 @@ class BedrockHPOExtractor:
             with open(whitelist_path, 'r', encoding='utf-8') as f:
                 self.hpo_whitelist = json.load(f)
             
-            # 💡 [핵심] "Fatigue" -> "HP:0012378" 형태로 찾을 수 있도록 맵핑 사전을 만듭니다 (모두 소문자로 정규화)
             self.term_to_hpo_map = {term.lower(): hpo_id for hpo_id, term in self.hpo_whitelist.items()}
             
             print(f"✅ 공식 HPO 화이트리스트 로드 및 검색 엔진 초기화 완료 (총 {len(self.hpo_whitelist)}개)")
@@ -35,25 +34,21 @@ class BedrockHPOExtractor:
             
         term_lower = english_term.lower()
         
-        # 1. 완벽하게 100% 일치하는 경우 (Exact Match)
         if term_lower in self.term_to_hpo_map:
             hpo_id = self.term_to_hpo_map[term_lower]
             return hpo_id, self.hpo_whitelist[hpo_id]
             
-        # 2. 스펠링이 살짝 다르거나 비슷한 경우 (Fuzzy Match) - 유사도 80% 이상만 허용
         matches = difflib.get_close_matches(term_lower, self.term_to_hpo_map.keys(), n=1, cutoff=0.8)
         
         if matches:
             best_match = matches[0]
             hpo_id = self.term_to_hpo_map[best_match]
             return hpo_id, self.hpo_whitelist[hpo_id]
-            
-        # 3. 매칭되는 질환이 없는 경우 (예: 외계인 납치 증후군)
+
         return None, None
     
 
     def extract_hpo_from_clinical_note(self, clinical_note: str) -> dict:
-        # 🚀 [프롬프트 고도화] LLM에게 HPO 코드를 생성하지 말라고 지시합니다.
         system_prompt = """
         You are an expert clinical informatician.
         Your task is to analyze clinical notes written in Korean and extract clinical findings.
@@ -96,21 +91,18 @@ class BedrockHPOExtractor:
             extracted_text = json.loads(response.get("body").read())["content"][0]["text"]
             raw_findings = json.loads(extracted_text)
             
-            # 최종 결과물을 담을 구조체
             final_hpo_result = {
                 "positive_hpos": [],
                 "negative_hpos": [],
-                "unmapped_findings": [] # 매핑 실패(환각 또는 비의료어) 분류
+                "unmapped_findings": []
             }
             
             print("🔍 Python Fuzzy Matching 엔진으로 공식 HPO 매핑 중...")
             
-            # Positive / Negative 항목들을 순회하며 파이썬으로 HPO 매핑
             for finding_type, target_key in [("positive_findings", "positive_hpos"), ("negative_findings", "negative_hpos")]:
                 for item in raw_findings.get(finding_type, []):
                     english_term = item.get("english_term", "")
-                    
-                    # 💡 파이썬 매핑 엔진 가동
+                
                     hpo_id, official_term = self._map_term_to_hpo(english_term)
                     
                     if hpo_id:
@@ -118,7 +110,7 @@ class BedrockHPOExtractor:
                             "exact_quote_from_text": item["exact_quote_from_text"],
                             "hpo_id": hpo_id,
                             "official_term": official_term,
-                            "original_translation": english_term # LLM이 번역했던 원본 유지 (디버깅용)
+                            "original_translation": english_term
                         })
                     else:
                         final_hpo_result["unmapped_findings"].append(item)
@@ -129,13 +121,9 @@ class BedrockHPOExtractor:
             print(f"❌ Bedrock API 호출 또는 JSON 파싱 에러: {e}")
             return {"positive_hpos": [], "negative_hpos": [], "unmapped_findings": []}
 
-# =====================================================================
-# 테스트 실행
-# =====================================================================
 if __name__ == "__main__":
     extractor = BedrockHPOExtractor(whitelist_path="aws_say2_project/hpo_whitelist.json")
-    
-    # 의사가 EMR에 입력한 실제와 유사한 한국어 소견서
+
     sample_clinical_note = """
     45세 남성 환자, 최근 2주간 지속되는 만성 피로와 양손 검지/중지 관절통(Arthralgia)으로 내원함. 
     최근 햇빛 노출이 없었음에도 피부가 청동색으로 어두워지는 양상 보임. 
