@@ -1,0 +1,6 @@
+{
+  "session_id": "550e8400-e29b-41d4-a716-446655440000",
+  "patient_id": "P12345",
+  "_comment": "Phase 5 로컬 테스트용 샘플 이벤트 (가상 데이터)",
+  "_note": "실제 실행 시 Orchestrator(Step Functions)가 session_id + patient_id 주입"
+}

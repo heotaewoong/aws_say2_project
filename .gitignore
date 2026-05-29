@@ -1,0 +1,19 @@
+# Model weights / archives (too large for git, >100MB GitHub limit)
+*.pth
+*.pt
+*.onnx
+*.pkl
+*.tar.gz
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Node
+node_modules/
+dist/
+
+# macOS
+.DS_Store

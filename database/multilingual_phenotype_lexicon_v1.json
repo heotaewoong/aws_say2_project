@@ -1,0 +1,5621 @@
+{
+  "_metadata": {
+    "version": "v1.0 multilingual",
+    "date": "2026-04-29",
+    "sources": [
+      "HPO official hp.obo (2026-02-16) — English canonical + synonyms",
+      "korean_hpo_dictionary_v1 — Korean lay terms",
+      "대한의학회 의학용어집 제6집 (2020) — Korean medical terms (KMA standard)",
+      "UpToDate / Harrison's 21st — clinical English + EMR abbreviations"
+    ],
+    "description": "v3.2 audited 170 HP IDs × 4-layer 다국어 lexicon",
+    "principle": "사견 배제 — 모든 출처 공인 표준; 미확정 항목 빈 필드",
+    "stats": {
+      "hp_ids": 170,
+      "total_terms": 1207,
+      "english_terms": 527,
+      "korean_lay": 404,
+      "korean_medical": 241,
+      "abbreviations": 35,
+      "reverse_index_keys": 952
+    }
+  },
+  "lexicon": {
+    "HP:0000458": {
+      "en_canonical": "Anosmia",
+      "en_synonyms": [
+        "Loss of smell",
+        "Lost smell"
+      ],
+      "ko_lay": [
+        "후각 감퇴"
+      ],
+      "ko_medical": [
+        "후각 감퇴",
+        "후각 소실"
+      ],
+      "abbreviations": []
+    },
+    "HP:0000766": {
+      "en_canonical": "Abnormal sternum morphology",
+      "en_synonyms": [
+        "Abnormality of the sternum",
+        "Pectus carinatum or pectus excavatum",
+        "Pectus deformities",
+        "Pectus deformity",
+        "Pectus excavatum or carinatum",
+        "Pectus excavatum or pectus carinatum",
+        "Pectus excavatum/carinatum",
+        "Sternal anomalies"
+      ],
+      "ko_lay": [
+        "흉골 이상"
+      ],
+      "ko_medical": [
+        "흉골 형태 이상"
+      ],
+      "abbreviations": []
+    },
+    "HP:0000767": {
+      "en_canonical": "Pectus excavatum",
+      "en_synonyms": [
+        "Funnel chest"
+      ],
+      "ko_lay": [
+        "pectus excavatum",
+        "오목가슴",
+        "함몰가슴"
+      ],
+      "ko_medical": [
+        "오목가슴",
+        "함몰가슴"
+      ],
+      "abbreviations": []
+    },
+    "HP:0000768": {
+      "en_canonical": "Pectus carinatum",
+      "en_synonyms": [
+        "Pigeon chest"
+      ],
+      "ko_lay": [
+        "pectus carinatum",
+        "새가슴",
+        "튀어나온 가슴"
+      ],
+      "ko_medical": [
+        "돌출가슴",
+        "새가슴"
+      ],
+      "abbreviations": []
+    },
+    "HP:0000961": {
+      "en_canonical": "Cyanosis",
+      "en_synonyms": [
+        "Blue discoloration of the skin",
+        "Central cyanosis"
+      ],
+      "ko_lay": [
+        "cyanosis",
+        "입술 파래짐",
+        "청색증",
+        "파랗게"
+      ],
+      "ko_medical": [
+        "입술 청색증",
+        "청색증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0000975": {
+      "en_canonical": "Hyperhidrosis",
+      "en_synonyms": [
+        "Diaphoresis",
+        "Excessive sweating",
+        "Increased sweating",
+        "Profuse sweating",
+        "Sweating",
+        "Sweating profusely",
+        "Sweating, increased"
+      ],
+      "ko_lay": [
+        "다한증"
+      ],
+      "ko_medical": [
+        "다한증",
+        "발한증가"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001217": {
+      "en_canonical": "Clubbing",
+      "en_synonyms": [
+        "Clubbing of fingers and toes",
+        "Digital clubbing",
+        "Hippocratic fingers"
+      ],
+      "ko_lay": [
+        "clubbing",
+        "곤봉지",
+        "손가락 곤봉"
+      ],
+      "ko_medical": [
+        "곤봉지",
+        "북채손가락"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001254": {
+      "en_canonical": "Lethargy",
+      "en_synonyms": [
+        "Drowsy",
+        "Dullness",
+        "Inaction",
+        "Inactivity",
+        "Languor",
+        "Slowness",
+        "Torpor"
+      ],
+      "ko_lay": [
+        "lethargy",
+        "기면",
+        "잠많음",
+        "졸림"
+      ],
+      "ko_medical": [
+        "기면",
+        "졸음"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001262": {
+      "en_canonical": "Excessive daytime somnolence",
+      "en_synonyms": [
+        "Daytime sleepiness",
+        "Excessive daytime sleepiness",
+        "More than typical sleepiness during day"
+      ],
+      "ko_lay": [
+        "EDS",
+        "daytime sleepiness",
+        "낮 졸림",
+        "주간 졸음"
+      ],
+      "ko_medical": [
+        "주간 졸음",
+        "주간 졸음 과다"
+      ],
+      "abbreviations": [
+        "EDS"
+      ]
+    },
+    "HP:0001279": {
+      "en_canonical": "Syncope",
+      "en_synonyms": [
+        "Fainting spell"
+      ],
+      "ko_lay": [
+        "syncope",
+        "기절",
+        "실신",
+        "쓰러짐"
+      ],
+      "ko_medical": [
+        "기절",
+        "실신"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001289": {
+      "en_canonical": "Confusion",
+      "en_synonyms": [
+        "Altered mental status",
+        "Disorientation",
+        "Easily confused",
+        "Mental disorientation"
+      ],
+      "ko_lay": [
+        "confusion",
+        "의식 혼동",
+        "정신 혼란",
+        "혼동"
+      ],
+      "ko_medical": [
+        "의식 혼동",
+        "혼동"
+      ],
+      "abbreviations": [
+        "AMS"
+      ]
+    },
+    "HP:0001297": {
+      "en_canonical": "Stroke",
+      "en_synonyms": [
+        "Cerebral vascular events",
+        "Cerebrovascular accident",
+        "Cerebrovascular accidents"
+      ],
+      "ko_lay": [
+        "뇌졸중"
+      ],
+      "ko_medical": [
+        "뇌졸중"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001298": {
+      "en_canonical": "Encephalopathy",
+      "en_synonyms": [],
+      "ko_lay": [
+        "뇌병증"
+      ],
+      "ko_medical": [
+        "뇌병증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001324": {
+      "en_canonical": "Muscle weakness",
+      "en_synonyms": [
+        "Muscular weakness"
+      ],
+      "ko_lay": [
+        "근력 저하"
+      ],
+      "ko_medical": [
+        "근력 저하",
+        "근위약"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001541": {
+      "en_canonical": "Ascites",
+      "en_synonyms": [
+        "Accumulation of fluid in the abdomen",
+        "Peritoneal effusion"
+      ],
+      "ko_lay": [
+        "ascites",
+        "배에 물",
+        "복수"
+      ],
+      "ko_medical": [
+        "복수"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001605": {
+      "en_canonical": "Vocal cord paralysis",
+      "en_synonyms": [
+        "Inability to move vocal cords",
+        "Laryngeal paralysis"
+      ],
+      "ko_lay": [
+        "성대 마비"
+      ],
+      "ko_medical": [
+        "성대 마비"
+      ],
+      "abbreviations": [
+        "VCP"
+      ]
+    },
+    "HP:0001638": {
+      "en_canonical": "Cardiomyopathy",
+      "en_synonyms": [
+        "Disease of the heart muscle"
+      ],
+      "ko_lay": [
+        "심근병증"
+      ],
+      "ko_medical": [
+        "심근병증",
+        "심근증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001640": {
+      "en_canonical": "Cardiomegaly",
+      "en_synonyms": [
+        "Enlarged heart",
+        "Increased heart size"
+      ],
+      "ko_lay": [
+        "cardiomegaly",
+        "심비대",
+        "심장 커짐"
+      ],
+      "ko_medical": [
+        "심비대",
+        "심장비대"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001641": {
+      "en_canonical": "Abnormal pulmonary valve morphology",
+      "en_synonyms": [
+        "Abnormality of the pulmonary valve",
+        "Anomaly of the pulmonary valve",
+        "PV abnormality"
+      ],
+      "ko_lay": [
+        "폐동맥판 이상"
+      ],
+      "ko_medical": [
+        "폐동맥판 이상"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001645": {
+      "en_canonical": "Sudden cardiac death",
+      "en_synonyms": [
+        "Premature sudden cardiac death"
+      ],
+      "ko_lay": [
+        "급사"
+      ],
+      "ko_medical": [
+        "급성 심장사",
+        "돌연사"
+      ],
+      "abbreviations": [
+        "SCD"
+      ]
+    },
+    "HP:0001648": {
+      "en_canonical": "Cor pulmonale",
+      "en_synonyms": [],
+      "ko_lay": [
+        "폐성심"
+      ],
+      "ko_medical": [
+        "폐성심",
+        "폐심증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001649": {
+      "en_canonical": "Tachycardia",
+      "en_synonyms": [
+        "Elevated heart rate",
+        "Fast heart rate",
+        "Heart racing",
+        "Increased heart rate",
+        "Racing heart",
+        "Rapid heart beat"
+      ],
+      "ko_lay": [
+        "tachycardia",
+        "맥박 빠름",
+        "빈맥",
+        "심박 빠름"
+      ],
+      "ko_medical": [
+        "빈맥",
+        "빠른맥"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001667": {
+      "en_canonical": "Right ventricular hypertrophy",
+      "en_synonyms": [
+        "Heart right ventricle hypertrophy"
+      ],
+      "ko_lay": [
+        "우심실 비대"
+      ],
+      "ko_medical": [
+        "우심실 비대",
+        "우심실비후"
+      ],
+      "abbreviations": [
+        "RVH"
+      ]
+    },
+    "HP:0001712": {
+      "en_canonical": "Left ventricular hypertrophy",
+      "en_synonyms": [
+        "Heart left ventricle hypertrophy",
+        "Left ventricular wall hypertrophy"
+      ],
+      "ko_lay": [
+        "좌심실 비대"
+      ],
+      "ko_medical": [
+        "좌심실 비대",
+        "좌심실비후"
+      ],
+      "abbreviations": [
+        "LVH"
+      ]
+    },
+    "HP:0001824": {
+      "en_canonical": "Weight loss",
+      "en_synonyms": [
+        "Cachexia",
+        "Loss of weight"
+      ],
+      "ko_lay": [
+        "cachexia",
+        "weight loss",
+        "마름",
+        "체중 감소",
+        "체중 빠짐",
+        "체중감소"
+      ],
+      "ko_medical": [
+        "체중 감소",
+        "체중감소"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001873": {
+      "en_canonical": "Thrombocytopenia",
+      "en_synonyms": [
+        "Low platelet count"
+      ],
+      "ko_lay": [
+        "혈소판 감소"
+      ],
+      "ko_medical": [
+        "혈소판 감소",
+        "혈소판감소증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001880": {
+      "en_canonical": "Increased total eosinophil count",
+      "en_synonyms": [
+        "Eosinophilia",
+        "High blood eosinophil count",
+        "Increased eosinophil count"
+      ],
+      "ko_lay": [
+        "호산구 증가"
+      ],
+      "ko_medical": [
+        "호산구 증가"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001882": {
+      "en_canonical": "Decreased total leukocyte count",
+      "en_synonyms": [
+        "Decreased blood leukocyte number",
+        "Leukopenia",
+        "Low white blood cell count"
+      ],
+      "ko_lay": [
+        "백혈구 감소"
+      ],
+      "ko_medical": [
+        "백혈구 감소",
+        "백혈구감소증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001901": {
+      "en_canonical": "Polycythemia",
+      "en_synonyms": [
+        "Abnormally shaped erythrocytes",
+        "Erythrocytosis",
+        "Increased red blood cells",
+        "Polyglobulia"
+      ],
+      "ko_lay": [
+        "적혈구 증가증"
+      ],
+      "ko_medical": [
+        "다혈구증",
+        "적혈구 증가증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001903": {
+      "en_canonical": "Anemia",
+      "en_synonyms": [
+        "Anaemia",
+        "Decreased haemoglobin",
+        "Decreased hemoglobin",
+        "Low number of red blood cells or haemoglobin",
+        "Low number of red blood cells or hemoglobin"
+      ],
+      "ko_lay": [
+        "만성질환 빈혈"
+      ],
+      "ko_medical": [
+        "빈혈"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001919": {
+      "en_canonical": "Acute kidney injury",
+      "en_synonyms": [
+        "AKI",
+        "Acute kidney failure",
+        "Acute renal failure"
+      ],
+      "ko_lay": [
+        "급성 신손상"
+      ],
+      "ko_medical": [
+        "급성 신손상"
+      ],
+      "abbreviations": [
+        "AKI",
+        "ARF"
+      ]
+    },
+    "HP:0001939": {
+      "en_canonical": "Abnormality of metabolism/homeostasis",
+      "en_synonyms": [
+        "Laboratory abnormality",
+        "Metabolism abnormality"
+      ],
+      "ko_lay": [
+        "이상 대사"
+      ],
+      "ko_medical": [
+        "대사 이상",
+        "항상성 이상"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001941": {
+      "en_canonical": "Acidosis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "산증"
+      ],
+      "ko_medical": [
+        "산증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001942": {
+      "en_canonical": "Metabolic acidosis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "대사성 산증"
+      ],
+      "ko_medical": [
+        "대사성 산증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001945": {
+      "en_canonical": "Fever",
+      "en_synonyms": [
+        "Hyperthermia",
+        "Pyrexia"
+      ],
+      "ko_lay": [
+        "fever",
+        "고열",
+        "발열",
+        "열",
+        "체온 상승"
+      ],
+      "ko_medical": [
+        "발열",
+        "열"
+      ],
+      "abbreviations": []
+    },
+    "HP:0001956": {
+      "en_canonical": "Truncal obesity",
+      "en_synonyms": [
+        "Central obesity",
+        "Centripetal obesity"
+      ],
+      "ko_lay": [
+        "중심성 비만"
+      ],
+      "ko_medical": [
+        "중심성 비만"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002013": {
+      "en_canonical": "Vomiting",
+      "en_synonyms": [
+        "Emesis",
+        "Throwing up"
+      ],
+      "ko_lay": [
+        "vomiting",
+        "구토",
+        "토함"
+      ],
+      "ko_medical": [
+        "구토"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002014": {
+      "en_canonical": "Diarrhea",
+      "en_synonyms": [
+        "Diarrhoea",
+        "Watery stool"
+      ],
+      "ko_lay": [
+        "diarrhea",
+        "묽은 변",
+        "설사"
+      ],
+      "ko_medical": [
+        "설사"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002015": {
+      "en_canonical": "Dysphagia",
+      "en_synonyms": [
+        "Deglutition disorder",
+        "Difficulty swallowing",
+        "Poor swallowing",
+        "Swallowing difficulties",
+        "Swallowing difficulty"
+      ],
+      "ko_lay": [
+        "삼킴 곤란"
+      ],
+      "ko_medical": [],
+      "abbreviations": []
+    },
+    "HP:0002088": {
+      "en_canonical": "Abnormal lung morphology",
+      "en_synonyms": [
+        "Abnormality of lung structure",
+        "Abnormality of the lungs",
+        "Abnormally shaped lung",
+        "Lung disease",
+        "Unusual lung shape"
+      ],
+      "ko_lay": [
+        "비정상 폐 형태",
+        "폐 내 다발성 결절",
+        "폐 형태 이상"
+      ],
+      "ko_medical": [
+        "비정상 폐 형태",
+        "폐 형태 이상"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002090": {
+      "en_canonical": "Pneumonia",
+      "en_synonyms": [],
+      "ko_lay": [
+        "pneumonia",
+        "폐렴"
+      ],
+      "ko_medical": [
+        "폐렴"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002091": {
+      "en_canonical": "Restrictive ventilatory defect",
+      "en_synonyms": [
+        "Restrictive PFT",
+        "Restrictive deficit on pulmonary function testing",
+        "Restrictive deficit on pulmonary function tests",
+        "Restrictive lung disease",
+        "Restrictive respiratory disease",
+        "Restrictive respiratory insufficiency",
+        "Restrictive respiratory syndrome",
+        "Spirometric restriction",
+        "Stiff lung or chest wall causing decreased lung volume"
+      ],
+      "ko_lay": [
+        "제한성 환기장애"
+      ],
+      "ko_medical": [
+        "제한성 폐기능 이상",
+        "제한성 환기장애"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002092": {
+      "en_canonical": "Pulmonary arterial hypertension",
+      "en_synonyms": [
+        "Increased blood pressure in blood vessels of lungs",
+        "Primary pulmonary hypertension",
+        "Pulmonary artery hypertension",
+        "Pulmonary hypertension"
+      ],
+      "ko_lay": [
+        "폐고혈압"
+      ],
+      "ko_medical": [
+        "폐고혈압",
+        "폐동맥성 고혈압"
+      ],
+      "abbreviations": [
+        "PAH"
+      ]
+    },
+    "HP:0002094": {
+      "en_canonical": "Dyspnea",
+      "en_synonyms": [
+        "Abnormal breathing",
+        "Breathing difficulty",
+        "Difficult to breathe",
+        "Difficulty breathing",
+        "Dyspnoea",
+        "Panting",
+        "Shortness of breath",
+        "Trouble breathing"
+      ],
+      "ko_lay": [
+        "SOB",
+        "breathless",
+        "dyspnea",
+        "만성",
+        "숨가쁨",
+        "숨이 차다",
+        "숨참",
+        "점진적",
+        "특히 발작성 야간",
+        "호흡곤란",
+        "호흡곤란 악화"
+      ],
+      "ko_medical": [
+        "숨참",
+        "호흡곤란"
+      ],
+      "abbreviations": [
+        "SOB"
+      ]
+    },
+    "HP:0002097": {
+      "en_canonical": "Emphysema",
+      "en_synonyms": [
+        "Pulmonary emphysema"
+      ],
+      "ko_lay": [
+        "emphysema",
+        "폐가 늘어남",
+        "폐기종"
+      ],
+      "ko_medical": [
+        "폐기종"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002099": {
+      "en_canonical": "Asthma",
+      "en_synonyms": [
+        "Bronchial asthma",
+        "Reactive airway disease"
+      ],
+      "ko_lay": [
+        "asthma",
+        "숨막힘",
+        "천식"
+      ],
+      "ko_medical": [
+        "천식"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002104": {
+      "en_canonical": "Apnea",
+      "en_synonyms": [
+        "Absence of spontaneous respiration",
+        "Apneic episodes",
+        "Apnoea"
+      ],
+      "ko_lay": [
+        "무호흡"
+      ],
+      "ko_medical": [
+        "무호흡"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002105": {
+      "en_canonical": "Hemoptysis",
+      "en_synonyms": [
+        "Coughing blood",
+        "Coughing up blood",
+        "Coughing up blood or blood-stained mucus",
+        "Haemoptysis"
+      ],
+      "ko_lay": [
+        "hemoptysis",
+        "객혈",
+        "피 가래",
+        "피섞인 가래",
+        "혈담"
+      ],
+      "ko_medical": [
+        "객혈",
+        "혈담"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002107": {
+      "en_canonical": "Pneumothorax",
+      "en_synonyms": [
+        "Collapsed lung"
+      ],
+      "ko_lay": [
+        "pneumothorax",
+        "공기가슴증",
+        "기압손상",
+        "기흉"
+      ],
+      "ko_medical": [
+        "공기가슴증",
+        "기흉"
+      ],
+      "abbreviations": [
+        "PTX"
+      ]
+    },
+    "HP:0002110": {
+      "en_canonical": "Bronchiectasis",
+      "en_synonyms": [
+        "Permanent enlargement of the airways of the lungs"
+      ],
+      "ko_lay": [
+        "bronchiectasis",
+        "기관지 늘어남",
+        "기관지확장증"
+      ],
+      "ko_medical": [
+        "기관지늘어남",
+        "기관지확장증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002113": {
+      "en_canonical": "Pulmonary infiltrates",
+      "en_synonyms": [
+        "Lung infiltrates",
+        "Pulmonic infiltration"
+      ],
+      "ko_lay": [
+        "양측 간유리",
+        "케리 라인/박쥐 날개",
+        "폐 침윤"
+      ],
+      "ko_medical": [
+        "폐 침습",
+        "폐 침윤"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002202": {
+      "en_canonical": "Pleural effusion",
+      "en_synonyms": [
+        "Fluid around lungs",
+        "Pleural fluid"
+      ],
+      "ko_lay": [
+        "pleural effusion",
+        "농성",
+        "늑막삼출",
+        "우측 우세",
+        "흉막 삼출"
+      ],
+      "ko_medical": [
+        "흉막 삼출",
+        "흉수"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002204": {
+      "en_canonical": "Pulmonary embolism",
+      "en_synonyms": [
+        "Blood clot in artery of lung"
+      ],
+      "ko_lay": [
+        "PE",
+        "pulmonary embolism",
+        "폐색전",
+        "폐색전증"
+      ],
+      "ko_medical": [
+        "폐색전증"
+      ],
+      "abbreviations": [
+        "PE"
+      ]
+    },
+    "HP:0002206": {
+      "en_canonical": "Pulmonary fibrosis",
+      "en_synonyms": [
+        "Pulmonary scarring"
+      ],
+      "ko_lay": [
+        "pulmonary fibrosis",
+        "폐 섬유화",
+        "폐섬유화"
+      ],
+      "ko_medical": [
+        "폐섬유증",
+        "폐섬유화"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002240": {
+      "en_canonical": "Hepatomegaly",
+      "en_synonyms": [
+        "Enlarged liver"
+      ],
+      "ko_lay": [
+        "hepatomegaly",
+        "간 커짐",
+        "간비대"
+      ],
+      "ko_medical": [
+        "간비대"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002257": {
+      "en_canonical": "Chronic rhinitis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "만성 비염"
+      ],
+      "ko_medical": [
+        "만성 비염"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002277": {
+      "en_canonical": "Horner syndrome",
+      "en_synonyms": [
+        "Horner's syndrome",
+        "Oculosympathetic palsy"
+      ],
+      "ko_lay": [
+        "호너 증후군"
+      ],
+      "ko_medical": [
+        "호너 증후군"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002315": {
+      "en_canonical": "Headache",
+      "en_synonyms": [
+        "Headaches"
+      ],
+      "ko_lay": [
+        "headache",
+        "두통",
+        "머리 아픔",
+        "아침 두통"
+      ],
+      "ko_medical": [
+        "두통"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002575": {
+      "en_canonical": "Tracheoesophageal fistula",
+      "en_synonyms": [
+        "Abnormal connection between trachea and esophagus",
+        "Abnormal connection between trachea and oesophagus"
+      ],
+      "ko_lay": [
+        "기관식도루"
+      ],
+      "ko_medical": [
+        "기관식도루",
+        "식도-기관 누공"
+      ],
+      "abbreviations": [
+        "TEF"
+      ]
+    },
+    "HP:0002615": {
+      "en_canonical": "Hypotension",
+      "en_synonyms": [
+        "Arterial hypotension",
+        "Low BP",
+        "Low blood pressure"
+      ],
+      "ko_lay": [
+        "hypotension",
+        "저혈압",
+        "혈압 낮음"
+      ],
+      "ko_medical": [
+        "저혈압"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002625": {
+      "en_canonical": "Deep venous thrombosis",
+      "en_synonyms": [
+        "Blood clot in a deep vein",
+        "Deep vein thrombosis",
+        "Multiple deep venous thrombosis"
+      ],
+      "ko_lay": [
+        "심부정맥혈전증"
+      ],
+      "ko_medical": [
+        "심부정맥혈전증"
+      ],
+      "abbreviations": [
+        "DVT"
+      ]
+    },
+    "HP:0002643": {
+      "en_canonical": "Neonatal respiratory distress",
+      "en_synonyms": [
+        "Infantile respiratory distress",
+        "Newborn respiratory distress",
+        "Respiratory distress, neonatal"
+      ],
+      "ko_lay": [
+        "NRDS",
+        "neonatal respiratory distress",
+        "신생아 RDS",
+        "신생아 호흡 곤란"
+      ],
+      "ko_medical": [
+        "신생아 호흡곤란"
+      ],
+      "abbreviations": [
+        "NRDS"
+      ]
+    },
+    "HP:0002647": {
+      "en_canonical": "Aortic dissection",
+      "en_synonyms": [
+        "Tear in inner wall of large artery that carries blood away from heart"
+      ],
+      "ko_lay": [
+        "대동맥 박리"
+      ],
+      "ko_medical": [
+        "대동맥 박리"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002664": {
+      "en_canonical": "Neoplasm",
+      "en_synonyms": [
+        "Abnormal tissue mass",
+        "Cancer",
+        "Malignancy",
+        "Neoplasia",
+        "Oncological abnormality",
+        "Oncology",
+        "Tumor",
+        "Tumour"
+      ],
+      "ko_lay": [
+        "악성 종양",
+        "악성 종양 위험",
+        "원발"
+      ],
+      "ko_medical": [
+        "신생물",
+        "악성 종양"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002716": {
+      "en_canonical": "Lymphadenopathy",
+      "en_synonyms": [
+        "Lymph node hyperplasia",
+        "Swollen lymph nodes"
+      ],
+      "ko_lay": [
+        "lymphadenopathy",
+        "림프절 비대",
+        "림프절병증"
+      ],
+      "ko_medical": [
+        "림프절 비대",
+        "림프절병증"
+      ],
+      "abbreviations": [
+        "LAD"
+      ]
+    },
+    "HP:0002721": {
+      "en_canonical": "Immunodeficiency",
+      "en_synonyms": [
+        "Decreased immune function",
+        "Immune deficiency",
+        "Immunocompromised"
+      ],
+      "ko_lay": [
+        "면역결핍"
+      ],
+      "ko_medical": [
+        "면역결핍",
+        "면역저하"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002751": {
+      "en_canonical": "Kyphoscoliosis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "kyphoscoliosis",
+        "척추후측만증"
+      ],
+      "ko_medical": [
+        "척추후측만증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002777": {
+      "en_canonical": "Tracheal stenosis",
+      "en_synonyms": [
+        "Narrowing of windpipe"
+      ],
+      "ko_lay": [
+        "기관 협착"
+      ],
+      "ko_medical": [
+        "기관 협착"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002789": {
+      "en_canonical": "Tachypnea",
+      "en_synonyms": [
+        "Increased respiratory rate or depth of breathing",
+        "Polypnea",
+        "Rapid breathing"
+      ],
+      "ko_lay": [
+        ">60/min",
+        "RR>30",
+        "shortness of breath rapid",
+        "tachypnea",
+        "빠른 호흡",
+        "호흡 빠름"
+      ],
+      "ko_medical": [
+        "빠른 호흡",
+        "호흡빈수"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002790": {
+      "en_canonical": "Neonatal breathing dysregulation",
+      "en_synonyms": [
+        "Impaired breathing in newborn",
+        "Periodic breathing"
+      ],
+      "ko_lay": [
+        "호흡 조절 이상"
+      ],
+      "ko_medical": [
+        "신생아 호흡 조절 이상"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002792": {
+      "en_canonical": "Reduced vital capacity",
+      "en_synonyms": [
+        "Decreased VC",
+        "Decreased vital capacity"
+      ],
+      "ko_lay": [
+        "폐활량 감소"
+      ],
+      "ko_medical": [
+        "폐활량 감소"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002808": {
+      "en_canonical": "Kyphosis",
+      "en_synonyms": [
+        "Gibbus deformity",
+        "Hunched back",
+        "Hyperkyphosis",
+        "Round back"
+      ],
+      "ko_lay": [
+        "후만증"
+      ],
+      "ko_medical": [
+        "척추후만",
+        "후만증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002829": {
+      "en_canonical": "Arthralgia",
+      "en_synonyms": [
+        "Arthralgias",
+        "Arthritic pain",
+        "Joint pain",
+        "Joint pains"
+      ],
+      "ko_lay": [
+        "arthralgia",
+        "관절 아픔",
+        "관절통"
+      ],
+      "ko_medical": [
+        "관절통"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002835": {
+      "en_canonical": "Aspiration",
+      "en_synonyms": [
+        "Pulmonary aspiration"
+      ],
+      "ko_lay": [
+        "흡인"
+      ],
+      "ko_medical": [
+        "흡인"
+      ],
+      "abbreviations": []
+    },
+    "HP:0002870": {
+      "en_canonical": "Obstructive sleep apnea",
+      "en_synonyms": [
+        "Obstructive sleep apnoea"
+      ],
+      "ko_lay": [
+        "OSA",
+        "sleep apnea",
+        "폐쇄성 수면무호흡"
+      ],
+      "ko_medical": [
+        "폐쇄성 수면무호흡"
+      ],
+      "abbreviations": [
+        "OSA"
+      ]
+    },
+    "HP:0002902": {
+      "en_canonical": "Hyponatremia",
+      "en_synonyms": [
+        "Low blood sodium levels",
+        "Low sodium"
+      ],
+      "ko_lay": [
+        "저나트륨혈증"
+      ],
+      "ko_medical": [
+        "저나트륨혈증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0003155": {
+      "en_canonical": "Elevated circulating alkaline phosphatase concentration",
+      "en_synonyms": [
+        "Elevated ALP",
+        "Elevated alkaline phosphatase",
+        "Greatly elevated alkaline phosphatase",
+        "High serum alkaline phosphatase",
+        "Hyperphosphatasemia",
+        "Hyperphosphatasia",
+        "Increased alkaline phosphatase",
+        "Increased serum alkaline phosphatase"
+      ],
+      "ko_lay": [
+        "ALP 상승"
+      ],
+      "ko_medical": [
+        "알칼리 인산분해효소 상승"
+      ],
+      "abbreviations": [
+        "ALP 상승"
+      ]
+    },
+    "HP:0003326": {
+      "en_canonical": "Myalgia",
+      "en_synonyms": [
+        "Muscle ache",
+        "Muscle pain",
+        "Myalgias"
+      ],
+      "ko_lay": [
+        "myalgia",
+        "근육통",
+        "몸살"
+      ],
+      "ko_medical": [
+        "근육통"
+      ],
+      "abbreviations": []
+    },
+    "HP:0003546": {
+      "en_canonical": "Exercise intolerance",
+      "en_synonyms": [
+        "Decreased ability to exercise",
+        "Decreased exercise tolerance",
+        "Inability to exercise",
+        "Low exercise endurance",
+        "Poor exercise tolerance"
+      ],
+      "ko_lay": [
+        "exercise intolerance",
+        "운동 내성 저하",
+        "운동 못함",
+        "운동내성 저하"
+      ],
+      "ko_medical": [
+        "운동 내성 저하",
+        "운동 못함"
+      ],
+      "abbreviations": []
+    },
+    "HP:0004469": {
+      "en_canonical": "Chronic bronchitis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "chronic bronchitis",
+        "만성 기관지",
+        "만성 기관지염"
+      ],
+      "ko_medical": [
+        "만성 기관지염"
+      ],
+      "abbreviations": []
+    },
+    "HP:0005607": {
+      "en_canonical": "Abnormal tracheobronchial morphology",
+      "en_synonyms": [
+        "Tracheobronchial anomalies"
+      ],
+      "ko_lay": [
+        "기관지계 이상"
+      ],
+      "ko_medical": [
+        "기관기관지계 이상"
+      ],
+      "abbreviations": []
+    },
+    "HP:0005946": {
+      "en_canonical": "Ventilator dependence with inability to wean",
+      "en_synonyms": [],
+      "ko_lay": [
+        "이탈 곤란"
+      ],
+      "ko_medical": [
+        "인공호흡기 이탈 곤란"
+      ],
+      "abbreviations": []
+    },
+    "HP:0005972": {
+      "en_canonical": "Respiratory acidosis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "보상",
+        "호흡성 산증"
+      ],
+      "ko_medical": [
+        "호흡성 산증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0006516": {
+      "en_canonical": "Hypersensitivity pneumonitis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "과민성 폐렴"
+      ],
+      "ko_medical": [
+        "과민성 폐렴"
+      ],
+      "abbreviations": [
+        "HP"
+      ]
+    },
+    "HP:0006530": {
+      "en_canonical": "Abnormal pulmonary interstitial morphology",
+      "en_synonyms": [
+        "Abnormal lung parenchyma morphology",
+        "Abnormality in area between air sacs in lung",
+        "ILD pattern",
+        "Interstitial lung disease",
+        "Interstitial pulmonary disease"
+      ],
+      "ko_lay": [
+        "폐 간질 이상"
+      ],
+      "ko_medical": [
+        "폐 간질 이상"
+      ],
+      "abbreviations": []
+    },
+    "HP:0006536": {
+      "en_canonical": "Airway obstruction",
+      "en_synonyms": [
+        "Obstructive lung disease",
+        "Obstructive ventilatory defect",
+        "Pulmonary obstruction"
+      ],
+      "ko_lay": [
+        "기도 폐쇄",
+        "폐쇄성 환기장애"
+      ],
+      "ko_medical": [
+        "기도 폐쇄",
+        "폐쇄성 환기장애"
+      ],
+      "abbreviations": []
+    },
+    "HP:0006538": {
+      "en_canonical": "Recurrent bronchopulmonary infections",
+      "en_synonyms": [
+        "Recurrent bronchopneumonia",
+        "Recurrent infections in bronchi and lungs"
+      ],
+      "ko_lay": [
+        "재발 호흡기 감염",
+        "재발성 호흡기 감염"
+      ],
+      "ko_medical": [
+        "재발성 호흡기 감염"
+      ],
+      "abbreviations": []
+    },
+    "HP:0008755": {
+      "en_canonical": "Laryngotracheomalacia",
+      "en_synonyms": [],
+      "ko_lay": [
+        "후두기관연화증"
+      ],
+      "ko_medical": [
+        "후두기관 연화증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0010310": {
+      "en_canonical": "Chylothorax",
+      "en_synonyms": [],
+      "ko_lay": [
+        "유미흉"
+      ],
+      "ko_medical": [
+        "유미흉"
+      ],
+      "abbreviations": []
+    },
+    "HP:0010535": {
+      "en_canonical": "Sleep apnea",
+      "en_synonyms": [
+        "Pauses in breathing while sleeping",
+        "Sleep apnoea"
+      ],
+      "ko_lay": [
+        "수면무호흡"
+      ],
+      "ko_medical": [
+        "수면무호흡"
+      ],
+      "abbreviations": []
+    },
+    "HP:0010536": {
+      "en_canonical": "Central sleep apnea",
+      "en_synonyms": [
+        "Central sleep apnoea"
+      ],
+      "ko_lay": [
+        "중추성 수면무호흡"
+      ],
+      "ko_medical": [
+        "중추성 수면무호흡"
+      ],
+      "abbreviations": [
+        "CSA"
+      ]
+    },
+    "HP:0010959": {
+      "en_canonical": "Congenital pulmonary airway malformation",
+      "en_synonyms": [
+        "CCAM",
+        "Congenital cystic adenomatoid malformation",
+        "Congenital cystic adenomatoid malformation of the lung",
+        "Congenital cystic disease of the lung",
+        "Cystic adenomatoid lung disease"
+      ],
+      "ko_lay": [
+        "선천성 폐기도 기형"
+      ],
+      "ko_medical": [
+        "선천성 폐기도기형"
+      ],
+      "abbreviations": [
+        "CCAM",
+        "CPAM"
+      ]
+    },
+    "HP:0011024": {
+      "en_canonical": "Abnormality of the gastrointestinal tract",
+      "en_synonyms": [
+        "Abnormality of the GI tract",
+        "Digestive system disease",
+        "Gastrointestinal disease"
+      ],
+      "ko_lay": [
+        "소화기 증상",
+        "소화기계 이상"
+      ],
+      "ko_medical": [
+        "소화기계 이상"
+      ],
+      "abbreviations": []
+    },
+    "HP:0011031": {
+      "en_canonical": "Abnormality of iron homeostasis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "철 항상성 이상"
+      ],
+      "ko_medical": [
+        "철 항상성 이상"
+      ],
+      "abbreviations": []
+    },
+    "HP:0011109": {
+      "en_canonical": "Chronic sinusitis",
+      "en_synonyms": [
+        "Chronic sinus disease",
+        "Sinusitis, chronic"
+      ],
+      "ko_lay": [
+        "chronic sinusitis",
+        "만성 부비동염",
+        "부비동염",
+        "축농증"
+      ],
+      "ko_medical": [
+        "만성 부비동염"
+      ],
+      "abbreviations": []
+    },
+    "HP:0011110": {
+      "en_canonical": "Recurrent tonsillitis",
+      "en_synonyms": [
+        "Recurrent inflammation of tonsils"
+      ],
+      "ko_lay": [
+        "재발 편도염"
+      ],
+      "ko_medical": [
+        "재발성 편도염"
+      ],
+      "abbreviations": []
+    },
+    "HP:0011675": {
+      "en_canonical": "Arrhythmia",
+      "en_synonyms": [
+        "Abnormal heart rate",
+        "Arrhythmias",
+        "Cardiac arrhythmia",
+        "Cardiac arrhythmias",
+        "Cardiac rhythm disturbances",
+        "Dysrhythmia",
+        "Heart rhythm disorders",
+        "Irregular heart beat",
+        "Irregular heartbeat"
+      ],
+      "ko_lay": [
+        "부정맥"
+      ],
+      "ko_medical": [
+        "부정맥"
+      ],
+      "abbreviations": []
+    },
+    "HP:0011919": {
+      "en_canonical": "Pleural empyema",
+      "en_synonyms": [
+        "Empyema",
+        "Pyothorax"
+      ],
+      "ko_lay": [
+        "empyema",
+        "고름가슴",
+        "농흉"
+      ],
+      "ko_medical": [
+        "고름가슴",
+        "농흉"
+      ],
+      "abbreviations": []
+    },
+    "HP:0011947": {
+      "en_canonical": "Respiratory tract infection",
+      "en_synonyms": [
+        "Respiratory infection",
+        "Respiratory infections"
+      ],
+      "ko_lay": [
+        "post-obstructive",
+        "감염성 원인",
+        "상기도 감염",
+        "재발성 호흡기 감염",
+        "트리거",
+        "호흡기 감염",
+        "호흡기 염증"
+      ],
+      "ko_medical": [
+        "호흡기 감염"
+      ],
+      "abbreviations": [
+        "RTI"
+      ]
+    },
+    "HP:0011950": {
+      "en_canonical": "Bronchiolitis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "세기관지염"
+      ],
+      "ko_medical": [
+        "세기관지염"
+      ],
+      "abbreviations": []
+    },
+    "HP:0011951": {
+      "en_canonical": "Aspiration pneumonia",
+      "en_synonyms": [],
+      "ko_lay": [
+        "흡인성 폐렴"
+      ],
+      "ko_medical": [
+        "흡인성 폐렴",
+        "흡인폐렴"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012122": {
+      "en_canonical": "Anterior uveitis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "전방 포도막염"
+      ],
+      "ko_medical": [
+        "전방 포도막염"
+      ],
+      "abbreviations": [
+        "AAU"
+      ]
+    },
+    "HP:0012219": {
+      "en_canonical": "Erythema nodosum",
+      "en_synonyms": [],
+      "ko_lay": [
+        "erythema nodosum",
+        "결절성 홍반",
+        "에리테마 노도숨"
+      ],
+      "ko_medical": [
+        "결절성 홍반"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012220": {
+      "en_canonical": "Non-caseating epithelioid cell granulomatosis",
+      "en_synonyms": [
+        "Non-caseating granuloma"
+      ],
+      "ko_lay": [
+        "비건락성 육아종"
+      ],
+      "ko_medical": [
+        "비건락성 육아종",
+        "비괴사성 육아종"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012236": {
+      "en_canonical": "Elevated sweat chloride",
+      "en_synonyms": [
+        "Elevated sweat Cl",
+        "Elevated sweat Cl-"
+      ],
+      "ko_lay": [
+        "땀 염소 상승"
+      ],
+      "ko_medical": [
+        "땀 염소 상승"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012378": {
+      "en_canonical": "Fatigue",
+      "en_synonyms": [
+        "Malaise",
+        "Tired",
+        "Tiredness"
+      ],
+      "ko_lay": [
+        "asthenia",
+        "fatigue",
+        "무력감",
+        "쇠약",
+        "피로"
+      ],
+      "ko_medical": [
+        "권태감",
+        "피로"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012387": {
+      "en_canonical": "Bronchitis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "bronchitis",
+        "기관지 염증",
+        "기관지염"
+      ],
+      "ko_medical": [
+        "기관지염"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012388": {
+      "en_canonical": "Acute bronchitis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "급성 기관지염"
+      ],
+      "ko_medical": [
+        "급성 기관지염"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012393": {
+      "en_canonical": "Allergy",
+      "en_synonyms": [
+        "Atopy"
+      ],
+      "ko_lay": [
+        "알레르기"
+      ],
+      "ko_medical": [
+        "알레르기"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012398": {
+      "en_canonical": "Peripheral edema",
+      "en_synonyms": [
+        "LE edema",
+        "Lower extremity edema",
+        "Peripheral oedema"
+      ],
+      "ko_lay": [
+        "peripheral edema",
+        "다리 부음",
+        "말초 부종",
+        "손발 부음"
+      ],
+      "ko_medical": [
+        "말초 부종",
+        "하지 부종"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012415": {
+      "en_canonical": "Abnormal blood gas level",
+      "en_synonyms": [
+        "ABG abnormality"
+      ],
+      "ko_lay": [
+        "동맥혈가스 이상"
+      ],
+      "ko_medical": [
+        "혈액가스 검사 이상"
+      ],
+      "abbreviations": [
+        "ABG 이상"
+      ]
+    },
+    "HP:0012416": {
+      "en_canonical": "Hypercapnia",
+      "en_synonyms": [
+        "High CO2",
+        "High blood carbon dioxide level",
+        "Hypercarbia"
+      ],
+      "ko_lay": [
+        "CO2 축적",
+        "PaCO2>45",
+        "PaCO2>45 만성",
+        "hypercapnia",
+        "고탄산혈증",
+        "이산화탄소 상승"
+      ],
+      "ko_medical": [
+        "고탄산혈증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012418": {
+      "en_canonical": "Hypoxemia",
+      "en_synonyms": [
+        "Hypoxia",
+        "Low SpO2",
+        "Low blood oxygen level",
+        "Low oxygen"
+      ],
+      "ko_lay": [
+        "PaO2<60",
+        "PaO2<60 만성",
+        "SpO2 저하",
+        "hypoxemia",
+        "불응성",
+        "산소 부족",
+        "운동시 우세",
+        "저산소혈증"
+      ],
+      "ko_medical": [
+        "저산소혈증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012722": {
+      "en_canonical": "Heart block",
+      "en_synonyms": [
+        "AV block"
+      ],
+      "ko_lay": [
+        "심차단"
+      ],
+      "ko_medical": [
+        "방실차단",
+        "심차단"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012727": {
+      "en_canonical": "Thoracic aortic aneurysm",
+      "en_synonyms": [
+        "Dilatation of the thoracic aorta"
+      ],
+      "ko_lay": [
+        "흉부 대동맥류"
+      ],
+      "ko_medical": [
+        "흉부 대동맥류"
+      ],
+      "abbreviations": [
+        "TAA"
+      ]
+    },
+    "HP:0012735": {
+      "en_canonical": "Cough",
+      "en_synonyms": [
+        "Coughing"
+      ],
+      "ko_lay": [
+        "<3주",
+        "dry cough",
+        "건성",
+        "급성 기침",
+        "기침",
+        "기침 악화",
+        "만성 건성 기침",
+        "만성 기침",
+        "변화",
+        "주로 건조",
+        "코프(cough)",
+        "콜록",
+        "해수"
+      ],
+      "ko_medical": [
+        "기침",
+        "해수(咳嗽)"
+      ],
+      "abbreviations": []
+    },
+    "HP:0012764": {
+      "en_canonical": "Orthopnea",
+      "en_synonyms": [
+        "Orthopnoea"
+      ],
+      "ko_lay": [
+        "기좌호흡"
+      ],
+      "ko_medical": [
+        "기좌호흡"
+      ],
+      "abbreviations": []
+    },
+    "HP:0020102": {
+      "en_canonical": "Pneumocystis jirovecii pneumonia",
+      "en_synonyms": [
+        "Pneumocystis carinii pneumonia",
+        "Pneumocystis pneumonia"
+      ],
+      "ko_lay": [
+        "PCP 폐렴"
+      ],
+      "ko_medical": [
+        "폐포자충 폐렴"
+      ],
+      "abbreviations": [
+        "PCP"
+      ]
+    },
+    "HP:0025044": {
+      "en_canonical": "Lung abscess",
+      "en_synonyms": [],
+      "ko_lay": [
+        "lung abscess",
+        "폐 농양",
+        "폐고름"
+      ],
+      "ko_medical": [
+        "폐 농양",
+        "폐고름집"
+      ],
+      "abbreviations": []
+    },
+    "HP:0025143": {
+      "en_canonical": "Chills",
+      "en_synonyms": [
+        "Chill"
+      ],
+      "ko_lay": [
+        "chill",
+        "오한",
+        "전율",
+        "추위"
+      ],
+      "ko_medical": [
+        "오한"
+      ],
+      "abbreviations": []
+    },
+    "HP:0025145": {
+      "en_canonical": "Rigors",
+      "en_synonyms": [
+        "Rigours",
+        "Shaking chills"
+      ],
+      "ko_lay": [
+        "rigor",
+        "경직",
+        "고열 떨림",
+        "오한 떨림",
+        "한기 떨림"
+      ],
+      "ko_medical": [
+        "오한 떨림",
+        "한기 떨림"
+      ],
+      "abbreviations": []
+    },
+    "HP:0025175": {
+      "en_canonical": "Honeycomb lung",
+      "en_synonyms": [
+        "Honeycomb cysts",
+        "Honeycombing"
+      ],
+      "ko_lay": [
+        "honeycomb lung",
+        "벌집 모양 폐",
+        "벌집폐"
+      ],
+      "ko_medical": [
+        "벌집 모양 폐",
+        "벌집폐"
+      ],
+      "abbreviations": []
+    },
+    "HP:0025179": {
+      "en_canonical": "Ground-glass opacification",
+      "en_synonyms": [
+        "GGO",
+        "Ground glass opacities",
+        "Ground-glass opacification on pulmonary HRCT",
+        "Ground-glass opacity"
+      ],
+      "ko_lay": [
+        "간유리 음영"
+      ],
+      "ko_medical": [
+        "간유리 음영"
+      ],
+      "abbreviations": [
+        "GGO"
+      ]
+    },
+    "HP:0025199": {
+      "en_canonical": "Fragmented sleep",
+      "en_synonyms": [
+        "Broken sleep",
+        "Fitful sleep",
+        "Interrupted sleep",
+        "Restless sleep"
+      ],
+      "ko_lay": [
+        "수면 분절"
+      ],
+      "ko_medical": [
+        "수면 단절",
+        "수면 분절"
+      ],
+      "abbreviations": []
+    },
+    "HP:0025267": {
+      "en_canonical": "Snoring",
+      "en_synonyms": [
+        "Snore",
+        "Snores",
+        "Snoring symptoms"
+      ],
+      "ko_lay": [
+        "snore",
+        "snoring",
+        "소리내며 잠",
+        "코골이"
+      ],
+      "ko_medical": [
+        "코골이"
+      ],
+      "abbreviations": []
+    },
+    "HP:0025372": {
+      "en_canonical": "Loud snoring",
+      "en_synonyms": [
+        "Has loud snoring",
+        "Have loud snoring",
+        "Heavy snoring",
+        "Snores loudly"
+      ],
+      "ko_lay": [
+        "심한 코골이"
+      ],
+      "ko_medical": [
+        "심한 코골이"
+      ],
+      "abbreviations": []
+    },
+    "HP:0025439": {
+      "en_canonical": "Pharyngitis",
+      "en_synonyms": [
+        "Sore throat"
+      ],
+      "ko_lay": [
+        "pharyngitis",
+        "sore throat",
+        "목 아픔",
+        "인후통"
+      ],
+      "ko_medical": [
+        "인두염",
+        "인후염"
+      ],
+      "abbreviations": []
+    },
+    "HP:0030166": {
+      "en_canonical": "Night sweats",
+      "en_synonyms": [
+        "Nocturnal diaphoresis",
+        "Nocturnal hyperhidrosis"
+      ],
+      "ko_lay": [
+        "night sweats",
+        "밤땀",
+        "야간 다한증",
+        "야간 발한",
+        "자다 식은땀"
+      ],
+      "ko_medical": [
+        "밤땀",
+        "야간 발한"
+      ],
+      "abbreviations": []
+    },
+    "HP:0030250": {
+      "en_canonical": "Pulmonary granulomatosis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "폐 육아종증"
+      ],
+      "ko_medical": [
+        "폐 육아종증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0030812": {
+      "en_canonical": "Enlarged tonsils",
+      "en_synonyms": [
+        "Enlargement of tonsils",
+        "Tonsillar hypertrophy",
+        "tonsils large/hypertrophy"
+      ],
+      "ko_lay": [
+        "enlarged tonsils",
+        "tonsillar hypertrophy",
+        "편도 비대"
+      ],
+      "ko_medical": [
+        "편도 비대"
+      ],
+      "abbreviations": []
+    },
+    "HP:0030828": {
+      "en_canonical": "Wheezing",
+      "en_synonyms": [
+        "Wheeze"
+      ],
+      "ko_lay": [
+        "wheeze",
+        "심장성 천명",
+        "쌕쌕거림",
+        "천명",
+        "천명음"
+      ],
+      "ko_medical": [
+        "쌕쌕거림",
+        "천명",
+        "천명음"
+      ],
+      "abbreviations": []
+    },
+    "HP:0030829": {
+      "en_canonical": "Abnormal breath sound",
+      "en_synonyms": [
+        "Abnormal breath sounds",
+        "Abnormal lung auscultation finding",
+        "Decreased breath sounds"
+      ],
+      "ko_lay": [
+        "감소",
+        "이상 호흡음"
+      ],
+      "ko_medical": [
+        "이상 호흡음",
+        "호흡음 감소"
+      ],
+      "abbreviations": []
+    },
+    "HP:0030830": {
+      "en_canonical": "Crackles",
+      "en_synonyms": [
+        "Crepitations",
+        "Rales"
+      ],
+      "ko_lay": [
+        "crackle",
+        "rale",
+        "velcro",
+        "수포음",
+        "양측 기저부",
+        "크래클",
+        "폐포음"
+      ],
+      "ko_medical": [
+        "거품소리",
+        "수포음"
+      ],
+      "abbreviations": []
+    },
+    "HP:0030831": {
+      "en_canonical": "Rhonchi",
+      "en_synonyms": [
+        "Coarse crackles"
+      ],
+      "ko_lay": [
+        "rhonchi",
+        "건성수포음",
+        "저음성 호흡잡음"
+      ],
+      "ko_medical": [
+        "건성수포음",
+        "저음성 호흡잡음"
+      ],
+      "abbreviations": []
+    },
+    "HP:0030864": {
+      "en_canonical": "Intercostal retractions",
+      "en_synonyms": [
+        "Chest retractions"
+      ],
+      "ko_lay": [
+        "늑간 함몰"
+      ],
+      "ko_medical": [
+        "늑간 함몰"
+      ],
+      "abbreviations": []
+    },
+    "HP:0030877": {
+      "en_canonical": "Reduced FEV1/FVC ratio",
+      "en_synonyms": [
+        "Decreased FEV1/FVC",
+        "Obstructive deficit on pulmonary function test",
+        "Obstructive deficit on pulmonary function testing"
+      ],
+      "ko_lay": [
+        "FEV1/FVC 감소"
+      ],
+      "ko_medical": [
+        "FEV1/FVC 감소"
+      ],
+      "abbreviations": []
+    },
+    "HP:0031035": {
+      "en_canonical": "Chronic infection",
+      "en_synonyms": [],
+      "ko_lay": [
+        "만성 감염"
+      ],
+      "ko_medical": [
+        "만성 감염"
+      ],
+      "abbreviations": []
+    },
+    "HP:0031041": {
+      "en_canonical": "Obstruction of the superior vena cava",
+      "en_synonyms": [
+        "SVC syndrome",
+        "Superior vena cava obstruction",
+        "Superior vena cava syndrome"
+      ],
+      "ko_lay": [
+        "상대정맥 폐쇄"
+      ],
+      "ko_medical": [
+        "상대정맥 폐쇄"
+      ],
+      "abbreviations": []
+    },
+    "HP:0031417": {
+      "en_canonical": "Rhinorrhea",
+      "en_synonyms": [
+        "Nasal Discharge",
+        "Runny Nose",
+        "Runny nose"
+      ],
+      "ko_lay": [
+        "rhinorrhea",
+        "runny nose",
+        "비루",
+        "콧물",
+        "콧물 흐름"
+      ],
+      "ko_medical": [
+        "비루",
+        "콧물"
+      ],
+      "abbreviations": []
+    },
+    "HP:0031950": {
+      "en_canonical": "Usual interstitial pneumonia",
+      "en_synonyms": [],
+      "ko_lay": [
+        "UIP",
+        "보통 간질성 폐렴"
+      ],
+      "ko_medical": [
+        "보통 간질성 폐렴"
+      ],
+      "abbreviations": [
+        "UIP"
+      ]
+    },
+    "HP:0032071": {
+      "en_canonical": "Eosinophilic pneumonia",
+      "en_synonyms": [
+        "Eosinophilic pulmonary infiltration",
+        "Pulmonary eosinophilia",
+        "Pulmonary eosinophilic infiltrate",
+        "Pulmonary eosinophilic infiltration"
+      ],
+      "ko_lay": [
+        "호산구성 폐렴"
+      ],
+      "ko_medical": [
+        "호산구성 폐렴"
+      ],
+      "abbreviations": []
+    },
+    "HP:0032177": {
+      "en_canonical": "Parenchymal consolidation",
+      "en_synonyms": [
+        "Lung consolidation"
+      ],
+      "ko_lay": [
+        "폐실질 경화"
+      ],
+      "ko_medical": [
+        "경화",
+        "폐실질 경화"
+      ],
+      "abbreviations": []
+    },
+    "HP:0032933": {
+      "en_canonical": "Airway hyperresponsiveness",
+      "en_synonyms": [
+        "Bronchial hyperresponsiveness"
+      ],
+      "ko_lay": [
+        "기관지 과민반응"
+      ],
+      "ko_medical": [
+        "기관지 과민반응",
+        "기도 과민반응"
+      ],
+      "abbreviations": [
+        "BHR"
+      ]
+    },
+    "HP:0032969": {
+      "en_canonical": "Traction bronchiectasis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "견인성 기관지확장증"
+      ],
+      "ko_medical": [
+        "견인성 기관지확장증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0033166": {
+      "en_canonical": "Recurrent viral upper respiratory tract infections",
+      "en_synonyms": [
+        "Recurrent viral URI"
+      ],
+      "ko_lay": [
+        "재발 URI"
+      ],
+      "ko_medical": [
+        "재발성 바이러스성 상기도 감염"
+      ],
+      "abbreviations": []
+    },
+    "HP:0033255": {
+      "en_canonical": "Congenital lobar overinflation",
+      "en_synonyms": [
+        "Congenital lobar emphysema"
+      ],
+      "ko_lay": [
+        "선천성 폐엽 과확장"
+      ],
+      "ko_medical": [
+        "선천성 폐엽 과확장"
+      ],
+      "abbreviations": []
+    },
+    "HP:0033398": {
+      "en_canonical": "Pleural plaque",
+      "en_synonyms": [],
+      "ko_lay": [
+        "흉막판"
+      ],
+      "ko_medical": [
+        "흉막판"
+      ],
+      "abbreviations": []
+    },
+    "HP:0033534": {
+      "en_canonical": "Increased circulating brain natriuretic peptide concentration",
+      "en_synonyms": [
+        "Elevated B-type natriuretic peptide",
+        "Elevated circulating BNP concentration",
+        "Increased B-type natriuretic peptide",
+        "Increased BNP",
+        "Increased ventricular natriuretic peptide"
+      ],
+      "ko_lay": [
+        "혈청 BNP 상승"
+      ],
+      "ko_medical": [],
+      "abbreviations": [
+        "BNP 상승"
+      ]
+    },
+    "HP:0033539": {
+      "en_canonical": "Bilateral apical pulmonary fibrosis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "상엽 폐섬유화"
+      ],
+      "ko_medical": [
+        "상엽 폐섬유화",
+        "양측 상엽 섬유화"
+      ],
+      "abbreviations": []
+    },
+    "HP:0033578": {
+      "en_canonical": "Pre-capillary pulmonary hypertension",
+      "en_synonyms": [
+        "Precapillary pulmonary hypertension"
+      ],
+      "ko_lay": [
+        "전모세관 폐고혈압",
+        "폐고혈압"
+      ],
+      "ko_medical": [
+        "전모세관 폐고혈압"
+      ],
+      "abbreviations": []
+    },
+    "HP:0033635": {
+      "en_canonical": "Post-capillary pulmonary hypertension",
+      "en_synonyms": [
+        "Postcapillary pulmonary hypertension"
+      ],
+      "ko_lay": [
+        "후모세관 폐고혈압"
+      ],
+      "ko_medical": [
+        "후모세관 폐고혈압"
+      ],
+      "abbreviations": []
+    },
+    "HP:0033655": {
+      "en_canonical": "Pulmonary cavity",
+      "en_synonyms": [
+        "Cavitating lesion",
+        "Lung cavitation",
+        "Pulmonary cavern",
+        "Pulmonary cavitation"
+      ],
+      "ko_lay": [
+        "폐 공동"
+      ],
+      "ko_medical": [
+        "공동",
+        "폐 공동"
+      ],
+      "abbreviations": []
+    },
+    "HP:0033677": {
+      "en_canonical": "Acute respiratory distress syndrome",
+      "en_synonyms": [
+        "ARDS"
+      ],
+      "ko_lay": [
+        "ARDS",
+        "ARDS-like",
+        "급성 호흡곤란",
+        "급성 호흡곤란증후군"
+      ],
+      "ko_medical": [
+        "급성 호흡곤란증후군"
+      ],
+      "abbreviations": [
+        "ARDS"
+      ]
+    },
+    "HP:0033709": {
+      "en_canonical": "Increased sputum production",
+      "en_synonyms": [
+        "Increased phlegm",
+        "Increased sputum",
+        "Sputum production"
+      ],
+      "ko_lay": [
+        "sputum",
+        "가래",
+        "객담",
+        "객담 증가",
+        "거품 객담",
+        "대량 객담",
+        "만성 객담"
+      ],
+      "ko_medical": [
+        "객담 증가",
+        "객담배출 증가"
+      ],
+      "abbreviations": []
+    },
+    "HP:0033771": {
+      "en_canonical": "Pleuritic chest pain",
+      "en_synonyms": [
+        "Pleuritic pain"
+      ],
+      "ko_lay": [
+        "pleuritic pain",
+        "급성",
+        "숨쉴때 가슴통증",
+        "흉막성 흉통",
+        "흉막통증"
+      ],
+      "ko_medical": [
+        "흉막성 흉통",
+        "흉막통"
+      ],
+      "abbreviations": []
+    },
+    "HP:0033823": {
+      "en_canonical": "Mediastinal mass",
+      "en_synonyms": [],
+      "ko_lay": [
+        "영상",
+        "종격동 종괴"
+      ],
+      "ko_medical": [
+        "종격동 종괴"
+      ],
+      "abbreviations": []
+    },
+    "HP:0034032": {
+      "en_canonical": "Central cyanosis",
+      "en_synonyms": [],
+      "ko_lay": [
+        "중심성 청색증"
+      ],
+      "ko_medical": [
+        "중심성 청색증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0034388": {
+      "en_canonical": "Hilar lymph node enlargement",
+      "en_synonyms": [
+        "Bilateral hilar lymphadenopathy",
+        "Hilar adenopathy",
+        "Hilar lymphadenopathy"
+      ],
+      "ko_lay": [
+        "BHL",
+        "hilar lymphadenopathy",
+        "양측 폐문 림프절",
+        "폐문 림프절 비대"
+      ],
+      "ko_medical": [
+        "양측 폐문 림프절",
+        "폐문 림프절 비대"
+      ],
+      "abbreviations": [
+        "BHL"
+      ]
+    },
+    "HP:0034777": {
+      "en_canonical": "Purulent sputum",
+      "en_synonyms": [
+        "Purulent expectoration"
+      ],
+      "ko_lay": [
+        "rust-colored sputum",
+        "노란 가래",
+        "녹색 가래",
+        "녹슨 가래",
+        "농가래",
+        "농성 객담",
+        "색 변화",
+        "악취",
+        "초록색 가래"
+      ],
+      "ko_medical": [
+        "농성 객담",
+        "화농성 가래"
+      ],
+      "abbreviations": []
+    },
+    "HP:0034807": {
+      "en_canonical": "Paroxysmal nocturnal dyspnea",
+      "en_synonyms": [],
+      "ko_lay": [
+        "발작성 야간 호흡곤란"
+      ],
+      "ko_medical": [
+        "발작성 야간 호흡곤란"
+      ],
+      "abbreviations": [
+        "PND"
+      ]
+    },
+    "HP:0040261": {
+      "en_canonical": "Increased size of nasopharyngeal adenoids",
+      "en_synonyms": [
+        "Adenoid hypertrophy",
+        "Adenoids large"
+      ],
+      "ko_lay": [
+        "adenoid hypertrophy",
+        "아데노이드 비대"
+      ],
+      "ko_medical": [
+        "아데노이드 비대"
+      ],
+      "abbreviations": []
+    },
+    "HP:0045051": {
+      "en_canonical": "Decreased DLCO",
+      "en_synonyms": [
+        "Decreased diffusing capacity",
+        "Reduced diffusing capacity"
+      ],
+      "ko_lay": [
+        "DLCO 감소"
+      ],
+      "ko_medical": [
+        "DLCO 감소",
+        "확산능 감소"
+      ],
+      "abbreviations": []
+    },
+    "HP:0100026": {
+      "en_canonical": "Arteriovenous malformation",
+      "en_synonyms": [],
+      "ko_lay": [
+        "동정맥 기형"
+      ],
+      "ko_medical": [
+        "동정맥 기형"
+      ],
+      "abbreviations": [
+        "AVM"
+      ]
+    },
+    "HP:0100522": {
+      "en_canonical": "Thymoma",
+      "en_synonyms": [],
+      "ko_lay": [
+        "흉선종"
+      ],
+      "ko_medical": [
+        "흉선종"
+      ],
+      "abbreviations": []
+    },
+    "HP:0100598": {
+      "en_canonical": "Pulmonary edema",
+      "en_synonyms": [
+        "Excess fluid in lungs",
+        "Lung edema",
+        "Lung oedema",
+        "Pulmonary oedema",
+        "Wet lung"
+      ],
+      "ko_lay": [
+        "pulmonary edema",
+        "비심인성",
+        "폐 부종",
+        "폐부종"
+      ],
+      "ko_medical": [
+        "폐부종"
+      ],
+      "abbreviations": []
+    },
+    "HP:0100632": {
+      "en_canonical": "Pulmonary sequestration",
+      "en_synonyms": [
+        "Bronchopulmonary sequestration",
+        "Cystic lung lesion"
+      ],
+      "ko_lay": [
+        "폐격리증"
+      ],
+      "ko_medical": [
+        "폐격리증"
+      ],
+      "abbreviations": []
+    },
+    "HP:0100749": {
+      "en_canonical": "Chest pain",
+      "en_synonyms": [
+        "Chest discomfort",
+        "Thoracic pain"
+      ],
+      "ko_lay": [
+        "chest pain",
+        "가슴아픔",
+        "가슴통증",
+        "흉부 압박감",
+        "흉통"
+      ],
+      "ko_medical": [
+        "가슴통증",
+        "흉통"
+      ],
+      "abbreviations": []
+    },
+    "HP:0100750": {
+      "en_canonical": "Atelectasis",
+      "en_synonyms": [
+        "Lung collapse",
+        "Partial or complete collapse of part or entire lung",
+        "Pulmonary atelectasis"
+      ],
+      "ko_lay": [
+        "무기폐"
+      ],
+      "ko_medical": [
+        "무기폐",
+        "폐허탈"
+      ],
+      "abbreviations": []
+    },
+    "HP:4000111": {
+      "en_canonical": "Asbestos exposure",
+      "en_synonyms": [],
+      "ko_lay": [
+        "석면 노출"
+      ],
+      "ko_medical": [
+        "석면 노출"
+      ],
+      "abbreviations": []
+    },
+    "HP:6000192": {
+      "en_canonical": "Silica dust exposure",
+      "en_synonyms": [],
+      "ko_lay": [
+        "규폐 분진 노출"
+      ],
+      "ko_medical": [
+        "규소 분진 노출",
+        "실리카 노출"
+      ],
+      "abbreviations": []
+    }
+  },
+  "term_to_hp": {
+    "anosmia": [
+      "HP:0000458"
+    ],
+    "loss of smell": [
+      "HP:0000458"
+    ],
+    "lost smell": [
+      "HP:0000458"
+    ],
+    "후각 감퇴": [
+      "HP:0000458"
+    ],
+    "후각 소실": [
+      "HP:0000458"
+    ],
+    "abnormal sternum morphology": [
+      "HP:0000766"
+    ],
+    "abnormality of the sternum": [
+      "HP:0000766"
+    ],
+    "pectus carinatum or pectus excavatum": [
+      "HP:0000766"
+    ],
+    "pectus deformities": [
+      "HP:0000766"
+    ],
+    "pectus deformity": [
+      "HP:0000766"
+    ],
+    "pectus excavatum or carinatum": [
+      "HP:0000766"
+    ],
+    "pectus excavatum or pectus carinatum": [
+      "HP:0000766"
+    ],
+    "pectus excavatum/carinatum": [
+      "HP:0000766"
+    ],
+    "sternal anomalies": [
+      "HP:0000766"
+    ],
+    "흉골 이상": [
+      "HP:0000766"
+    ],
+    "흉골 형태 이상": [
+      "HP:0000766"
+    ],
+    "pectus excavatum": [
+      "HP:0000767"
+    ],
+    "funnel chest": [
+      "HP:0000767"
+    ],
+    "오목가슴": [
+      "HP:0000767"
+    ],
+    "함몰가슴": [
+      "HP:0000767"
+    ],
+    "pectus carinatum": [
+      "HP:0000768"
+    ],
+    "pigeon chest": [
+      "HP:0000768"
+    ],
+    "새가슴": [
+      "HP:0000768"
+    ],
+    "튀어나온 가슴": [
+      "HP:0000768"
+    ],
+    "돌출가슴": [
+      "HP:0000768"
+    ],
+    "cyanosis": [
+      "HP:0000961"
+    ],
+    "blue discoloration of the skin": [
+      "HP:0000961"
+    ],
+    "central cyanosis": [
+      "HP:0000961",
+      "HP:0034032"
+    ],
+    "입술 파래짐": [
+      "HP:0000961"
+    ],
+    "청색증": [
+      "HP:0000961"
+    ],
+    "파랗게": [
+      "HP:0000961"
+    ],
+    "입술 청색증": [
+      "HP:0000961"
+    ],
+    "hyperhidrosis": [
+      "HP:0000975"
+    ],
+    "diaphoresis": [
+      "HP:0000975"
+    ],
+    "excessive sweating": [
+      "HP:0000975"
+    ],
+    "increased sweating": [
+      "HP:0000975"
+    ],
+    "profuse sweating": [
+      "HP:0000975"
+    ],
+    "sweating": [
+      "HP:0000975"
+    ],
+    "sweating profusely": [
+      "HP:0000975"
+    ],
+    "sweating, increased": [
+      "HP:0000975"
+    ],
+    "다한증": [
+      "HP:0000975"
+    ],
+    "발한증가": [
+      "HP:0000975"
+    ],
+    "clubbing": [
+      "HP:0001217"
+    ],
+    "clubbing of fingers and toes": [
+      "HP:0001217"
+    ],
+    "digital clubbing": [
+      "HP:0001217"
+    ],
+    "hippocratic fingers": [
+      "HP:0001217"
+    ],
+    "곤봉지": [
+      "HP:0001217"
+    ],
+    "손가락 곤봉": [
+      "HP:0001217"
+    ],
+    "북채손가락": [
+      "HP:0001217"
+    ],
+    "lethargy": [
+      "HP:0001254"
+    ],
+    "drowsy": [
+      "HP:0001254"
+    ],
+    "dullness": [
+      "HP:0001254"
+    ],
+    "inaction": [
+      "HP:0001254"
+    ],
+    "inactivity": [
+      "HP:0001254"
+    ],
+    "languor": [
+      "HP:0001254"
+    ],
+    "slowness": [
+      "HP:0001254"
+    ],
+    "torpor": [
+      "HP:0001254"
+    ],
+    "기면": [
+      "HP:0001254"
+    ],
+    "잠많음": [
+      "HP:0001254"
+    ],
+    "졸림": [
+      "HP:0001254"
+    ],
+    "졸음": [
+      "HP:0001254"
+    ],
+    "excessive daytime somnolence": [
+      "HP:0001262"
+    ],
+    "daytime sleepiness": [
+      "HP:0001262"
+    ],
+    "excessive daytime sleepiness": [
+      "HP:0001262"
+    ],
+    "more than typical sleepiness during day": [
+      "HP:0001262"
+    ],
+    "eds": [
+      "HP:0001262"
+    ],
+    "낮 졸림": [
+      "HP:0001262"
+    ],
+    "주간 졸음": [
+      "HP:0001262"
+    ],
+    "주간 졸음 과다": [
+      "HP:0001262"
+    ],
+    "syncope": [
+      "HP:0001279"
+    ],
+    "fainting spell": [
+      "HP:0001279"
+    ],
+    "기절": [
+      "HP:0001279"
+    ],
+    "실신": [
+      "HP:0001279"
+    ],
+    "쓰러짐": [
+      "HP:0001279"
+    ],
+    "confusion": [
+      "HP:0001289"
+    ],
+    "altered mental status": [
+      "HP:0001289"
+    ],
+    "disorientation": [
+      "HP:0001289"
+    ],
+    "easily confused": [
+      "HP:0001289"
+    ],
+    "mental disorientation": [
+      "HP:0001289"
+    ],
+    "의식 혼동": [
+      "HP:0001289"
+    ],
+    "정신 혼란": [
+      "HP:0001289"
+    ],
+    "혼동": [
+      "HP:0001289"
+    ],
+    "ams": [
+      "HP:0001289"
+    ],
+    "stroke": [
+      "HP:0001297"
+    ],
+    "cerebral vascular events": [
+      "HP:0001297"
+    ],
+    "cerebrovascular accident": [
+      "HP:0001297"
+    ],
+    "cerebrovascular accidents": [
+      "HP:0001297"
+    ],
+    "뇌졸중": [
+      "HP:0001297"
+    ],
+    "encephalopathy": [
+      "HP:0001298"
+    ],
+    "뇌병증": [
+      "HP:0001298"
+    ],
+    "muscle weakness": [
+      "HP:0001324"
+    ],
+    "muscular weakness": [
+      "HP:0001324"
+    ],
+    "근력 저하": [
+      "HP:0001324"
+    ],
+    "근위약": [
+      "HP:0001324"
+    ],
+    "ascites": [
+      "HP:0001541"
+    ],
+    "accumulation of fluid in the abdomen": [
+      "HP:0001541"
+    ],
+    "peritoneal effusion": [
+      "HP:0001541"
+    ],
+    "배에 물": [
+      "HP:0001541"
+    ],
+    "복수": [
+      "HP:0001541"
+    ],
+    "vocal cord paralysis": [
+      "HP:0001605"
+    ],
+    "inability to move vocal cords": [
+      "HP:0001605"
+    ],
+    "laryngeal paralysis": [
+      "HP:0001605"
+    ],
+    "성대 마비": [
+      "HP:0001605"
+    ],
+    "vcp": [
+      "HP:0001605"
+    ],
+    "cardiomyopathy": [
+      "HP:0001638"
+    ],
+    "disease of the heart muscle": [
+      "HP:0001638"
+    ],
+    "심근병증": [
+      "HP:0001638"
+    ],
+    "심근증": [
+      "HP:0001638"
+    ],
+    "cardiomegaly": [
+      "HP:0001640"
+    ],
+    "enlarged heart": [
+      "HP:0001640"
+    ],
+    "increased heart size": [
+      "HP:0001640"
+    ],
+    "심비대": [
+      "HP:0001640"
+    ],
+    "심장 커짐": [
+      "HP:0001640"
+    ],
+    "심장비대": [
+      "HP:0001640"
+    ],
+    "abnormal pulmonary valve morphology": [
+      "HP:0001641"
+    ],
+    "abnormality of the pulmonary valve": [
+      "HP:0001641"
+    ],
+    "anomaly of the pulmonary valve": [
+      "HP:0001641"
+    ],
+    "pv abnormality": [
+      "HP:0001641"
+    ],
+    "폐동맥판 이상": [
+      "HP:0001641"
+    ],
+    "sudden cardiac death": [
+      "HP:0001645"
+    ],
+    "premature sudden cardiac death": [
+      "HP:0001645"
+    ],
+    "급사": [
+      "HP:0001645"
+    ],
+    "급성 심장사": [
+      "HP:0001645"
+    ],
+    "돌연사": [
+      "HP:0001645"
+    ],
+    "scd": [
+      "HP:0001645"
+    ],
+    "cor pulmonale": [
+      "HP:0001648"
+    ],
+    "폐성심": [
+      "HP:0001648"
+    ],
+    "폐심증": [
+      "HP:0001648"
+    ],
+    "tachycardia": [
+      "HP:0001649"
+    ],
+    "elevated heart rate": [
+      "HP:0001649"
+    ],
+    "fast heart rate": [
+      "HP:0001649"
+    ],
+    "heart racing": [
+      "HP:0001649"
+    ],
+    "increased heart rate": [
+      "HP:0001649"
+    ],
+    "racing heart": [
+      "HP:0001649"
+    ],
+    "rapid heart beat": [
+      "HP:0001649"
+    ],
+    "맥박 빠름": [
+      "HP:0001649"
+    ],
+    "빈맥": [
+      "HP:0001649"
+    ],
+    "심박 빠름": [
+      "HP:0001649"
+    ],
+    "빠른맥": [
+      "HP:0001649"
+    ],
+    "right ventricular hypertrophy": [
+      "HP:0001667"
+    ],
+    "heart right ventricle hypertrophy": [
+      "HP:0001667"
+    ],
+    "우심실 비대": [
+      "HP:0001667"
+    ],
+    "우심실비후": [
+      "HP:0001667"
+    ],
+    "rvh": [
+      "HP:0001667"
+    ],
+    "left ventricular hypertrophy": [
+      "HP:0001712"
+    ],
+    "heart left ventricle hypertrophy": [
+      "HP:0001712"
+    ],
+    "left ventricular wall hypertrophy": [
+      "HP:0001712"
+    ],
+    "좌심실 비대": [
+      "HP:0001712"
+    ],
+    "좌심실비후": [
+      "HP:0001712"
+    ],
+    "lvh": [
+      "HP:0001712"
+    ],
+    "weight loss": [
+      "HP:0001824"
+    ],
+    "cachexia": [
+      "HP:0001824"
+    ],
+    "loss of weight": [
+      "HP:0001824"
+    ],
+    "마름": [
+      "HP:0001824"
+    ],
+    "체중 감소": [
+      "HP:0001824"
+    ],
+    "체중 빠짐": [
+      "HP:0001824"
+    ],
+    "체중감소": [
+      "HP:0001824"
+    ],
+    "thrombocytopenia": [
+      "HP:0001873"
+    ],
+    "low platelet count": [
+      "HP:0001873"
+    ],
+    "혈소판 감소": [
+      "HP:0001873"
+    ],
+    "혈소판감소증": [
+      "HP:0001873"
+    ],
+    "increased total eosinophil count": [
+      "HP:0001880"
+    ],
+    "eosinophilia": [
+      "HP:0001880"
+    ],
+    "high blood eosinophil count": [
+      "HP:0001880"
+    ],
+    "increased eosinophil count": [
+      "HP:0001880"
+    ],
+    "호산구 증가": [
+      "HP:0001880"
+    ],
+    "decreased total leukocyte count": [
+      "HP:0001882"
+    ],
+    "decreased blood leukocyte number": [
+      "HP:0001882"
+    ],
+    "leukopenia": [
+      "HP:0001882"
+    ],
+    "low white blood cell count": [
+      "HP:0001882"
+    ],
+    "백혈구 감소": [
+      "HP:0001882"
+    ],
+    "백혈구감소증": [
+      "HP:0001882"
+    ],
+    "polycythemia": [
+      "HP:0001901"
+    ],
+    "abnormally shaped erythrocytes": [
+      "HP:0001901"
+    ],
+    "erythrocytosis": [
+      "HP:0001901"
+    ],
+    "increased red blood cells": [
+      "HP:0001901"
+    ],
+    "polyglobulia": [
+      "HP:0001901"
+    ],
+    "적혈구 증가증": [
+      "HP:0001901"
+    ],
+    "다혈구증": [
+      "HP:0001901"
+    ],
+    "anemia": [
+      "HP:0001903"
+    ],
+    "anaemia": [
+      "HP:0001903"
+    ],
+    "decreased haemoglobin": [
+      "HP:0001903"
+    ],
+    "decreased hemoglobin": [
+      "HP:0001903"
+    ],
+    "low number of red blood cells or haemoglobin": [
+      "HP:0001903"
+    ],
+    "low number of red blood cells or hemoglobin": [
+      "HP:0001903"
+    ],
+    "만성질환 빈혈": [
+      "HP:0001903"
+    ],
+    "빈혈": [
+      "HP:0001903"
+    ],
+    "acute kidney injury": [
+      "HP:0001919"
+    ],
+    "aki": [
+      "HP:0001919"
+    ],
+    "acute kidney failure": [
+      "HP:0001919"
+    ],
+    "acute renal failure": [
+      "HP:0001919"
+    ],
+    "급성 신손상": [
+      "HP:0001919"
+    ],
+    "arf": [
+      "HP:0001919"
+    ],
+    "abnormality of metabolism/homeostasis": [
+      "HP:0001939"
+    ],
+    "laboratory abnormality": [
+      "HP:0001939"
+    ],
+    "metabolism abnormality": [
+      "HP:0001939"
+    ],
+    "이상 대사": [
+      "HP:0001939"
+    ],
+    "대사 이상": [
+      "HP:0001939"
+    ],
+    "항상성 이상": [
+      "HP:0001939"
+    ],
+    "acidosis": [
+      "HP:0001941"
+    ],
+    "산증": [
+      "HP:0001941"
+    ],
+    "metabolic acidosis": [
+      "HP:0001942"
+    ],
+    "대사성 산증": [
+      "HP:0001942"
+    ],
+    "fever": [
+      "HP:0001945"
+    ],
+    "hyperthermia": [
+      "HP:0001945"
+    ],
+    "pyrexia": [
+      "HP:0001945"
+    ],
+    "고열": [
+      "HP:0001945"
+    ],
+    "발열": [
+      "HP:0001945"
+    ],
+    "열": [
+      "HP:0001945"
+    ],
+    "체온 상승": [
+      "HP:0001945"
+    ],
+    "truncal obesity": [
+      "HP:0001956"
+    ],
+    "central obesity": [
+      "HP:0001956"
+    ],
+    "centripetal obesity": [
+      "HP:0001956"
+    ],
+    "중심성 비만": [
+      "HP:0001956"
+    ],
+    "vomiting": [
+      "HP:0002013"
+    ],
+    "emesis": [
+      "HP:0002013"
+    ],
+    "throwing up": [
+      "HP:0002013"
+    ],
+    "구토": [
+      "HP:0002013"
+    ],
+    "토함": [
+      "HP:0002013"
+    ],
+    "diarrhea": [
+      "HP:0002014"
+    ],
+    "diarrhoea": [
+      "HP:0002014"
+    ],
+    "watery stool": [
+      "HP:0002014"
+    ],
+    "묽은 변": [
+      "HP:0002014"
+    ],
+    "설사": [
+      "HP:0002014"
+    ],
+    "dysphagia": [
+      "HP:0002015"
+    ],
+    "deglutition disorder": [
+      "HP:0002015"
+    ],
+    "difficulty swallowing": [
+      "HP:0002015"
+    ],
+    "poor swallowing": [
+      "HP:0002015"
+    ],
+    "swallowing difficulties": [
+      "HP:0002015"
+    ],
+    "swallowing difficulty": [
+      "HP:0002015"
+    ],
+    "삼킴 곤란": [
+      "HP:0002015"
+    ],
+    "abnormal lung morphology": [
+      "HP:0002088"
+    ],
+    "abnormality of lung structure": [
+      "HP:0002088"
+    ],
+    "abnormality of the lungs": [
+      "HP:0002088"
+    ],
+    "abnormally shaped lung": [
+      "HP:0002088"
+    ],
+    "lung disease": [
+      "HP:0002088"
+    ],
+    "unusual lung shape": [
+      "HP:0002088"
+    ],
+    "비정상 폐 형태": [
+      "HP:0002088"
+    ],
+    "폐 내 다발성 결절": [
+      "HP:0002088"
+    ],
+    "폐 형태 이상": [
+      "HP:0002088"
+    ],
+    "pneumonia": [
+      "HP:0002090"
+    ],
+    "폐렴": [
+      "HP:0002090"
+    ],
+    "restrictive ventilatory defect": [
+      "HP:0002091"
+    ],
+    "restrictive pft": [
+      "HP:0002091"
+    ],
+    "restrictive deficit on pulmonary function testing": [
+      "HP:0002091"
+    ],
+    "restrictive deficit on pulmonary function tests": [
+      "HP:0002091"
+    ],
+    "restrictive lung disease": [
+      "HP:0002091"
+    ],
+    "restrictive respiratory disease": [
+      "HP:0002091"
+    ],
+    "restrictive respiratory insufficiency": [
+      "HP:0002091"
+    ],
+    "restrictive respiratory syndrome": [
+      "HP:0002091"
+    ],
+    "spirometric restriction": [
+      "HP:0002091"
+    ],
+    "stiff lung or chest wall causing decreased lung volume": [
+      "HP:0002091"
+    ],
+    "제한성 환기장애": [
+      "HP:0002091"
+    ],
+    "제한성 폐기능 이상": [
+      "HP:0002091"
+    ],
+    "pulmonary arterial hypertension": [
+      "HP:0002092"
+    ],
+    "increased blood pressure in blood vessels of lungs": [
+      "HP:0002092"
+    ],
+    "primary pulmonary hypertension": [
+      "HP:0002092"
+    ],
+    "pulmonary artery hypertension": [
+      "HP:0002092"
+    ],
+    "pulmonary hypertension": [
+      "HP:0002092"
+    ],
+    "폐고혈압": [
+      "HP:0002092",
+      "HP:0033578"
+    ],
+    "폐동맥성 고혈압": [
+      "HP:0002092"
+    ],
+    "pah": [
+      "HP:0002092"
+    ],
+    "dyspnea": [
+      "HP:0002094"
+    ],
+    "abnormal breathing": [
+      "HP:0002094"
+    ],
+    "breathing difficulty": [
+      "HP:0002094"
+    ],
+    "difficult to breathe": [
+      "HP:0002094"
+    ],
+    "difficulty breathing": [
+      "HP:0002094"
+    ],
+    "dyspnoea": [
+      "HP:0002094"
+    ],
+    "panting": [
+      "HP:0002094"
+    ],
+    "shortness of breath": [
+      "HP:0002094"
+    ],
+    "trouble breathing": [
+      "HP:0002094"
+    ],
+    "sob": [
+      "HP:0002094"
+    ],
+    "breathless": [
+      "HP:0002094"
+    ],
+    "만성": [
+      "HP:0002094"
+    ],
+    "숨가쁨": [
+      "HP:0002094"
+    ],
+    "숨이 차다": [
+      "HP:0002094"
+    ],
+    "숨참": [
+      "HP:0002094"
+    ],
+    "점진적": [
+      "HP:0002094"
+    ],
+    "특히 발작성 야간": [
+      "HP:0002094"
+    ],
+    "호흡곤란": [
+      "HP:0002094"
+    ],
+    "호흡곤란 악화": [
+      "HP:0002094"
+    ],
+    "emphysema": [
+      "HP:0002097"
+    ],
+    "pulmonary emphysema": [
+      "HP:0002097"
+    ],
+    "폐가 늘어남": [
+      "HP:0002097"
+    ],
+    "폐기종": [
+      "HP:0002097"
+    ],
+    "asthma": [
+      "HP:0002099"
+    ],
+    "bronchial asthma": [
+      "HP:0002099"
+    ],
+    "reactive airway disease": [
+      "HP:0002099"
+    ],
+    "숨막힘": [
+      "HP:0002099"
+    ],
+    "천식": [
+      "HP:0002099"
+    ],
+    "apnea": [
+      "HP:0002104"
+    ],
+    "absence of spontaneous respiration": [
+      "HP:0002104"
+    ],
+    "apneic episodes": [
+      "HP:0002104"
+    ],
+    "apnoea": [
+      "HP:0002104"
+    ],
+    "무호흡": [
+      "HP:0002104"
+    ],
+    "hemoptysis": [
+      "HP:0002105"
+    ],
+    "coughing blood": [
+      "HP:0002105"
+    ],
+    "coughing up blood": [
+      "HP:0002105"
+    ],
+    "coughing up blood or blood-stained mucus": [
+      "HP:0002105"
+    ],
+    "haemoptysis": [
+      "HP:0002105"
+    ],
+    "객혈": [
+      "HP:0002105"
+    ],
+    "피 가래": [
+      "HP:0002105"
+    ],
+    "피섞인 가래": [
+      "HP:0002105"
+    ],
+    "혈담": [
+      "HP:0002105"
+    ],
+    "pneumothorax": [
+      "HP:0002107"
+    ],
+    "collapsed lung": [
+      "HP:0002107"
+    ],
+    "공기가슴증": [
+      "HP:0002107"
+    ],
+    "기압손상": [
+      "HP:0002107"
+    ],
+    "기흉": [
+      "HP:0002107"
+    ],
+    "ptx": [
+      "HP:0002107"
+    ],
+    "bronchiectasis": [
+      "HP:0002110"
+    ],
+    "permanent enlargement of the airways of the lungs": [
+      "HP:0002110"
+    ],
+    "기관지 늘어남": [
+      "HP:0002110"
+    ],
+    "기관지확장증": [
+      "HP:0002110"
+    ],
+    "기관지늘어남": [
+      "HP:0002110"
+    ],
+    "pulmonary infiltrates": [
+      "HP:0002113"
+    ],
+    "lung infiltrates": [
+      "HP:0002113"
+    ],
+    "pulmonic infiltration": [
+      "HP:0002113"
+    ],
+    "양측 간유리": [
+      "HP:0002113"
+    ],
+    "케리 라인/박쥐 날개": [
+      "HP:0002113"
+    ],
+    "폐 침윤": [
+      "HP:0002113"
+    ],
+    "폐 침습": [
+      "HP:0002113"
+    ],
+    "pleural effusion": [
+      "HP:0002202"
+    ],
+    "fluid around lungs": [
+      "HP:0002202"
+    ],
+    "pleural fluid": [
+      "HP:0002202"
+    ],
+    "농성": [
+      "HP:0002202"
+    ],
+    "늑막삼출": [
+      "HP:0002202"
+    ],
+    "우측 우세": [
+      "HP:0002202"
+    ],
+    "흉막 삼출": [
+      "HP:0002202"
+    ],
+    "흉수": [
+      "HP:0002202"
+    ],
+    "pulmonary embolism": [
+      "HP:0002204"
+    ],
+    "blood clot in artery of lung": [
+      "HP:0002204"
+    ],
+    "pe": [
+      "HP:0002204"
+    ],
+    "폐색전": [
+      "HP:0002204"
+    ],
+    "폐색전증": [
+      "HP:0002204"
+    ],
+    "pulmonary fibrosis": [
+      "HP:0002206"
+    ],
+    "pulmonary scarring": [
+      "HP:0002206"
+    ],
+    "폐 섬유화": [
+      "HP:0002206"
+    ],
+    "폐섬유화": [
+      "HP:0002206"
+    ],
+    "폐섬유증": [
+      "HP:0002206"
+    ],
+    "hepatomegaly": [
+      "HP:0002240"
+    ],
+    "enlarged liver": [
+      "HP:0002240"
+    ],
+    "간 커짐": [
+      "HP:0002240"
+    ],
+    "간비대": [
+      "HP:0002240"
+    ],
+    "chronic rhinitis": [
+      "HP:0002257"
+    ],
+    "만성 비염": [
+      "HP:0002257"
+    ],
+    "horner syndrome": [
+      "HP:0002277"
+    ],
+    "horner's syndrome": [
+      "HP:0002277"
+    ],
+    "oculosympathetic palsy": [
+      "HP:0002277"
+    ],
+    "호너 증후군": [
+      "HP:0002277"
+    ],
+    "headache": [
+      "HP:0002315"
+    ],
+    "headaches": [
+      "HP:0002315"
+    ],
+    "두통": [
+      "HP:0002315"
+    ],
+    "머리 아픔": [
+      "HP:0002315"
+    ],
+    "아침 두통": [
+      "HP:0002315"
+    ],
+    "tracheoesophageal fistula": [
+      "HP:0002575"
+    ],
+    "abnormal connection between trachea and esophagus": [
+      "HP:0002575"
+    ],
+    "abnormal connection between trachea and oesophagus": [
+      "HP:0002575"
+    ],
+    "기관식도루": [
+      "HP:0002575"
+    ],
+    "식도-기관 누공": [
+      "HP:0002575"
+    ],
+    "tef": [
+      "HP:0002575"
+    ],
+    "hypotension": [
+      "HP:0002615"
+    ],
+    "arterial hypotension": [
+      "HP:0002615"
+    ],
+    "low bp": [
+      "HP:0002615"
+    ],
+    "low blood pressure": [
+      "HP:0002615"
+    ],
+    "저혈압": [
+      "HP:0002615"
+    ],
+    "혈압 낮음": [
+      "HP:0002615"
+    ],
+    "deep venous thrombosis": [
+      "HP:0002625"
+    ],
+    "blood clot in a deep vein": [
+      "HP:0002625"
+    ],
+    "deep vein thrombosis": [
+      "HP:0002625"
+    ],
+    "multiple deep venous thrombosis": [
+      "HP:0002625"
+    ],
+    "심부정맥혈전증": [
+      "HP:0002625"
+    ],
+    "dvt": [
+      "HP:0002625"
+    ],
+    "neonatal respiratory distress": [
+      "HP:0002643"
+    ],
+    "infantile respiratory distress": [
+      "HP:0002643"
+    ],
+    "newborn respiratory distress": [
+      "HP:0002643"
+    ],
+    "respiratory distress, neonatal": [
+      "HP:0002643"
+    ],
+    "nrds": [
+      "HP:0002643"
+    ],
+    "신생아 rds": [
+      "HP:0002643"
+    ],
+    "신생아 호흡 곤란": [
+      "HP:0002643"
+    ],
+    "신생아 호흡곤란": [
+      "HP:0002643"
+    ],
+    "aortic dissection": [
+      "HP:0002647"
+    ],
+    "tear in inner wall of large artery that carries blood away from heart": [
+      "HP:0002647"
+    ],
+    "대동맥 박리": [
+      "HP:0002647"
+    ],
+    "neoplasm": [
+      "HP:0002664"
+    ],
+    "abnormal tissue mass": [
+      "HP:0002664"
+    ],
+    "cancer": [
+      "HP:0002664"
+    ],
+    "malignancy": [
+      "HP:0002664"
+    ],
+    "neoplasia": [
+      "HP:0002664"
+    ],
+    "oncological abnormality": [
+      "HP:0002664"
+    ],
+    "oncology": [
+      "HP:0002664"
+    ],
+    "tumor": [
+      "HP:0002664"
+    ],
+    "tumour": [
+      "HP:0002664"
+    ],
+    "악성 종양": [
+      "HP:0002664"
+    ],
+    "악성 종양 위험": [
+      "HP:0002664"
+    ],
+    "원발": [
+      "HP:0002664"
+    ],
+    "신생물": [
+      "HP:0002664"
+    ],
+    "lymphadenopathy": [
+      "HP:0002716"
+    ],
+    "lymph node hyperplasia": [
+      "HP:0002716"
+    ],
+    "swollen lymph nodes": [
+      "HP:0002716"
+    ],
+    "림프절 비대": [
+      "HP:0002716"
+    ],
+    "림프절병증": [
+      "HP:0002716"
+    ],
+    "lad": [
+      "HP:0002716"
+    ],
+    "immunodeficiency": [
+      "HP:0002721"
+    ],
+    "decreased immune function": [
+      "HP:0002721"
+    ],
+    "immune deficiency": [
+      "HP:0002721"
+    ],
+    "immunocompromised": [
+      "HP:0002721"
+    ],
+    "면역결핍": [
+      "HP:0002721"
+    ],
+    "면역저하": [
+      "HP:0002721"
+    ],
+    "kyphoscoliosis": [
+      "HP:0002751"
+    ],
+    "척추후측만증": [
+      "HP:0002751"
+    ],
+    "tracheal stenosis": [
+      "HP:0002777"
+    ],
+    "narrowing of windpipe": [
+      "HP:0002777"
+    ],
+    "기관 협착": [
+      "HP:0002777"
+    ],
+    "tachypnea": [
+      "HP:0002789"
+    ],
+    "increased respiratory rate or depth of breathing": [
+      "HP:0002789"
+    ],
+    "polypnea": [
+      "HP:0002789"
+    ],
+    "rapid breathing": [
+      "HP:0002789"
+    ],
+    ">60/min": [
+      "HP:0002789"
+    ],
+    "rr>30": [
+      "HP:0002789"
+    ],
+    "shortness of breath rapid": [
+      "HP:0002789"
+    ],
+    "빠른 호흡": [
+      "HP:0002789"
+    ],
+    "호흡 빠름": [
+      "HP:0002789"
+    ],
+    "호흡빈수": [
+      "HP:0002789"
+    ],
+    "neonatal breathing dysregulation": [
+      "HP:0002790"
+    ],
+    "impaired breathing in newborn": [
+      "HP:0002790"
+    ],
+    "periodic breathing": [
+      "HP:0002790"
+    ],
+    "호흡 조절 이상": [
+      "HP:0002790"
+    ],
+    "신생아 호흡 조절 이상": [
+      "HP:0002790"
+    ],
+    "reduced vital capacity": [
+      "HP:0002792"
+    ],
+    "decreased vc": [
+      "HP:0002792"
+    ],
+    "decreased vital capacity": [
+      "HP:0002792"
+    ],
+    "폐활량 감소": [
+      "HP:0002792"
+    ],
+    "kyphosis": [
+      "HP:0002808"
+    ],
+    "gibbus deformity": [
+      "HP:0002808"
+    ],
+    "hunched back": [
+      "HP:0002808"
+    ],
+    "hyperkyphosis": [
+      "HP:0002808"
+    ],
+    "round back": [
+      "HP:0002808"
+    ],
+    "후만증": [
+      "HP:0002808"
+    ],
+    "척추후만": [
+      "HP:0002808"
+    ],
+    "arthralgia": [
+      "HP:0002829"
+    ],
+    "arthralgias": [
+      "HP:0002829"
+    ],
+    "arthritic pain": [
+      "HP:0002829"
+    ],
+    "joint pain": [
+      "HP:0002829"
+    ],
+    "joint pains": [
+      "HP:0002829"
+    ],
+    "관절 아픔": [
+      "HP:0002829"
+    ],
+    "관절통": [
+      "HP:0002829"
+    ],
+    "aspiration": [
+      "HP:0002835"
+    ],
+    "pulmonary aspiration": [
+      "HP:0002835"
+    ],
+    "흡인": [
+      "HP:0002835"
+    ],
+    "obstructive sleep apnea": [
+      "HP:0002870"
+    ],
+    "obstructive sleep apnoea": [
+      "HP:0002870"
+    ],
+    "osa": [
+      "HP:0002870"
+    ],
+    "sleep apnea": [
+      "HP:0002870",
+      "HP:0010535"
+    ],
+    "폐쇄성 수면무호흡": [
+      "HP:0002870"
+    ],
+    "hyponatremia": [
+      "HP:0002902"
+    ],
+    "low blood sodium levels": [
+      "HP:0002902"
+    ],
+    "low sodium": [
+      "HP:0002902"
+    ],
+    "저나트륨혈증": [
+      "HP:0002902"
+    ],
+    "elevated circulating alkaline phosphatase concentration": [
+      "HP:0003155"
+    ],
+    "elevated alp": [
+      "HP:0003155"
+    ],
+    "elevated alkaline phosphatase": [
+      "HP:0003155"
+    ],
+    "greatly elevated alkaline phosphatase": [
+      "HP:0003155"
+    ],
+    "high serum alkaline phosphatase": [
+      "HP:0003155"
+    ],
+    "hyperphosphatasemia": [
+      "HP:0003155"
+    ],
+    "hyperphosphatasia": [
+      "HP:0003155"
+    ],
+    "increased alkaline phosphatase": [
+      "HP:0003155"
+    ],
+    "increased serum alkaline phosphatase": [
+      "HP:0003155"
+    ],
+    "alp 상승": [
+      "HP:0003155"
+    ],
+    "알칼리 인산분해효소 상승": [
+      "HP:0003155"
+    ],
+    "myalgia": [
+      "HP:0003326"
+    ],
+    "muscle ache": [
+      "HP:0003326"
+    ],
+    "muscle pain": [
+      "HP:0003326"
+    ],
+    "myalgias": [
+      "HP:0003326"
+    ],
+    "근육통": [
+      "HP:0003326"
+    ],
+    "몸살": [
+      "HP:0003326"
+    ],
+    "exercise intolerance": [
+      "HP:0003546"
+    ],
+    "decreased ability to exercise": [
+      "HP:0003546"
+    ],
+    "decreased exercise tolerance": [
+      "HP:0003546"
+    ],
+    "inability to exercise": [
+      "HP:0003546"
+    ],
+    "low exercise endurance": [
+      "HP:0003546"
+    ],
+    "poor exercise tolerance": [
+      "HP:0003546"
+    ],
+    "운동 내성 저하": [
+      "HP:0003546"
+    ],
+    "운동 못함": [
+      "HP:0003546"
+    ],
+    "운동내성 저하": [
+      "HP:0003546"
+    ],
+    "chronic bronchitis": [
+      "HP:0004469"
+    ],
+    "만성 기관지": [
+      "HP:0004469"
+    ],
+    "만성 기관지염": [
+      "HP:0004469"
+    ],
+    "abnormal tracheobronchial morphology": [
+      "HP:0005607"
+    ],
+    "tracheobronchial anomalies": [
+      "HP:0005607"
+    ],
+    "기관지계 이상": [
+      "HP:0005607"
+    ],
+    "기관기관지계 이상": [
+      "HP:0005607"
+    ],
+    "ventilator dependence with inability to wean": [
+      "HP:0005946"
+    ],
+    "이탈 곤란": [
+      "HP:0005946"
+    ],
+    "인공호흡기 이탈 곤란": [
+      "HP:0005946"
+    ],
+    "respiratory acidosis": [
+      "HP:0005972"
+    ],
+    "보상": [
+      "HP:0005972"
+    ],
+    "호흡성 산증": [
+      "HP:0005972"
+    ],
+    "hypersensitivity pneumonitis": [
+      "HP:0006516"
+    ],
+    "과민성 폐렴": [
+      "HP:0006516"
+    ],
+    "hp": [
+      "HP:0006516"
+    ],
+    "abnormal pulmonary interstitial morphology": [
+      "HP:0006530"
+    ],
+    "abnormal lung parenchyma morphology": [
+      "HP:0006530"
+    ],
+    "abnormality in area between air sacs in lung": [
+      "HP:0006530"
+    ],
+    "ild pattern": [
+      "HP:0006530"
+    ],
+    "interstitial lung disease": [
+      "HP:0006530"
+    ],
+    "interstitial pulmonary disease": [
+      "HP:0006530"
+    ],
+    "폐 간질 이상": [
+      "HP:0006530"
+    ],
+    "airway obstruction": [
+      "HP:0006536"
+    ],
+    "obstructive lung disease": [
+      "HP:0006536"
+    ],
+    "obstructive ventilatory defect": [
+      "HP:0006536"
+    ],
+    "pulmonary obstruction": [
+      "HP:0006536"
+    ],
+    "기도 폐쇄": [
+      "HP:0006536"
+    ],
+    "폐쇄성 환기장애": [
+      "HP:0006536"
+    ],
+    "recurrent bronchopulmonary infections": [
+      "HP:0006538"
+    ],
+    "recurrent bronchopneumonia": [
+      "HP:0006538"
+    ],
+    "recurrent infections in bronchi and lungs": [
+      "HP:0006538"
+    ],
+    "재발 호흡기 감염": [
+      "HP:0006538"
+    ],
+    "재발성 호흡기 감염": [
+      "HP:0006538",
+      "HP:0011947"
+    ],
+    "laryngotracheomalacia": [
+      "HP:0008755"
+    ],
+    "후두기관연화증": [
+      "HP:0008755"
+    ],
+    "후두기관 연화증": [
+      "HP:0008755"
+    ],
+    "chylothorax": [
+      "HP:0010310"
+    ],
+    "유미흉": [
+      "HP:0010310"
+    ],
+    "pauses in breathing while sleeping": [
+      "HP:0010535"
+    ],
+    "sleep apnoea": [
+      "HP:0010535"
+    ],
+    "수면무호흡": [
+      "HP:0010535"
+    ],
+    "central sleep apnea": [
+      "HP:0010536"
+    ],
+    "central sleep apnoea": [
+      "HP:0010536"
+    ],
+    "중추성 수면무호흡": [
+      "HP:0010536"
+    ],
+    "csa": [
+      "HP:0010536"
+    ],
+    "congenital pulmonary airway malformation": [
+      "HP:0010959"
+    ],
+    "ccam": [
+      "HP:0010959"
+    ],
+    "congenital cystic adenomatoid malformation": [
+      "HP:0010959"
+    ],
+    "congenital cystic adenomatoid malformation of the lung": [
+      "HP:0010959"
+    ],
+    "congenital cystic disease of the lung": [
+      "HP:0010959"
+    ],
+    "cystic adenomatoid lung disease": [
+      "HP:0010959"
+    ],
+    "선천성 폐기도 기형": [
+      "HP:0010959"
+    ],
+    "선천성 폐기도기형": [
+      "HP:0010959"
+    ],
+    "cpam": [
+      "HP:0010959"
+    ],
+    "abnormality of the gastrointestinal tract": [
+      "HP:0011024"
+    ],
+    "abnormality of the gi tract": [
+      "HP:0011024"
+    ],
+    "digestive system disease": [
+      "HP:0011024"
+    ],
+    "gastrointestinal disease": [
+      "HP:0011024"
+    ],
+    "소화기 증상": [
+      "HP:0011024"
+    ],
+    "소화기계 이상": [
+      "HP:0011024"
+    ],
+    "abnormality of iron homeostasis": [
+      "HP:0011031"
+    ],
+    "철 항상성 이상": [
+      "HP:0011031"
+    ],
+    "chronic sinusitis": [
+      "HP:0011109"
+    ],
+    "chronic sinus disease": [
+      "HP:0011109"
+    ],
+    "sinusitis, chronic": [
+      "HP:0011109"
+    ],
+    "만성 부비동염": [
+      "HP:0011109"
+    ],
+    "부비동염": [
+      "HP:0011109"
+    ],
+    "축농증": [
+      "HP:0011109"
+    ],
+    "recurrent tonsillitis": [
+      "HP:0011110"
+    ],
+    "recurrent inflammation of tonsils": [
+      "HP:0011110"
+    ],
+    "재발 편도염": [
+      "HP:0011110"
+    ],
+    "재발성 편도염": [
+      "HP:0011110"
+    ],
+    "arrhythmia": [
+      "HP:0011675"
+    ],
+    "abnormal heart rate": [
+      "HP:0011675"
+    ],
+    "arrhythmias": [
+      "HP:0011675"
+    ],
+    "cardiac arrhythmia": [
+      "HP:0011675"
+    ],
+    "cardiac arrhythmias": [
+      "HP:0011675"
+    ],
+    "cardiac rhythm disturbances": [
+      "HP:0011675"
+    ],
+    "dysrhythmia": [
+      "HP:0011675"
+    ],
+    "heart rhythm disorders": [
+      "HP:0011675"
+    ],
+    "irregular heart beat": [
+      "HP:0011675"
+    ],
+    "irregular heartbeat": [
+      "HP:0011675"
+    ],
+    "부정맥": [
+      "HP:0011675"
+    ],
+    "pleural empyema": [
+      "HP:0011919"
+    ],
+    "empyema": [
+      "HP:0011919"
+    ],
+    "pyothorax": [
+      "HP:0011919"
+    ],
+    "고름가슴": [
+      "HP:0011919"
+    ],
+    "농흉": [
+      "HP:0011919"
+    ],
+    "respiratory tract infection": [
+      "HP:0011947"
+    ],
+    "respiratory infection": [
+      "HP:0011947"
+    ],
+    "respiratory infections": [
+      "HP:0011947"
+    ],
+    "post-obstructive": [
+      "HP:0011947"
+    ],
+    "감염성 원인": [
+      "HP:0011947"
+    ],
+    "상기도 감염": [
+      "HP:0011947"
+    ],
+    "트리거": [
+      "HP:0011947"
+    ],
+    "호흡기 감염": [
+      "HP:0011947"
+    ],
+    "호흡기 염증": [
+      "HP:0011947"
+    ],
+    "rti": [
+      "HP:0011947"
+    ],
+    "bronchiolitis": [
+      "HP:0011950"
+    ],
+    "세기관지염": [
+      "HP:0011950"
+    ],
+    "aspiration pneumonia": [
+      "HP:0011951"
+    ],
+    "흡인성 폐렴": [
+      "HP:0011951"
+    ],
+    "흡인폐렴": [
+      "HP:0011951"
+    ],
+    "anterior uveitis": [
+      "HP:0012122"
+    ],
+    "전방 포도막염": [
+      "HP:0012122"
+    ],
+    "aau": [
+      "HP:0012122"
+    ],
+    "erythema nodosum": [
+      "HP:0012219"
+    ],
+    "결절성 홍반": [
+      "HP:0012219"
+    ],
+    "에리테마 노도숨": [
+      "HP:0012219"
+    ],
+    "non-caseating epithelioid cell granulomatosis": [
+      "HP:0012220"
+    ],
+    "non-caseating granuloma": [
+      "HP:0012220"
+    ],
+    "비건락성 육아종": [
+      "HP:0012220"
+    ],
+    "비괴사성 육아종": [
+      "HP:0012220"
+    ],
+    "elevated sweat chloride": [
+      "HP:0012236"
+    ],
+    "elevated sweat cl": [
+      "HP:0012236"
+    ],
+    "elevated sweat cl-": [
+      "HP:0012236"
+    ],
+    "땀 염소 상승": [
+      "HP:0012236"
+    ],
+    "fatigue": [
+      "HP:0012378"
+    ],
+    "malaise": [
+      "HP:0012378"
+    ],
+    "tired": [
+      "HP:0012378"
+    ],
+    "tiredness": [
+      "HP:0012378"
+    ],
+    "asthenia": [
+      "HP:0012378"
+    ],
+    "무력감": [
+      "HP:0012378"
+    ],
+    "쇠약": [
+      "HP:0012378"
+    ],
+    "피로": [
+      "HP:0012378"
+    ],
+    "권태감": [
+      "HP:0012378"
+    ],
+    "bronchitis": [
+      "HP:0012387"
+    ],
+    "기관지 염증": [
+      "HP:0012387"
+    ],
+    "기관지염": [
+      "HP:0012387"
+    ],
+    "acute bronchitis": [
+      "HP:0012388"
+    ],
+    "급성 기관지염": [
+      "HP:0012388"
+    ],
+    "allergy": [
+      "HP:0012393"
+    ],
+    "atopy": [
+      "HP:0012393"
+    ],
+    "알레르기": [
+      "HP:0012393"
+    ],
+    "peripheral edema": [
+      "HP:0012398"
+    ],
+    "le edema": [
+      "HP:0012398"
+    ],
+    "lower extremity edema": [
+      "HP:0012398"
+    ],
+    "peripheral oedema": [
+      "HP:0012398"
+    ],
+    "다리 부음": [
+      "HP:0012398"
+    ],
+    "말초 부종": [
+      "HP:0012398"
+    ],
+    "손발 부음": [
+      "HP:0012398"
+    ],
+    "하지 부종": [
+      "HP:0012398"
+    ],
+    "abnormal blood gas level": [
+      "HP:0012415"
+    ],
+    "abg abnormality": [
+      "HP:0012415"
+    ],
+    "동맥혈가스 이상": [
+      "HP:0012415"
+    ],
+    "혈액가스 검사 이상": [
+      "HP:0012415"
+    ],
+    "abg 이상": [
+      "HP:0012415"
+    ],
+    "hypercapnia": [
+      "HP:0012416"
+    ],
+    "high co2": [
+      "HP:0012416"
+    ],
+    "high blood carbon dioxide level": [
+      "HP:0012416"
+    ],
+    "hypercarbia": [
+      "HP:0012416"
+    ],
+    "co2 축적": [
+      "HP:0012416"
+    ],
+    "paco2>45": [
+      "HP:0012416"
+    ],
+    "paco2>45 만성": [
+      "HP:0012416"
+    ],
+    "고탄산혈증": [
+      "HP:0012416"
+    ],
+    "이산화탄소 상승": [
+      "HP:0012416"
+    ],
+    "hypoxemia": [
+      "HP:0012418"
+    ],
+    "hypoxia": [
+      "HP:0012418"
+    ],
+    "low spo2": [
+      "HP:0012418"
+    ],
+    "low blood oxygen level": [
+      "HP:0012418"
+    ],
+    "low oxygen": [
+      "HP:0012418"
+    ],
+    "pao2<60": [
+      "HP:0012418"
+    ],
+    "pao2<60 만성": [
+      "HP:0012418"
+    ],
+    "spo2 저하": [
+      "HP:0012418"
+    ],
+    "불응성": [
+      "HP:0012418"
+    ],
+    "산소 부족": [
+      "HP:0012418"
+    ],
+    "운동시 우세": [
+      "HP:0012418"
+    ],
+    "저산소혈증": [
+      "HP:0012418"
+    ],
+    "heart block": [
+      "HP:0012722"
+    ],
+    "av block": [
+      "HP:0012722"
+    ],
+    "심차단": [
+      "HP:0012722"
+    ],
+    "방실차단": [
+      "HP:0012722"
+    ],
+    "thoracic aortic aneurysm": [
+      "HP:0012727"
+    ],
+    "dilatation of the thoracic aorta": [
+      "HP:0012727"
+    ],
+    "흉부 대동맥류": [
+      "HP:0012727"
+    ],
+    "taa": [
+      "HP:0012727"
+    ],
+    "cough": [
+      "HP:0012735"
+    ],
+    "coughing": [
+      "HP:0012735"
+    ],
+    "<3주": [
+      "HP:0012735"
+    ],
+    "dry cough": [
+      "HP:0012735"
+    ],
+    "건성": [
+      "HP:0012735"
+    ],
+    "급성 기침": [
+      "HP:0012735"
+    ],
+    "기침": [
+      "HP:0012735"
+    ],
+    "기침 악화": [
+      "HP:0012735"
+    ],
+    "만성 건성 기침": [
+      "HP:0012735"
+    ],
+    "만성 기침": [
+      "HP:0012735"
+    ],
+    "변화": [
+      "HP:0012735"
+    ],
+    "주로 건조": [
+      "HP:0012735"
+    ],
+    "코프(cough)": [
+      "HP:0012735"
+    ],
+    "콜록": [
+      "HP:0012735"
+    ],
+    "해수": [
+      "HP:0012735"
+    ],
+    "해수(咳嗽)": [
+      "HP:0012735"
+    ],
+    "orthopnea": [
+      "HP:0012764"
+    ],
+    "orthopnoea": [
+      "HP:0012764"
+    ],
+    "기좌호흡": [
+      "HP:0012764"
+    ],
+    "pneumocystis jirovecii pneumonia": [
+      "HP:0020102"
+    ],
+    "pneumocystis carinii pneumonia": [
+      "HP:0020102"
+    ],
+    "pneumocystis pneumonia": [
+      "HP:0020102"
+    ],
+    "pcp 폐렴": [
+      "HP:0020102"
+    ],
+    "폐포자충 폐렴": [
+      "HP:0020102"
+    ],
+    "pcp": [
+      "HP:0020102"
+    ],
+    "lung abscess": [
+      "HP:0025044"
+    ],
+    "폐 농양": [
+      "HP:0025044"
+    ],
+    "폐고름": [
+      "HP:0025044"
+    ],
+    "폐고름집": [
+      "HP:0025044"
+    ],
+    "chills": [
+      "HP:0025143"
+    ],
+    "chill": [
+      "HP:0025143"
+    ],
+    "오한": [
+      "HP:0025143"
+    ],
+    "전율": [
+      "HP:0025143"
+    ],
+    "추위": [
+      "HP:0025143"
+    ],
+    "rigors": [
+      "HP:0025145"
+    ],
+    "rigours": [
+      "HP:0025145"
+    ],
+    "shaking chills": [
+      "HP:0025145"
+    ],
+    "rigor": [
+      "HP:0025145"
+    ],
+    "경직": [
+      "HP:0025145"
+    ],
+    "고열 떨림": [
+      "HP:0025145"
+    ],
+    "오한 떨림": [
+      "HP:0025145"
+    ],
+    "한기 떨림": [
+      "HP:0025145"
+    ],
+    "honeycomb lung": [
+      "HP:0025175"
+    ],
+    "honeycomb cysts": [
+      "HP:0025175"
+    ],
+    "honeycombing": [
+      "HP:0025175"
+    ],
+    "벌집 모양 폐": [
+      "HP:0025175"
+    ],
+    "벌집폐": [
+      "HP:0025175"
+    ],
+    "ground-glass opacification": [
+      "HP:0025179"
+    ],
+    "ggo": [
+      "HP:0025179"
+    ],
+    "ground glass opacities": [
+      "HP:0025179"
+    ],
+    "ground-glass opacification on pulmonary hrct": [
+      "HP:0025179"
+    ],
+    "ground-glass opacity": [
+      "HP:0025179"
+    ],
+    "간유리 음영": [
+      "HP:0025179"
+    ],
+    "fragmented sleep": [
+      "HP:0025199"
+    ],
+    "broken sleep": [
+      "HP:0025199"
+    ],
+    "fitful sleep": [
+      "HP:0025199"
+    ],
+    "interrupted sleep": [
+      "HP:0025199"
+    ],
+    "restless sleep": [
+      "HP:0025199"
+    ],
+    "수면 분절": [
+      "HP:0025199"
+    ],
+    "수면 단절": [
+      "HP:0025199"
+    ],
+    "snoring": [
+      "HP:0025267"
+    ],
+    "snore": [
+      "HP:0025267"
+    ],
+    "snores": [
+      "HP:0025267"
+    ],
+    "snoring symptoms": [
+      "HP:0025267"
+    ],
+    "소리내며 잠": [
+      "HP:0025267"
+    ],
+    "코골이": [
+      "HP:0025267"
+    ],
+    "loud snoring": [
+      "HP:0025372"
+    ],
+    "has loud snoring": [
+      "HP:0025372"
+    ],
+    "have loud snoring": [
+      "HP:0025372"
+    ],
+    "heavy snoring": [
+      "HP:0025372"
+    ],
+    "snores loudly": [
+      "HP:0025372"
+    ],
+    "심한 코골이": [
+      "HP:0025372"
+    ],
+    "pharyngitis": [
+      "HP:0025439"
+    ],
+    "sore throat": [
+      "HP:0025439"
+    ],
+    "목 아픔": [
+      "HP:0025439"
+    ],
+    "인후통": [
+      "HP:0025439"
+    ],
+    "인두염": [
+      "HP:0025439"
+    ],
+    "인후염": [
+      "HP:0025439"
+    ],
+    "night sweats": [
+      "HP:0030166"
+    ],
+    "nocturnal diaphoresis": [
+      "HP:0030166"
+    ],
+    "nocturnal hyperhidrosis": [
+      "HP:0030166"
+    ],
+    "밤땀": [
+      "HP:0030166"
+    ],
+    "야간 다한증": [
+      "HP:0030166"
+    ],
+    "야간 발한": [
+      "HP:0030166"
+    ],
+    "자다 식은땀": [
+      "HP:0030166"
+    ],
+    "pulmonary granulomatosis": [
+      "HP:0030250"
+    ],
+    "폐 육아종증": [
+      "HP:0030250"
+    ],
+    "enlarged tonsils": [
+      "HP:0030812"
+    ],
+    "enlargement of tonsils": [
+      "HP:0030812"
+    ],
+    "tonsillar hypertrophy": [
+      "HP:0030812"
+    ],
+    "tonsils large/hypertrophy": [
+      "HP:0030812"
+    ],
+    "편도 비대": [
+      "HP:0030812"
+    ],
+    "wheezing": [
+      "HP:0030828"
+    ],
+    "wheeze": [
+      "HP:0030828"
+    ],
+    "심장성 천명": [
+      "HP:0030828"
+    ],
+    "쌕쌕거림": [
+      "HP:0030828"
+    ],
+    "천명": [
+      "HP:0030828"
+    ],
+    "천명음": [
+      "HP:0030828"
+    ],
+    "abnormal breath sound": [
+      "HP:0030829"
+    ],
+    "abnormal breath sounds": [
+      "HP:0030829"
+    ],
+    "abnormal lung auscultation finding": [
+      "HP:0030829"
+    ],
+    "decreased breath sounds": [
+      "HP:0030829"
+    ],
+    "감소": [
+      "HP:0030829"
+    ],
+    "이상 호흡음": [
+      "HP:0030829"
+    ],
+    "호흡음 감소": [
+      "HP:0030829"
+    ],
+    "crackles": [
+      "HP:0030830"
+    ],
+    "crepitations": [
+      "HP:0030830"
+    ],
+    "rales": [
+      "HP:0030830"
+    ],
+    "crackle": [
+      "HP:0030830"
+    ],
+    "rale": [
+      "HP:0030830"
+    ],
+    "velcro": [
+      "HP:0030830"
+    ],
+    "수포음": [
+      "HP:0030830"
+    ],
+    "양측 기저부": [
+      "HP:0030830"
+    ],
+    "크래클": [
+      "HP:0030830"
+    ],
+    "폐포음": [
+      "HP:0030830"
+    ],
+    "거품소리": [
+      "HP:0030830"
+    ],
+    "rhonchi": [
+      "HP:0030831"
+    ],
+    "coarse crackles": [
+      "HP:0030831"
+    ],
+    "건성수포음": [
+      "HP:0030831"
+    ],
+    "저음성 호흡잡음": [
+      "HP:0030831"
+    ],
+    "intercostal retractions": [
+      "HP:0030864"
+    ],
+    "chest retractions": [
+      "HP:0030864"
+    ],
+    "늑간 함몰": [
+      "HP:0030864"
+    ],
+    "reduced fev1/fvc ratio": [
+      "HP:0030877"
+    ],
+    "decreased fev1/fvc": [
+      "HP:0030877"
+    ],
+    "obstructive deficit on pulmonary function test": [
+      "HP:0030877"
+    ],
+    "obstructive deficit on pulmonary function testing": [
+      "HP:0030877"
+    ],
+    "fev1/fvc 감소": [
+      "HP:0030877"
+    ],
+    "chronic infection": [
+      "HP:0031035"
+    ],
+    "만성 감염": [
+      "HP:0031035"
+    ],
+    "obstruction of the superior vena cava": [
+      "HP:0031041"
+    ],
+    "svc syndrome": [
+      "HP:0031041"
+    ],
+    "superior vena cava obstruction": [
+      "HP:0031041"
+    ],
+    "superior vena cava syndrome": [
+      "HP:0031041"
+    ],
+    "상대정맥 폐쇄": [
+      "HP:0031041"
+    ],
+    "rhinorrhea": [
+      "HP:0031417"
+    ],
+    "nasal discharge": [
+      "HP:0031417"
+    ],
+    "runny nose": [
+      "HP:0031417"
+    ],
+    "비루": [
+      "HP:0031417"
+    ],
+    "콧물": [
+      "HP:0031417"
+    ],
+    "콧물 흐름": [
+      "HP:0031417"
+    ],
+    "usual interstitial pneumonia": [
+      "HP:0031950"
+    ],
+    "uip": [
+      "HP:0031950"
+    ],
+    "보통 간질성 폐렴": [
+      "HP:0031950"
+    ],
+    "eosinophilic pneumonia": [
+      "HP:0032071"
+    ],
+    "eosinophilic pulmonary infiltration": [
+      "HP:0032071"
+    ],
+    "pulmonary eosinophilia": [
+      "HP:0032071"
+    ],
+    "pulmonary eosinophilic infiltrate": [
+      "HP:0032071"
+    ],
+    "pulmonary eosinophilic infiltration": [
+      "HP:0032071"
+    ],
+    "호산구성 폐렴": [
+      "HP:0032071"
+    ],
+    "parenchymal consolidation": [
+      "HP:0032177"
+    ],
+    "lung consolidation": [
+      "HP:0032177"
+    ],
+    "폐실질 경화": [
+      "HP:0032177"
+    ],
+    "경화": [
+      "HP:0032177"
+    ],
+    "airway hyperresponsiveness": [
+      "HP:0032933"
+    ],
+    "bronchial hyperresponsiveness": [
+      "HP:0032933"
+    ],
+    "기관지 과민반응": [
+      "HP:0032933"
+    ],
+    "기도 과민반응": [
+      "HP:0032933"
+    ],
+    "bhr": [
+      "HP:0032933"
+    ],
+    "traction bronchiectasis": [
+      "HP:0032969"
+    ],
+    "견인성 기관지확장증": [
+      "HP:0032969"
+    ],
+    "recurrent viral upper respiratory tract infections": [
+      "HP:0033166"
+    ],
+    "recurrent viral uri": [
+      "HP:0033166"
+    ],
+    "재발 uri": [
+      "HP:0033166"
+    ],
+    "재발성 바이러스성 상기도 감염": [
+      "HP:0033166"
+    ],
+    "congenital lobar overinflation": [
+      "HP:0033255"
+    ],
+    "congenital lobar emphysema": [
+      "HP:0033255"
+    ],
+    "선천성 폐엽 과확장": [
+      "HP:0033255"
+    ],
+    "pleural plaque": [
+      "HP:0033398"
+    ],
+    "흉막판": [
+      "HP:0033398"
+    ],
+    "increased circulating brain natriuretic peptide concentration": [
+      "HP:0033534"
+    ],
+    "elevated b-type natriuretic peptide": [
+      "HP:0033534"
+    ],
+    "elevated circulating bnp concentration": [
+      "HP:0033534"
+    ],
+    "increased b-type natriuretic peptide": [
+      "HP:0033534"
+    ],
+    "increased bnp": [
+      "HP:0033534"
+    ],
+    "increased ventricular natriuretic peptide": [
+      "HP:0033534"
+    ],
+    "혈청 bnp 상승": [
+      "HP:0033534"
+    ],
+    "bnp 상승": [
+      "HP:0033534"
+    ],
+    "bilateral apical pulmonary fibrosis": [
+      "HP:0033539"
+    ],
+    "상엽 폐섬유화": [
+      "HP:0033539"
+    ],
+    "양측 상엽 섬유화": [
+      "HP:0033539"
+    ],
+    "pre-capillary pulmonary hypertension": [
+      "HP:0033578"
+    ],
+    "precapillary pulmonary hypertension": [
+      "HP:0033578"
+    ],
+    "전모세관 폐고혈압": [
+      "HP:0033578"
+    ],
+    "post-capillary pulmonary hypertension": [
+      "HP:0033635"
+    ],
+    "postcapillary pulmonary hypertension": [
+      "HP:0033635"
+    ],
+    "후모세관 폐고혈압": [
+      "HP:0033635"
+    ],
+    "pulmonary cavity": [
+      "HP:0033655"
+    ],
+    "cavitating lesion": [
+      "HP:0033655"
+    ],
+    "lung cavitation": [
+      "HP:0033655"
+    ],
+    "pulmonary cavern": [
+      "HP:0033655"
+    ],
+    "pulmonary cavitation": [
+      "HP:0033655"
+    ],
+    "폐 공동": [
+      "HP:0033655"
+    ],
+    "공동": [
+      "HP:0033655"
+    ],
+    "acute respiratory distress syndrome": [
+      "HP:0033677"
+    ],
+    "ards": [
+      "HP:0033677"
+    ],
+    "ards-like": [
+      "HP:0033677"
+    ],
+    "급성 호흡곤란": [
+      "HP:0033677"
+    ],
+    "급성 호흡곤란증후군": [
+      "HP:0033677"
+    ],
+    "increased sputum production": [
+      "HP:0033709"
+    ],
+    "increased phlegm": [
+      "HP:0033709"
+    ],
+    "increased sputum": [
+      "HP:0033709"
+    ],
+    "sputum production": [
+      "HP:0033709"
+    ],
+    "sputum": [
+      "HP:0033709"
+    ],
+    "가래": [
+      "HP:0033709"
+    ],
+    "객담": [
+      "HP:0033709"
+    ],
+    "객담 증가": [
+      "HP:0033709"
+    ],
+    "거품 객담": [
+      "HP:0033709"
+    ],
+    "대량 객담": [
+      "HP:0033709"
+    ],
+    "만성 객담": [
+      "HP:0033709"
+    ],
+    "객담배출 증가": [
+      "HP:0033709"
+    ],
+    "pleuritic chest pain": [
+      "HP:0033771"
+    ],
+    "pleuritic pain": [
+      "HP:0033771"
+    ],
+    "급성": [
+      "HP:0033771"
+    ],
+    "숨쉴때 가슴통증": [
+      "HP:0033771"
+    ],
+    "흉막성 흉통": [
+      "HP:0033771"
+    ],
+    "흉막통증": [
+      "HP:0033771"
+    ],
+    "흉막통": [
+      "HP:0033771"
+    ],
+    "mediastinal mass": [
+      "HP:0033823"
+    ],
+    "영상": [
+      "HP:0033823"
+    ],
+    "종격동 종괴": [
+      "HP:0033823"
+    ],
+    "중심성 청색증": [
+      "HP:0034032"
+    ],
+    "hilar lymph node enlargement": [
+      "HP:0034388"
+    ],
+    "bilateral hilar lymphadenopathy": [
+      "HP:0034388"
+    ],
+    "hilar adenopathy": [
+      "HP:0034388"
+    ],
+    "hilar lymphadenopathy": [
+      "HP:0034388"
+    ],
+    "bhl": [
+      "HP:0034388"
+    ],
+    "양측 폐문 림프절": [
+      "HP:0034388"
+    ],
+    "폐문 림프절 비대": [
+      "HP:0034388"
+    ],
+    "purulent sputum": [
+      "HP:0034777"
+    ],
+    "purulent expectoration": [
+      "HP:0034777"
+    ],
+    "rust-colored sputum": [
+      "HP:0034777"
+    ],
+    "노란 가래": [
+      "HP:0034777"
+    ],
+    "녹색 가래": [
+      "HP:0034777"
+    ],
+    "녹슨 가래": [
+      "HP:0034777"
+    ],
+    "농가래": [
+      "HP:0034777"
+    ],
+    "농성 객담": [
+      "HP:0034777"
+    ],
+    "색 변화": [
+      "HP:0034777"
+    ],
+    "악취": [
+      "HP:0034777"
+    ],
+    "초록색 가래": [
+      "HP:0034777"
+    ],
+    "화농성 가래": [
+      "HP:0034777"
+    ],
+    "paroxysmal nocturnal dyspnea": [
+      "HP:0034807"
+    ],
+    "발작성 야간 호흡곤란": [
+      "HP:0034807"
+    ],
+    "pnd": [
+      "HP:0034807"
+    ],
+    "increased size of nasopharyngeal adenoids": [
+      "HP:0040261"
+    ],
+    "adenoid hypertrophy": [
+      "HP:0040261"
+    ],
+    "adenoids large": [
+      "HP:0040261"
+    ],
+    "아데노이드 비대": [
+      "HP:0040261"
+    ],
+    "decreased dlco": [
+      "HP:0045051"
+    ],
+    "decreased diffusing capacity": [
+      "HP:0045051"
+    ],
+    "reduced diffusing capacity": [
+      "HP:0045051"
+    ],
+    "dlco 감소": [
+      "HP:0045051"
+    ],
+    "확산능 감소": [
+      "HP:0045051"
+    ],
+    "arteriovenous malformation": [
+      "HP:0100026"
+    ],
+    "동정맥 기형": [
+      "HP:0100026"
+    ],
+    "avm": [
+      "HP:0100026"
+    ],
+    "thymoma": [
+      "HP:0100522"
+    ],
+    "흉선종": [
+      "HP:0100522"
+    ],
+    "pulmonary edema": [
+      "HP:0100598"
+    ],
+    "excess fluid in lungs": [
+      "HP:0100598"
+    ],
+    "lung edema": [
+      "HP:0100598"
+    ],
+    "lung oedema": [
+      "HP:0100598"
+    ],
+    "pulmonary oedema": [
+      "HP:0100598"
+    ],
+    "wet lung": [
+      "HP:0100598"
+    ],
+    "비심인성": [
+      "HP:0100598"
+    ],
+    "폐 부종": [
+      "HP:0100598"
+    ],
+    "폐부종": [
+      "HP:0100598"
+    ],
+    "pulmonary sequestration": [
+      "HP:0100632"
+    ],
+    "bronchopulmonary sequestration": [
+      "HP:0100632"
+    ],
+    "cystic lung lesion": [
+      "HP:0100632"
+    ],
+    "폐격리증": [
+      "HP:0100632"
+    ],
+    "chest pain": [
+      "HP:0100749"
+    ],
+    "chest discomfort": [
+      "HP:0100749"
+    ],
+    "thoracic pain": [
+      "HP:0100749"
+    ],
+    "가슴아픔": [
+      "HP:0100749"
+    ],
+    "가슴통증": [
+      "HP:0100749"
+    ],
+    "흉부 압박감": [
+      "HP:0100749"
+    ],
+    "흉통": [
+      "HP:0100749"
+    ],
+    "atelectasis": [
+      "HP:0100750"
+    ],
+    "lung collapse": [
+      "HP:0100750"
+    ],
+    "partial or complete collapse of part or entire lung": [
+      "HP:0100750"
+    ],
+    "pulmonary atelectasis": [
+      "HP:0100750"
+    ],
+    "무기폐": [
+      "HP:0100750"
+    ],
+    "폐허탈": [
+      "HP:0100750"
+    ],
+    "asbestos exposure": [
+      "HP:4000111"
+    ],
+    "석면 노출": [
+      "HP:4000111"
+    ],
+    "silica dust exposure": [
+      "HP:6000192"
+    ],
+    "규폐 분진 노출": [
+      "HP:6000192"
+    ],
+    "규소 분진 노출": [
+      "HP:6000192"
+    ],
+    "실리카 노출": [
+      "HP:6000192"
+    ]
+  }
+}

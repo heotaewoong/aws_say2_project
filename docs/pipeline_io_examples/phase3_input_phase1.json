@@ -1,0 +1,81 @@
+{
+  "_comment": "Phase 3 입력 예시 — Phase 1 HPO 결과 (Phase 1 팀 OWN: phase1_hpo_results 테이블의 SELECT 결과). 가상 환자 P00123, 65세 남성, CAP 의심.",
+  "_source_table": "phase1_hpo_results",
+  "_query": "SELECT case_id, hpo_id, hpo_term, frequency, source FROM phase1_hpo_results WHERE case_id = 'P00123'",
+  "case_id": "P00123",
+  "extracted_at": "2026-05-14T09:32:11Z",
+  "rows": [
+    {
+      "hpo_id": "HP:0001945",
+      "hpo_term": "Fever",
+      "hpo_kr": "발열",
+      "frequency": "Frequent",
+      "source": "patient_history",
+      "raw_text": "고열 3일째"
+    },
+    {
+      "hpo_id": "HP:0012735",
+      "hpo_term": "Cough",
+      "hpo_kr": "기침",
+      "frequency": "Very frequent",
+      "source": "patient_history",
+      "raw_text": "기침"
+    },
+    {
+      "hpo_id": "HP:0033709",
+      "hpo_term": "Increased sputum production",
+      "hpo_kr": "객담 증가",
+      "frequency": "Frequent",
+      "source": "patient_history",
+      "raw_text": "객담 많음"
+    },
+    {
+      "hpo_id": "HP:0034777",
+      "hpo_term": "Purulent sputum",
+      "hpo_kr": "화농성 객담",
+      "frequency": "Frequent",
+      "source": "patient_history",
+      "raw_text": "노란색 가래"
+    },
+    {
+      "hpo_id": "HP:0002094",
+      "hpo_term": "Dyspnea",
+      "hpo_kr": "호흡곤란",
+      "frequency": "Frequent",
+      "source": "patient_history",
+      "raw_text": "숨참"
+    },
+    {
+      "hpo_id": "HP:0033771",
+      "hpo_term": "Pleuritic chest pain",
+      "hpo_kr": "흉막성 흉통",
+      "frequency": "Frequent",
+      "source": "physical_exam",
+      "raw_text": "흡기 시 우측 흉통"
+    },
+    {
+      "hpo_id": "HP:0002789",
+      "hpo_term": "Tachypnea",
+      "hpo_kr": "빈호흡",
+      "frequency": "Frequent",
+      "source": "physical_exam",
+      "raw_text": "RR 28"
+    },
+    {
+      "hpo_id": "HP:0001649",
+      "hpo_term": "Tachycardia",
+      "hpo_kr": "빈맥",
+      "frequency": "Frequent",
+      "source": "physical_exam",
+      "raw_text": "HR 112"
+    },
+    {
+      "hpo_id": "HP:0025143",
+      "hpo_term": "Chills",
+      "hpo_kr": "오한",
+      "frequency": "Frequent",
+      "source": "patient_history",
+      "raw_text": "한기"
+    }
+  ]
+}

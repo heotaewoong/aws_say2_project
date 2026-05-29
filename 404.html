@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Soo-Pul · SooNet-Pulmonary</title>
+  <script>
+    var seg = window.location.pathname.replace('/aws_say2_project','').replace(/^\//,'');
+    var query = window.location.search.slice(1);
+    var hash = window.location.hash.slice(1);
+    var url = '/aws_say2_project/?p=/' + seg + (query ? '&q=' + query : '') + (hash ? '&h=' + hash : '');
+    window.location.replace(url);
+  </script>
+</head>
+</html>
