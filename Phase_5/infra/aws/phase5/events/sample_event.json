@@ -1,0 +1,4 @@
+{
+  "session_id": "00000000-0000-0000-0000-000000000001",
+  "comment": "테스트용 더미 session_id — 실제 Aurora DB에 해당 session이 있어야 정상 동작"
+}

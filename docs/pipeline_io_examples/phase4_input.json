@@ -1,0 +1,109 @@
+{
+  "_comment": "Phase 4 입력 예시 — Phase 3 결과 + 상류 컨텍스트를 묶어 LLM(Bedrock Claude)에 전달하기 위한 dict. JSON-호환.",
+  "_source_tables_read": [
+    "phase3_disease_scores",
+    "phase3_scoring_evidence",
+    "phase3_scoring_adjustments",
+    "phase2_cxr_findings",
+    "phase1_hpo_results",
+    "emr_patient"
+  ],
+  "case_id": "P00123",
+  "verification_run_id": "9b1a2c3d-4e5f-6789-abcd-ef0123456789",
+  "source_scoring_run_id": "5b7a634d-387f-42ab-b882-955e64ae93d7",
+
+  "patient_context": {
+    "age": 65,
+    "sex": "M",
+    "chief_complaint": "3일 전부터 발열·기침·화농성 객담, 우측 흉통",
+    "smoking_pack_year": 30,
+    "comorbidities": ["HTN", "DM"]
+  },
+
+  "phase1_hpo": [
+    {"hpo_id": "HP:0001945", "hpo_term": "Fever"},
+    {"hpo_id": "HP:0012735", "hpo_term": "Cough"},
+    {"hpo_id": "HP:0033709", "hpo_term": "Increased sputum production"},
+    {"hpo_id": "HP:0034777", "hpo_term": "Purulent sputum"},
+    {"hpo_id": "HP:0002094", "hpo_term": "Dyspnea"},
+    {"hpo_id": "HP:0033771", "hpo_term": "Pleuritic chest pain"},
+    {"hpo_id": "HP:0002789", "hpo_term": "Tachypnea"},
+    {"hpo_id": "HP:0001649", "hpo_term": "Tachycardia"},
+    {"hpo_id": "HP:0025143", "hpo_term": "Chills"}
+  ],
+
+  "phase2_cxr_raw": [
+    {"chexpert_label": "Pneumonia",     "probability": 0.92},
+    {"chexpert_label": "Consolidation", "probability": 0.78},
+    {"chexpert_label": "Lung Opacity",  "probability": 0.65}
+  ],
+
+  "phase3_top10": [
+    {
+      "rank": 1, "disease_key": "community_acquired_pneumonia",
+      "name_kr": "지역사회획득폐렴",
+      "total_score": 0.8421, "confidence": "STRONG",
+      "modality_scores": {"symptoms": 0.667, "lab": 0.785, "radiology": 1.000, "micro": 0.333},
+      "matched_count": 11, "total_criteria": 17
+    },
+    {
+      "rank": 2, "disease_key": "bacterial_pneumonia_nec",
+      "name_kr": "기타 명시된 세균성 폐렴",
+      "total_score": 0.6259, "confidence": "MODERATE",
+      "modality_scores": {"symptoms": 0.500, "lab": 0.714, "radiology": 1.000, "micro": 0.333}
+    },
+    {
+      "rank": 3, "disease_key": "viral_pneumonia",
+      "name_kr": "바이러스성 폐렴",
+      "total_score": 0.4187, "confidence": "MODERATE",
+      "modality_scores": {"symptoms": 0.667, "lab": 0.286, "radiology": 0.500, "micro": 0.000}
+    }
+  ],
+
+  "phase3_evidence_top1": [
+    {"modality": "symptoms",  "finding": "Fever",                              "source": "HP:0001945"},
+    {"modality": "symptoms",  "finding": "Increased sputum production",        "source": "HP:0033709"},
+    {"modality": "symptoms",  "finding": "Purulent sputum",                    "source": "HP:0034777"},
+    {"modality": "radiology", "finding": "consolidation",                      "source": "CheXpert Consolidation 0.78"},
+    {"modality": "radiology", "finding": "air bronchogram",                    "source": "CheXpert Pneumonia 0.92"},
+    {"modality": "radiology", "finding": "infiltrate",                         "source": "CheXpert Pneumonia 0.92"},
+    {"modality": "lab",       "finding": "Markedly Elevated CRP (184 mg/L)",   "source": "itemid 50889 (critical)"},
+    {"modality": "lab",       "finding": "Leukocytosis (WBC 18.5)",            "source": "itemid 51301"},
+    {"modality": "lab",       "finding": "Elevated procalcitonin (2.8 ng/mL)", "source": "itemid 51275 (critical)"},
+    {"modality": "lab",       "finding": "Hypoxemia (pO2 62, SpO2 91%)",       "source": "itemid 50821/220277"},
+    {"modality": "micro",     "finding": "Streptococcus pneumoniae",           "source": "Sputum culture"}
+  ],
+
+  "phase3_adjustments_top1": [
+    {"kind": "critical_lab_bonus",  "delta": 0.05, "reason": "Critical CRP + Procalcitonin"},
+    {"kind": "news2_high_bonus",    "delta": 0.03, "reason": "NEWS2=8 + 감염성 질환"},
+    {"kind": "coverage_factor",     "delta": 0.0,  "reason": "4/4 modality 활성, sqrt(1)=1.0"}
+  ],
+
+  "clinical_scores": {
+    "NEWS2": {"score": 8, "interpretation": "High clinical risk"},
+    "CURB-65": {"score": 2, "interpretation": "Moderate severity — consider hospitalization"}
+  },
+
+  "chexpert_family_reference": {
+    "_comment": "Phase 4 LLM에게 CheXpert 14 카테고리의 의학적 family를 컨텍스트로 제공 (data/chexpert_label_reference_v1.yaml 추출). LLM이 family-aware 추론 가능.",
+    "Pneumonia": ["consolidation", "infiltrate", "opacity", "air bronchogram", "airspace disease", "ground glass"],
+    "Consolidation": ["consolidation", "airspace disease", "air bronchogram"],
+    "Lung Opacity": ["opacity", "infiltrate", "ground glass", "consolidation", "reticular"]
+  },
+
+  "llm_call_config": {
+    "model_id": "anthropic.claude-sonnet-4-6",
+    "prompt_template_id": "phase4_diagnostic_verifier_v2",
+    "max_tokens": 4000,
+    "temperature": 0.2,
+    "guard_rails_enabled": [
+      "safety_critical_finding",
+      "rare_screen_trigger",
+      "rule_out_disclaimer",
+      "evidence_hallucination_check",
+      "korean_clinical_terminology",
+      "fda_samd_compliance_phrasing"
+    ]
+  }
+}

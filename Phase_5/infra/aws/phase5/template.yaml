@@ -1,0 +1,223 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Description: >
+  Phase 5 — RAG LLM Pipeline (RareLinkHybridDualRAG)
+  Step Functions → Lambda → Aurora PostgreSQL + Bedrock
+
+# ============================================================
+# Parameters
+# ============================================================
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Deployment stage
+
+  BedrockRegion:
+    Type: String
+    Default: ap-northeast-2
+    Description: AWS region for Bedrock runtime calls
+
+  BedrockModelId:
+    Type: String
+    Default: anthropic.claude-3-5-sonnet-20241022-v2:0
+    Description: Bedrock foundation model ID
+
+  S3Bucket:
+    Type: String
+    Default: say2-2team-bucket
+    Description: Team S3 bucket name
+
+# ============================================================
+# Globals
+# ============================================================
+Globals:
+  Function:
+    Runtime: python3.11
+    Architectures:
+      - x86_64
+    Timeout: 300
+    MemorySize: 1024
+    Tracing: Active
+    Environment:
+      Variables:
+        STAGE: !Ref Stage
+        BEDROCK_REGION: !Ref BedrockRegion
+        BEDROCK_MODEL_ID: !Ref BedrockModelId
+        S3_BUCKET: !Ref S3Bucket
+    Tags:
+      project: pre-lambda-2-2-team
+
+# ============================================================
+# Resources
+# ============================================================
+Resources:
+
+  # ----------------------------------------------------------
+  # CloudWatch Log Group
+  # ----------------------------------------------------------
+  Phase5RagLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/phase5-rag-${Stage}"
+      RetentionInDays: 90
+      Tags:
+        - Key: project
+          Value: pre-lambda-2-2-team
+
+  # ----------------------------------------------------------
+  # Lambda Layer — Python deps (aiohttp, psycopg2, pandas, requests)
+  # ----------------------------------------------------------
+  Phase5DepsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub "phase5-deps-${Stage}"
+      Description: "Phase5 RAG pipeline dependencies (aiohttp, psycopg2-binary, pandas, requests)"
+      ContentUri: layer/deps-build/
+      CompatibleRuntimes:
+        - python3.11
+      CompatibleArchitectures:
+        - x86_64
+      RetentionPolicy: Delete
+
+  # ----------------------------------------------------------
+  # Lambda Function — Phase 5 RAG
+  # ----------------------------------------------------------
+  Phase5RagFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: Phase5RagLogGroup
+    Properties:
+      FunctionName: !Sub "report-rag-${Stage}"
+      CodeUri: lambda/
+      Handler: handler.lambda_handler
+      Description: "Phase5 RAG pipeline — Hybrid Dual RAG with Bedrock + Aurora"
+      Layers:
+        - !Ref Phase5DepsLayer
+      # VPC config — RDS 사설 IP 접근 위해 VPC 내부 배치
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-03b9bc5d95699b797   # fhir-ec2-sg — RDS 5432 ingress 허용
+        SubnetIds:
+          - subnet-02eed659772bac6aa   # private-1 (AZ 2a)
+          - subnet-09ba10cf625d73da0   # private-4 (AZ 2c) — multi-AZ HA
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSLambdaVPCAccessExecutionRole
+        - AWSXrayWriteOnlyAccess
+        # Bedrock — InvokeModel
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource:
+                - !Sub "arn:aws:bedrock:${BedrockRegion}::foundation-model/${BedrockModelId}"
+        # S3 — HPO JSON read
+        - Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+              Resource:
+                - !Sub "arn:aws:s3:::${S3Bucket}/Phase_1/hpo_official.json"
+                - !Sub "arn:aws:s3:::${S3Bucket}/RAG/*"
+        # Secrets Manager — Aurora credentials
+        - Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource:
+                - !Sub "arn:aws:secretsmanager:ap-northeast-2:*:secret:soopul/aurora/app-user*"
+      Events:
+        RunPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Phase5Api
+            Path: /run
+            Method: POST
+        HealthGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Phase5Api
+            Path: /health
+            Method: GET
+      Tags:
+        project: pre-lambda-2-2-team
+
+  # ----------------------------------------------------------
+  # API Gateway
+  # ----------------------------------------------------------
+  Phase5Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub "phase5-rag-api-${Stage}"
+      StageName: !Ref Stage
+      TracingEnabled: true
+      Tags:
+        project: pre-lambda-2-2-team
+
+  # ----------------------------------------------------------
+  # CloudWatch Alarms
+  # ----------------------------------------------------------
+  Phase5RagErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "phase5-rag-${Stage}-errors"
+      AlarmDescription: "Phase5 RAG Lambda error rate alarm"
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref Phase5RagFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  Phase5RagLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "phase5-rag-${Stage}-latency-p99"
+      AlarmDescription: "Phase5 RAG Lambda p99 latency > 280s (near timeout)"
+      Namespace: AWS/Lambda
+      MetricName: Duration
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref Phase5RagFunction
+      ExtendedStatistic: p99
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 280000
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+# ============================================================
+# Outputs
+# ============================================================
+Outputs:
+  ApiEndpoint:
+    Description: "Phase5 RAG API Gateway base URL"
+    Value: !Sub "https://${Phase5Api}.execute-api.ap-northeast-2.amazonaws.com/${Stage}"
+    Export:
+      Name: !Sub "phase5-rag-${Stage}-ApiEndpoint"
+
+  RunUrl:
+    Description: "POST endpoint to trigger RAG pipeline"
+    Value: !Sub "https://${Phase5Api}.execute-api.ap-northeast-2.amazonaws.com/${Stage}/run"
+    Export:
+      Name: !Sub "phase5-rag-${Stage}-RunUrl"
+
+  LambdaArn:
+    Description: "Phase5 RAG Lambda function ARN (for Step Functions)"
+    Value: !GetAtt Phase5RagFunction.Arn
+    Export:
+      Name: !Sub "phase5-rag-${Stage}-LambdaArn"
+
+  LayerArn:
+    Description: "Phase5 deps Layer ARN"
+    Value: !Ref Phase5DepsLayer
+    Export:
+      Name: !Sub "phase5-rag-${Stage}-LayerArn"

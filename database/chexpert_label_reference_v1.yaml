@@ -1,0 +1,750 @@
+# CheXpert 14 Label → DB Imaging Token Expansion Reference (v1.6)
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# ▣ 약어·용어 풀이 (GLOSSARY) — 본 헤더에 등장하는 모든 약어·전문 용어
+# ───────────────────────────────────────────────────────────────────────────────
+# 본 문서는 의료·AI·학술 도메인이 결합되어 약어가 많다. 모두 풀어서 설명한다.
+#
+# ▶ 핵심 시스템 용어
+#   • SSOT  (Single Source of Truth, 단일 진실 출처)
+#           — 하나의 사실(정보·정의·매핑)에 대해 신뢰할 수 있는 *유일한* 원천
+#             문서. 여러 곳에 같은 정보를 복사하면 한쪽이 수정될 때 다른 쪽이
+#             낡아져 모순이 생기므로, "딱 한 곳에만 진실을 두고 나머지는 거기
+#             서 읽어 간다" 는 소프트웨어·데이터 관리 원칙. 본 YAML 이 바로
+#             CheXpert 14 라벨 ↔ DB 토큰 매핑의 SSOT 다 — 다른 코드·문서는
+#             이 파일을 *읽기만* 하고 매핑을 자체 정의하지 않는다.
+#   • YAML  (YAML Ain't Markup Language, 사람이 읽기 쉬운 데이터 형식)
+#           — JSON 처럼 데이터를 표현하되 들여쓰기 + 콜론으로 작성해서 사람이
+#             읽고 편집하기 쉬운 형식. 설정 파일·매핑 테이블에 흔히 사용.
+#   • DB    (Database, 데이터베이스) — 본 문서에서는 lung_dx 의 질환 profile
+#             YAML (lung_disease_profiles_v3_3.yaml) 을 의미. Phase 3 가
+#             질환별 radiology_findings 토큰을 읽어 매칭한다.
+#   • Phase 1 — lung_dx 5단계 중 첫 단계. "증상·문진" (symptom + history).
+#             HPO 표준 vocabulary 사용. profile.hpo_phenotypes 와 매칭.
+#   • Phase 2 — lung_dx 5단계 중 두 번째 단계. "X-ray AI 분석".
+#             CheXpert 14 카테고리 label + 확률 (probability) 만 출력
+#             (Option E). 본 어댑터의 입력 출처.
+#   • Phase 3 — lung_dx 5단계 중 세 번째 단계. "Multimodal scoring"
+#             (symptoms + x-ray + lab + micro 통합). S/L/R/M 4축
+#             (Symptom/Lab/Radiology/Micro) 의 가중 합산으로 질환 ranking.
+#             본 어댑터의 출력 소비처.
+#   • Phase 4 — lung_dx 5단계 중 네 번째 단계. "LLM re-ranking".
+#             Bedrock Sonnet + Guard Rail 6종으로 Phase 3 ranking + Phase 1·2·3
+#             value (symptom HPO / X-ray 14cat / lab / micro) 를 LLM 정답지와
+#             대조하여 재 ranking. **Phase 5 결과는 입력 아님**.
+#   • Phase 5 — lung_dx 5단계 중 다섯 번째 단계. "Rare disease".
+#             **별도 팀 담당** — Phase 3·4 와 엄격 분리. Phase 1·2·3 의 4
+#             modality value 를 받아 LIRICAL Bayesian LR + RRF 4-ranker fusion
+#             으로 희귀질환 평가. Phase 4 거치지 않는 독립 트랙. 결과는 Final
+#             단계로 직접 전달.
+#   • R축    — Phase 3 의 4축 중 Radiology(영상) 축. 본 YAML 의 expansion
+#             토큰이 질환 profile 의 radiology_findings 와 매칭되는 곳.
+#   • Option E — Phase 2 가 CheXpert 14 라벨만 출력 (HPO 변환 거부) 하는 설계
+#             결정. 2026-05-14 owner 의학 판단으로 채택.
+#
+# ▶ 의학·영상의학 용어
+#   • CheXpert — Stanford 가 2019 년 발표한 흉부 X-ray AI 라벨 데이터셋.
+#             보고서에서 14개 항목(observation) 을 자동 추출해 라벨링.
+#             arXiv:1901.07031 (CheXpert 원전 논문).
+#   • CR/DX  (Computed Radiography / Digital Radiography, 디지털 흉부 X-ray)
+#           — 필름 대신 디지털 센서로 촬영한 일반 X-ray. 본 YAML 의 적용
+#             대상. 단면 영상인 CT 나 자기공명영상인 MRI 는 적용 대상 아님.
+#   • CT    (Computed Tomography, 컴퓨터 단층촬영) — X-ray 를 여러 각도에서
+#             촬영해 단면 영상으로 재구성. 본 YAML 적용 범위 밖.
+#   • MRI   (Magnetic Resonance Imaging, 자기공명영상) — 자석으로 인체
+#             단면을 촬영. 본 YAML 적용 범위 밖.
+#   • Fleischner Society — 흉부 영상의학 국제 학회. 흉부 영상 용어의 국제
+#             표준(Glossary) 을 발표한다. 가장 최신 판이 2024 년 Bankier
+#             et al. (PMID 38411514) Glossary.
+#   • descriptor (서술자) — Fleischner 2024 가 정의하는 분류. *영상에서
+#             직접 보이는 비특이적 관찰* (예: consolidation, opacity).
+#             "진단을 함의하는 용어 (terms that imply a radiologic
+#             diagnosis)" 와 명시적으로 분리.
+#   • observation (관찰 라벨) — CheXpert 가 14 라벨에 부여한 명칭. 영상
+#             소견 + 임상 진단명이 혼재한 라벨 카테고리.
+#   • HPO   (Human Phenotype Ontology, 인간 표현형 온톨로지) — 의학 증상·
+#             징후를 표준 코드로 정리한 국제 vocabulary. 본 YAML 은 HPO
+#             변환을 거부 (Option E) 하며, lung_dx 의 Phase 1(증상)과
+#             Phase 5(희귀질환)에서만 HPO 사용.
+#   • CAP   (Community-Acquired Pneumonia, 지역사회 획득 폐렴) — 병원 밖
+#             에서 감염된 폐렴. R3 가 ATS/IDSA 의 CAP 진료 지침.
+#   • ATS   (American Thoracic Society, 미국 흉부학회)
+#   • IDSA  (Infectious Diseases Society of America, 미국 감염병학회)
+#   • ALI/ARDS — Acute Lung Injury / Acute Respiratory Distress Syndrome
+#             (급성 폐손상 / 급성 호흡곤란 증후군). R4 가 다루는 질환.
+#   • CPE   (Cardiogenic Pulmonary Edema, 심인성 폐부종) — 심장 기능 저하
+#             로 폐에 체액이 차는 상태. R4 가 ALI/ARDS 와 CPE 의 영상
+#             감별에 관한 systematic review.
+#   • BTS   (British Thoracic Society, 영국 흉부학회) — R7 의 발행 기관.
+#   • ACR   (American College of Radiology, 미국 영상의학회) — R8 의 발행
+#             기관. "Appropriateness Criteria" 는 영상 검사 권고 지침.
+#   • PA projection (Posteroanterior, 후전방 촬영) — X-ray 를 환자 뒤에서
+#             앞으로 통과시켜 촬영. 표준 흉부 X-ray 자세.
+#   • supine AP — Supine(누운 자세) + AP(Anteroposterior, 전후방 촬영).
+#             환자가 누운 상태에서 X-ray 를 앞에서 뒤로 통과시킴 (보통
+#             중환자실 침상 촬영).
+#
+# ▶ 학술·문헌 식별 용어
+#   • PMID  (PubMed Identifier, 펍메드 식별 번호) — 미국 NLM 의 PubMed
+#             데이터베이스가 의학 논문에 부여하는 고유 번호.
+#             예: PMID 38411514 → Fleischner 2024 Glossary.
+#   • PMC   (PubMed Central, 펍메드 센트럴) — PubMed 의 무료 전문(full text)
+#             아카이브. 예: PMC10902601 → Fleischner 2024 전문 HTML.
+#   • arXiv — 코넬 대학교가 운영하는 무료 학술 논문 사전공개 서버.
+#             AI/CS 분야 논문은 정식 학술지 발표 전 arXiv 에 올라가는
+#             경우가 많다. 예: arXiv:1901.07031 → CheXpert 원전.
+#   • AAAI  (Association for the Advancement of Artificial Intelligence,
+#             국제 AI 학회) — CheXpert 가 발표된 학술 회의.
+#   • DOI   (Digital Object Identifier, 디지털 객체 식별자) — 학술 자료의
+#             영구 식별 URL. (본 YAML 에서는 PMID 우선 사용)
+#   • SR    (Systematic Review, 체계적 문헌 고찰) — 특정 임상 질문에 대해
+#             기존 연구를 체계적으로 검색·평가·종합하는 연구 방법.
+#             가장 높은 근거 수준 중 하나. R4 Komiya 2017 이 SR.
+#   • PubMed esearch — NLM 이 제공하는 PubMed 검색 API. 본 YAML 에서
+#             "peer-reviewed crosswalk 0건" 같은 negative evidence 확인
+#             에 사용.
+#   • verbatim (축자 인용) — 원문 그대로(글자 한 자도 안 바꾸고) 인용한
+#             것. paraphrase(의역) 의 반대. 본 YAML 의 [V] 마커가 이를
+#             강제한다.
+#   • paraphrase (의역) — 원문 의미는 유지하되 표현은 바꿔서 다시 쓴
+#             것. verbatim 아님. [V] 로 라벨링하면 안 되며 적발 시 [F].
+#   • fabrication (조작) — 원문에 없는 내용을 있다고 주장하는 것. 의도
+#             여부와 무관하게 [F] 적발 대상.
+#   • hallucination (환각) — AI 가 사실이 아닌 내용을 마치 사실처럼
+#             생성하는 현상. fabrication 의 AI 맥락 용어.
+#   • peer-reviewed (동료 심사) — 같은 분야 전문가들이 학술적으로 검증한.
+#             peer-reviewed crosswalk = 동료 심사 거친 매핑표.
+#   • crosswalk (대응표 / 매핑표) — 두 개 이상의 표준 vocabulary 간
+#             1:1 또는 1:N 매핑 테이블. 예: ICD-10 ↔ SNOMED CT crosswalk.
+#             본 YAML 자체가 CheXpert ↔ Fleischner 의 *비공식* crosswalk.
+#   • granularity (입자도 / 세분화 수준) — 정보의 잘게 쪼개진 정도.
+#             CheXpert "Pneumonia" 는 굵은 입자도(진단명 수준),
+#             Fleischner "consolidation" 은 가는 입자도(소견 수준).
+#   • institutional convention (기관 내부 관례) — 학술 표준이 아직 없을
+#             때 한 기관(여기선 lung_dx 팀) 내부에서 정한 잠정 규칙.
+#             외부 권위가 아닌 내부 합의에 근거함을 정직 공시해야 함.
+#
+# ▶ AI 모델·데이터 용어
+#   • NLP   (Natural Language Processing, 자연어 처리) — 컴퓨터가 사람의
+#             글을 이해·처리하는 AI 기술. CheXpert 가 영상 자체가 아니라
+#             "방사선 보고서 텍스트" 에서 14 라벨을 NLP 룰로 추출.
+#   • LLM   (Large Language Model, 대규모 언어 모델) — GPT/Claude/Gemini
+#             같은 거대 언어 AI. lung_dx 의 Phase 4 verifier 에서 사용.
+#   • label noise (라벨 잡음) — 학습 데이터의 라벨이 부정확한 경우. CheXpert
+#             원전이 Pneumonia 라벨에 대해 인정한 한계.
+#   • probability (확률) — AI 모델이 "이 라벨이 맞을 확률" 로 출력하는
+#             0~1 범위의 값. detection_threshold(기본 0.5) 이상이면
+#             detected_findings 에 포함.
+#   • expansion (확장) — 본 YAML 의 핵심 동작. 단일 CheXpert 라벨을
+#             여러 DB 토큰 set 으로 펼치는 것. 예: "Pneumonia" → 6 토큰.
+#   • canonical_db_token (정규 DB 토큰) — 14 라벨 각각의 대표 토큰 1개.
+#             expansion 토큰 set 의 첫 번째 원소이자 가장 표준적인 명칭.
+#
+# ▣ 파일 역할 (FILE ROLE)
+# ───────────────────────────────────────────────────────────────────────────────
+# 본 YAML 은 lung_dx 진단 시스템의 **Phase 2 ↔ Phase 3 어댑터 매핑 SSOT**
+# (Single Source of Truth, 단일 진실 출처) 이다.
+#
+#   [Phase 2 출력]                  [본 YAML 어댑터]                [Phase 3 입력]
+#   ─────────────                   ────────────────                ─────────────
+#   X-ray AI 모델             →    14 라벨 → DB 토큰 매핑     →    질환 profile
+#   (CheXpert 14 카테고리                                            radiology_findings
+#    label + probability)                                            매칭 (R축 scoring)
+#
+# 왜 필요한가:
+#   ① CheXpert 14 라벨은 영상의학 vocabulary 와 다른 입자도(granularity)를 가짐
+#      • CheXpert "Pneumonia" = 임상 진단명 (clinical diagnosis)
+#        - arXiv 1901.07031 verbatim: "Pneumonia, despite being a clinical
+#          diagnosis, was included as a label" (CheXpert 원저자가 인정)
+#      • profile DB radiology_findings = Fleischner 표준 descriptor
+#        - 예: "consolidation", "air bronchogram", "ground glass" 등
+#        - Fleischner 2024 verbatim: "Some terms are labeled as descriptors
+#          to differentiate them from terms that imply a radiologic diagnosis"
+#   ② 두 vocabulary 의 입자도 차이를 매개할 peer-reviewed crosswalk 부재
+#      (PubMed esearch 6 query → 0건)
+#   ③ 따라서 lung_dx 내부 institutional convention 으로 매핑을 정의·문서화하고,
+#      각 매핑 토큰에 학술 evidence 를 token-level marker 로 부착해야 함.
+#
+# 본 파일의 책임 범위:
+#   ✓ 14 라벨 각각의 canonical_db_token + expansion 토큰 set 정의
+#   ✓ 각 expansion 토큰별 학술 evidence 부착 ([V]/[P]/[F] 마커)
+#   ✓ Phase 3 어댑터 설정 (detection_threshold, possible_threshold, exclude_labels)
+#   ✓ honesty_disclosure — 매핑의 한계·1차 출처 부재·임상 통용 토큰 정직 공시
+#   ✗ HPO 변환 (Option E — Phase 1 증상·Phase 5 희귀질환에만 HPO 사용)
+#   ✗ CT/MRI (chest X-ray CR/DX only)
+#
+# 본 파일의 소비자:
+#   • lung_dx/phase3_multimodal/chexpert_adapter.py
+#     - ChexpertReferenceLoader (싱글톤 캐시) → version/labels/expansion 로딩
+#     - build_phase1_result() → 14 라벨 입력을 ai_keywords_matched 토큰 set
+#       으로 변환, Phase 3 diagnostic_scorer._calc_radiology_ratio 에 전달
+#
+# ▣ Evidence 마커 체계 ([V] / [P] / [F]) — token-level audit framework
+# ───────────────────────────────────────────────────────────────────────────────
+# 본 YAML 의 모든 evidence 항목은 다음 3종 마커 중 하나로 시작한다.
+# 마커는 학술 인용의 **재현 가능한 검증 상태(verification state)** 를 표시한다.
+#
+# ┌──────┬────────────────┬───────────────────────────────────────────────────┐
+# │ 마커 │ 의미           │ 정의                                              │
+# ├──────┼────────────────┼───────────────────────────────────────────────────┤
+# │ [V]  │ verbatim       │ 인용한 표현이 출처 본문에 글자 그대로(verbatim)   │
+# │      │ 본문 확인      │ 존재함을 raw text grep 으로 확인. 인용문 원문     │
+# │      │                │ (translation 아닌 origin) 첨부.                   │
+# │      │                │ 예: PMC HTML grep / arXiv PDF pdftotext grep      │
+# ├──────┼────────────────┼───────────────────────────────────────────────────┤
+# │ [P]  │ verbatim       │ 인용 의도는 정당하나 본 시점에 verbatim 확인      │
+# │      │ pending        │ 불가. 사유 명시 (paywall, textbook 미접근,        │
+# │      │                │ 부분 일치 등). next_steps 에 검증 계획 기재.      │
+# │      │                │ → "있다고 단정하지 않음" (보수적 보류).            │
+# ├──────┼────────────────┼───────────────────────────────────────────────────┤
+# │ [F]  │ fact 위반      │ 인용 시도했으나 본문에 부재 — 잘못된 인용 적발.   │
+# │      │ 적발·정정      │ attribute 제거 / 다운그레이드 / 토큰 보존 여부    │
+# │      │                │ 를 사유와 함께 기록. 누적 [F] 건수는 학술 정직성  │
+# │      │                │ 지표.                                             │
+# └──────┴────────────────┴───────────────────────────────────────────────────┘
+#
+# 왜 이 마커 체계가 필요한가:
+#   ① 단순 references 부착은 audit 시 "원문이 정말 그렇게 말했는가?" 검증 불가
+#      → 토큰 단위 marker 부착으로 누구나 grep 한 줄로 재현·반박 가능
+#   ② AI 의학 시스템에서 fabrication/hallucination 적발은 단언적 [V] 와
+#      유보적 [P] 의 구분이 사전 차단 → 잘못된 [V] 표기 자체가 [F] 로 적발됨
+#   ③ 의학 reference 의 paraphrase ≠ verbatim ≠ fabrication 의 3-tier 구분이
+#      학술 책임성(scholarly accountability)을 코드 레벨로 강제
+#   ④ 누적 [F] 건수는 시스템 초기 라벨링 신뢰도의 정량 지표가 됨
+#      (v1 → v1.3 누적 fact 위반 9건 적발 = 학술 audit 의 가시성 확보 증거)
+#
+# 마커 사용 의사결정 흐름:
+#
+#   주장(claim) → 출처 paper 본문 raw text grep
+#       ↓
+#   본문에 verbatim 존재?
+#       ├── YES                  → [V] + verbatim 원문(translation 아님) 첨부
+#       ├── 접근 불가/미확인     → [P] + 사유 + next_steps 검증 계획
+#       └── NO (본문 부재)       → [F]
+#                                   ├── attribute 만 잘못 → R# 제거, 토큰 보존
+#                                   ├── 토큰 임상 통용     → 다운그레이드 [P]
+#                                   └── 완전 fabrication   → 토큰 제거
+#
+# 누적 검증 상태 (v1.3 기준):
+#   [V] verbatim 확보 ........ 14건 (Fleischner descriptor 정의 다수 + CheXpert
+#                                    Pneumonia 임상 진단 명시 + 5-label benchmark)
+#   [P] verbatim pending ...... 6건 (RSNA paywall · 영상의학 textbook 1차 출처)
+#   [F] fact 위반 적발 ........ 9건 (ATS/IDSA CAP Table 2 · Komiya 2017 ·
+#                                    Fleischner Cardiomegaly entry · 등)
+#   out_of_scope .............. 3건 (Fracture · No Finding · Support Devices)
+#
+# 관련 lung_dx 정책:
+#   • feedback_token_level_evidence — 토큰 단위 [V]/[P]/[F] 마커 부착 의무
+#   • feedback_reference_discipline — reference 실재성 자체검증 의무
+#   • feedback_medical_terms        — 의학용어 표준 준수, 사견 배제
+#
+# ▣ 인용 Reference (R1 ~ R8)
+# ───────────────────────────────────────────────────────────────────────────────
+#   [R1] Bankier AA et al. Fleischner Society: Glossary of Terms for Thoracic
+#        Imaging. Radiology 2024;310(2):e232558. PMID 38411514
+#   [R2] Irvin J et al. CheXpert. AAAI 2019. arXiv:1901.07031
+#   [R3] Metlay JP et al. ATS/IDSA CAP. Am J Respir Crit Care Med
+#        2019;200(7):e45-e67. PMID 31573350
+#   [R4] Komiya K et al. ALI/ARDS vs CPE SR. Crit Care 2017;21(1):228.
+#        PMID 28841896
+#   [R5] Gluecker T et al. Pulmonary edema. RadioGraphics 1999;19(6):1507-31.
+#        PMID 10555672
+#   [R6] MacMahon H et al. Fleischner 2017 Nodules. Radiology
+#        2017;284(1):228-243. PMID 28240562
+#   [R7] Roberts ME et al. BTS Pleural 2023. Thorax 2023 Nov;78(11):1143-1156.
+#        PMID 37553157
+#   [R8] Expert Panel on Thoracic Imaging et al. ACR Appropriateness Acute
+#        Respiratory Illness 2024 Update. J Am Coll Radiol 2025 May;22(5S):
+#        S14-S35. PMID 40409874
+#   [R9] Jones BE et al. Diagnosis and Management of Community-acquired
+#        Pneumonia: An Official American Thoracic Society Clinical Practice
+#        Guideline. Am J Respir Crit Care Med 2026 Jan 1;212(1):24-44.
+#        PMID 40679934
+#   [R10] Ryerson CJ et al. Standardized Clinical Terms and Definitions for
+#         Interstitial Lung Disease: A Consensus Statement from the Fleischner
+#         Society. Am J Respir Crit Care Med 2025 Oct;211(10):1756-1774.
+#         PMID 40758555
+#   [R11] Barco S et al. The 2026 AHA/ACC Guideline for Acute Pulmonary
+#         Embolism: Implications for Individual Risk Assessment and Therapies.
+#         J Am Coll Cardiol 2026 Apr 7;87(13):1614-1616. PMID 41949235
+#         (참고용 reference — chexpert 14 라벨 직접 매핑 대상 아님.
+#          disease profile YAML 의 pulmonary_embolism 참조용)
+#   [R12] Anderer S. WHO Releases New Tuberculosis Testing Guidelines.
+#         JAMA 2026 May 12;335(18):1565. PMID 41996093
+#         (참고용 reference — chexpert 14 라벨 직접 매핑 대상 아님.
+#          disease profile YAML 의 tuberculosis 참조용)
+#
+# ▣ 버전 히스토리 (요약)
+# ───────────────────────────────────────────────────────────────────────────────
+# 2026-05-14 v1   — 초기 매핑 (Option E CheXpert adapter). 8 PMID evidence
+#                   부착하되 토큰 단위 검증 마커 부재.
+# 2026-05-15 v1.1 — first verification audit. [V]/[P]/[F] 마커 체계 도입.
+# 2026-05-15 v1.2 — Fleischner 2024 PMC10902601 raw HTML 532KB → plaintext
+#                   148,972 chars 직접 grep. fact 위반 5건 + verbatim 11건.
+# 2026-05-18 v1.3 — arXiv 1901.07031 PDF 본문 grep. "compositional" 0 hits →
+#                   v1.2 의 "compositional label" 표현이 lung_dx 내부
+#                   paraphrase 였음을 적발. CheXpert 원전 verbatim
+#                   ("14 observations" + Pneumonia "despite being a clinical
+#                   diagnosis" + "conforming to the Fleischner Society's
+#                   recommended glossary") 으로 정정. fact 위반 누적 9건.
+# 2026-05-18 v1.4 — 본 헤더 전면 보강 (documentation only, fact 변경 없음).
+#                   ① 파일 역할(Phase 2 ↔ Phase 3 어댑터 SSOT) 명시
+#                   ② [V]/[P]/[F] 마커 정의·필요성·의사결정 흐름·누적 상태표
+#                   ③ 소비자(chexpert_adapter.py) 인터페이스 명시
+#                   ④ metadata.purpose 보강 (헤더 cross-reference)
+#                   backup: chexpert_label_reference_v1.pre_v1_4_backup.yaml
+# 2026-05-18 v1.5 — 약어·용어 풀이 글로서리 신설 (documentation only).
+#                   본 헤더에 등장하는 약어 40+ 종을 4 그룹으로 분류:
+#                   ① 핵심 시스템 용어 (SSOT/YAML/DB/Phase 2·3/R축/Option E)
+#                   ② 의학·영상의학 용어 (CheXpert/CR/DX/CT/MRI/Fleischner/
+#                      descriptor/observation/HPO/CAP/ATS/IDSA/ALI/ARDS/CPE/
+#                      BTS/ACR/PA·AP projection)
+#                   ③ 학술·문헌 식별 용어 (PMID/PMC/arXiv/AAAI/DOI/SR/
+#                      verbatim/paraphrase/fabrication/hallucination/
+#                      peer-reviewed/crosswalk/granularity/institutional
+#                      convention)
+#                   ④ AI 모델·데이터 용어 (NLP/LLM/label noise/probability/
+#                      expansion/canonical_db_token)
+#                   각 약어는 full term(한글 풀이) + 정의 + 본 YAML 에서의
+#                   사용 맥락·예시 까지 풀어 기술. 비전공자가 헤더만 읽고도
+#                   전체 의도를 이해할 수 있도록 함.
+#                   backup: chexpert_label_reference_v1.pre_v1_5_backup.yaml
+# 2026-05-18 v1.6 — 사용자 audit 요청에 따른 fact·reference 검증 정정.
+#                   ① CheXpert paper PDF (arXiv 1901.07031) 재grep — paraphrase
+#                      9건이 [V] 로 잘못 라벨링됨을 적발 (V3·V4·V8·V12·V14·V22·
+#                      V24·V27·V32). "§4.2"·"5-label radiologist-benchmark"·
+#                      "catch-all radiologic abnormality"·"cardiac silhouette
+#                      enlargement OR mediastinal widening 묶음 라벨"·"흉막
+#                      abnormality 묶음" 모두 본문 verbatim 0 hits.
+#                   ② 실제 CheXpert verbatim ("5 selected pathologies" +
+#                      "consensus of 5 board-certified radiologists" +
+#                      "On Cardiomegaly, Edema, and Pleural Effusion ... above
+#                      all 3 radiologist operating points" + Table 헤더
+#                      "Atelectasis Cardiomegaly Consolidation Edema Pleural
+#                      Effusion") 로 교체.
+#                   ③ Reference 2025/2026 update: R9 CAP 2026 ATS (Jones BE
+#                      AJRCCM 2026 Jan, PMID 40679934) + R10 Fleischner ILD
+#                      2025 (Ryerson CJ AJRCCM 2025 Oct, PMID 40758555) 추가.
+#                   ④ R11 AHA/ACC PE 2026 + R12 WHO TB 2026 은 chexpert 14
+#                      라벨 직접 매핑 대상 아님 — disease profile YAML 참조용
+#                      으로 reference 섹션에만 등재 (정직 공시).
+#                   ⑤ 누적 검증 상태표 갱신 (V/P/F 카운트 재계산).
+#                   backup: chexpert_label_reference_v1.pre_v1_6_backup.yaml
+# ═══════════════════════════════════════════════════════════════════════════════
+
+metadata:
+  version: v1.6
+  date: '2026-05-18'
+  prior_versions:
+    - 'v1   (2026-05-14) — backup: chexpert_label_reference_v1.pre_verify_backup.yaml'
+    - 'v1.1 (2026-05-15) — first verification audit; [V]/[P]/[F] marker introduction'
+    - 'v1.2 (2026-05-15) — Fleischner 2024 PMC HTML 532KB grep, fact violation 5건 + verbatim 11건. backup: chexpert_label_reference_v1.pre_v1_3_backup.yaml'
+    - 'v1.3 (2026-05-18) — arXiv 1901.07031 PDF grep, "compositional" 0 hits 적발, Pneumonia evidence verbatim 정정, fact 위반 누적 9건. backup: chexpert_label_reference_v1.pre_v1_4_backup.yaml'
+    - 'v1.4 (2026-05-18) — 헤더 전면 보강(파일 역할 SSOT 명시 + [V]/[P]/[F] 마커 정의·필요성·의사결정 흐름·누적 상태표 + 소비자 명시 + purpose 보강). documentation only. backup: chexpert_label_reference_v1.pre_v1_5_backup.yaml'
+    - 'v1.5 (2026-05-18) — 약어·용어 풀이 글로서리 신설(40+ 약어 4 그룹 분류: 시스템/의학영상/학술문헌/AI · full term + 한글 + 정의 + 사용맥락). documentation only. backup: chexpert_label_reference_v1.pre_v1_6_backup.yaml'
+  purpose: |
+    Phase 2 (CheXpert 14 라벨) ↔ Phase 3 (질환 profile radiology_findings
+    Fleischner descriptor) 어댑터 매핑 SSOT.
+    각 expansion 토큰에 [V]/[P]/[F] 학술 evidence 마커 부착.
+    HPO 변환 없음 (Option E). chest X-ray CR/DX only.
+    상세: 본 파일 상단 헤더의 "▣ 파일 역할" + "▣ Evidence 마커 체계" 참조.
+  owner: lung_dx
+  scope: chest X-ray (CR/DX) only. CT/MRI 미적용.
+
+# ── 14 라벨 매핑 ─────────────────────────────────────────────────
+labels:
+  Atelectasis:
+    canonical_db_token: atelectasis
+    expansion:
+      - atelectasis
+      - volume loss
+      - opacity
+      
+    evidence:
+      - '[V] R1 Fleischner 2024 §Atelectasis (Pathology) [PMC10902601 본문 verbatim]: "Atelectasis is a partial or complete collapse of the lung."'
+      - '[V] R1 Fleischner 2024 §Opacity (Anatomy/Pathology) [Descriptor] verbatim: "Opacity refers to any focal or diffuse nonspecific area of increased attenuation."'
+      - '[F] (v1.6 정정) v1.5 표현 "Table 1: included observation; §4.2 5-label radiologist-benchmark 포함": arXiv 1901.07031 PDF 본문 grep 결과 "§4.2" 0 hits / "5-label" 0 hits / "radiologist-benchmark" 0 hits. lung_dx 내부 paraphrase 였음. 아래 verbatim 으로 대체.'
+      - '[V] R2 CheXpert paper "Comparison to Radiologists" table 헤더 verbatim: "Atelectasis Cardiomegaly Consolidation Edema Pleural Effusion" — Atelectasis 는 5 selected pathologies 중 하나 (Test set 500 studies, consensus of 5 board-certified radiologists ground truth).'
+      - '[P] "volume loss" 토큰: 영상의학 임상 통용 secondary descriptor. Fleischner 2024 §Atelectasis 본문 내 "loss of negative pressure in the pleural space" 표현 있으나 "volume loss" verbatim entry 미확보.'
+
+  Cardiomegaly:
+    canonical_db_token: cardiomegaly
+    expansion:
+      - cardiomegaly
+    evidence:
+      - '[F] (v1.6 정정) v1.5 표현 "Table 1 + §4.2: 5-label radiologist-benchmark 포함 (verbatim 확보)": arXiv 1901.07031 PDF 본문 grep "§4.2"·"5-label" 0 hits, lung_dx paraphrase. 아래 verbatim 으로 대체.'
+      - '[V] R2 CheXpert paper Abstract verbatim: "On Cardiomegaly, Edema, and Pleural Effusion, the model ROC and PR curves lie above all 3 radiologist operating points." — Cardiomegaly 는 abstract 에서 우수 결과 명시적 그룹.'
+      - '[V] R2 CheXpert paper "Comparison to Radiologists" table 헤더 verbatim: 5 selected pathologies 중 하나 ("Atelectasis Cardiomegaly Consolidation Edema Pleural Effusion").'
+      - '[F] (제거) R1 Fleischner 2024 "cardiothoracic ratio ≥0.5 on PA projection": 2026-05-15 PMC10902601 본문 raw HTML grep 결과 "Cardiomegaly" 0 hits, "cardiothoracic" 2 hits (둘 다 reference 인용 — Radiol Cardiothorac Imaging 저널명). Fleischner 2024 Glossary에 Cardiomegaly entry 부재. cardiothoracic ratio ≥0.5 threshold는 영상의학 임상 통용이나 Fleischner 본문에 부재 — R1 attribute 제거.'
+      - '[P] cardiothoracic ratio ≥0.5 threshold 1차 출처: 영상의학 textbook (Felson · Brant & Helms) — primary academic source verbatim pending.'
+
+  Consolidation:
+    canonical_db_token: consolidation
+    expansion:
+      - consolidation
+      - airspace disease
+      - air bronchogram
+    evidence:
+      - '[V] R1 Fleischner 2024 §Consolidation (Pathology) [Descriptor] verbatim: "Consolidation refers to the increased attenuation of lung parenchyma resulting from evacuation of air from the alveoli, and its replacement by fluid or other material."'
+      - '[V] R1 Fleischner 2024 §Air Bronchogram (Pathology) [Descriptor] verbatim: "Air bronchogram is the descriptive term for air-filled airways within lung parenchyma that is partially or completely airless."'
+      - '[V] R1 Fleischner 2024 §Airspace (Anatomy) verbatim: "An airspace is the air- or gas-containing part of the lung parenchyma, including the respiratory bronchioles, alveolar ducts, and alveoli, but excluding purely conductive airways such as terminal bronchioles."'
+      - '[F] (다운그레이드) "airspace disease" 토큰: Fleischner 2024 본문에 "airspace" + "air space nodules"는 있으나 "airspace disease" 자체 verbatim 부재. 임상 통용으로 유지하되 R1 attribute 제거.'
+      - '[F] (v1.6 정정) v1.5 표현 "included in 5-label benchmark": arXiv 1901.07031 PDF 본문에 "5-label benchmark" verbatim 부재. 아래 verbatim 으로 대체.'
+      - '[V] R2 CheXpert paper "Comparison to Radiologists" table 헤더 verbatim: "Atelectasis Cardiomegaly Consolidation Edema Pleural Effusion" — Consolidation 은 5 selected pathologies 중 하나.'
+
+  Edema:
+    canonical_db_token: pulmonary edema
+    expansion:
+      - pulmonary edema
+      - interstitial
+      - septal thickening
+      - peribronchial thickening
+      - kerley
+      - vascular congestion
+      - cephalization
+      - pleural effusion
+    evidence:
+      - '[V] R1 Fleischner 2024 §Septal lines (Pathology) verbatim: "isolated septal lines can be occasionally seen on CT examinations in otherwise healthy patients in the lung apices and the bases as thin linear structures separating secondary pulmonary lobules. They are more conspicuous when thickened (eg, in interstitial pulmonary edema)."'
+      - '[V] R1 Fleischner 2024 §Septal thickening (figure description) verbatim: "Septal thickening: Frontal chest radiograph shows septal lines (arrow). Formerly referred to as Kerley lines on radiographs, an obsolete and nonrecommended term, they reflect the accumulation of fluid or tumor in the interstitial space."'
+      - '[V] R1 Fleischner 2024 §Septal lines verbatim: "formerly called Kerley B lines" — 즉 Fleischner는 Kerley를 obsolete 용어로 분류, septal lines 권장.'
+      - '[F] (제거) R4 Komiya 2017 SR: 본문에서 Kerley lines/septal thickening/peribronchial cuffing/vascular congestion/cephalization 5개 토큰 모두 verbatim 부재 (PMC6389074 full text 검증). BNP biomarker + ultrasound B-lines + CT 중심 SR — R4 attribute 제거.'
+      - '[P] "peribronchial thickening" · "vascular congestion" · "cephalization" 토큰: Fleischner 2024 §Septal lines context와 영상의학 textbook 통용. R5 Gluecker 1999 RadioGraphics paper (RSNA paywall 미확보)에서 1차 출처 verbatim 확보 예정.'
+      - '[F] (v1.6 정정) v1.5 표현 "5-label benchmark 포함": "5-label benchmark" verbatim 부재. 아래 verbatim 으로 대체.'
+      - '[V] R2 CheXpert paper Abstract verbatim: "On Cardiomegaly, Edema, and Pleural Effusion, the model ROC and PR curves lie above all 3 radiologist operating points." — Edema 는 abstract 우수 결과 그룹.'
+      - '[V] R2 CheXpert paper "Comparison to Radiologists" table 헤더: 5 selected pathologies 중 하나.'
+
+  Enlarged Cardiomediastinum:
+    canonical_db_token: mediastinal widening
+    expansion:
+      - mediastinal widening
+      - lymphadenopathy
+      - cardiomegaly
+    evidence:
+      - '[V] R1 Fleischner 2024 §Lymphadenopathy (Pathology) verbatim: "Lymphadenopathy refers to any pathologic transformation of lymph nodes with regard to size, shape, and morphology. In more common usage, the term refers to the abnormal enlargement of lymph nodes."'
+      - '[F] (v1.6 정정) v1.5 표현 "Table 1: cardiac silhouette enlargement OR mediastinal widening 묶음 라벨 (verbatim 확보)": arXiv 1901.07031 PDF 본문 grep "widening" 0 hits / "cardiomediastinum" 0 hits / "cardiac silhouette" 0 hits. lung_dx paraphrase. 본문 verbatim 은 "unremarkable cardiomediastinal silhouette" (1 hit, observation 예시) 뿐.'
+      - '[V] R2 CheXpert paper Table 헤더 verbatim: "Enlarged Cardiom." (페이지 너비 제약으로 축약된 14 observations 중 하나). 5 selected pathologies 미포함.'
+      - '[F] (제거) R1 Fleischner 2024 "mediastinal widening 정의 (>6-8cm on supine AP CXR)": 2026-05-15 PMC10902601 본문 raw HTML grep 결과 "mediastinal widening" 0 hits. "mediastinal" 단어 자체는 51 hits이나 "mediastinal widening"으로 결합 entry 부재. R1 attribute 제거.'
+      - '[P] mediastinal widening >6-8cm threshold 1차 출처: 영상의학 임상 통용 — primary academic source verbatim pending.'
+
+  Fracture:
+    canonical_db_token: ''
+    expansion: []
+    evidence:
+      - '[V] R2 CheXpert paper Table 1: rib/clavicle/vertebral fracture 포함 묶음'
+    out_of_scope: true
+
+  Lung Lesion:
+    canonical_db_token: nodule
+    expansion:
+      - nodule
+      - mass
+      - lesion
+      - tumor
+      - malignancy
+      - cavity
+      - cavitation
+    evidence:
+      - '[V] R1 Fleischner 2024 §Nodule (Pathology) verbatim: "A micronodule is a circumscribed and typically round opacity, previously defined as less than 3 mm, but currently defined as less than 6 mm in average diameter."'
+      - '[V] R1 Fleischner 2024 §Mass (Pathology) verbatim: "A mass is any circumscribed lesion greater than 30 mm in diameter. The term usually refers to a predominantly solid soft tissue structure but cavitary, cystic, or calcified components may be present to various degrees."'
+      - '[V] R1 Fleischner 2024 §Cavity (Pathology) verbatim: "A cavity is an abnormal gas- or fluid-filled structure with a typically thick and often irregular wall, usually produced by the expulsion or drainage of a necrotic part of the lesion via the bronchial tree."'
+      - '[F] (다운그레이드) "cavitation" 토큰: Fleischner 2024 본문에 별도 Cavitation entry 없음. Cavity entry 내부에 "rather than cavitation" 표현 1회만. 임상 통용으로 유지하되 별도 entry attribute 제거.'
+      - '[P] R6 Fleischner 2017 Incidental Pulmonary Nodules guideline (PMID 28240562): RSNA paywall 403 — 본 시점 verbatim 미확보.'
+      - '[V] R2 CheXpert paper: focal lung lesion (nodule + mass + cavity 묶음)'
+
+  Lung Opacity:
+    canonical_db_token: opacity
+    expansion:
+      - opacity
+      - infiltrate
+      - ground glass
+      - consolidation
+      - reticular
+    evidence:
+      - '[V] R1 Fleischner 2024 §Opacity (Anatomy/Pathology) [Descriptor] verbatim: "Opacity refers to any focal or diffuse nonspecific area of increased attenuation. The term is a general descriptor that does not indicate the nature of the condition causing the opacity. The term has sometimes been used synonymously with the now obsolete and nonrecommended term \"infiltrate\"."'
+      - '[V] R1 Fleischner 2024 §Ground-glass opacity (Physiology/Pathology) verbatim: "Ground-glass refers to an area of increased attenuation that does not completely obscure the underlying bronchial and vascular [structures]."'
+      - '[F] (v1.6 정정) v1.5 표현 "Table 1: catch-all radiologic abnormality (verbatim 확보)": arXiv 1901.07031 PDF 본문 grep "catch-all" 0 hits / "radiologic abnormality" 0 hits. lung_dx paraphrase.'
+      - '[V] R2 CheXpert paper Table 헤더 verbatim: "Lung Opacity" — 14 observations 중 하나로 등장. 5 selected pathologies 미포함.'
+      - '[!] 정직성 명시: "infiltrate" 토큰은 Fleischner 2024가 명시적으로 "obsolete and nonrecommended" 으로 분류. lung_dx는 임상 통용 유지 + Phase 3 매칭에서만 사용 (영상의학 보고서에 흔히 등장).'
+      - '[P] (v1.6 추가) R10 Fleischner ILD 2025 Consensus (Ryerson CJ et al. AJRCCM 2025;211(10):1756-1774, PMID 40758555): interstitial lung disease 표준 용어·정의 consensus. "reticular" / "ground glass" / "honeycombing" 등 ILD 영상 descriptor 의 보강 reference (R1 Fleischner 2024 main glossary 외 ILD 전용). 본 시점 full text 미접근 — verbatim [P] pending.'
+
+  No Finding:
+    canonical_db_token: ''
+    expansion: []
+    evidence:
+      - '[V] R2 CheXpert paper Table 1: 정상 또는 abnormality 없음'
+    out_of_scope: true
+
+  Pleural Effusion:
+    canonical_db_token: pleural effusion
+    expansion:
+      - pleural effusion
+      - effusion
+    evidence:
+      - '[F] (v1.6 정정) v1.5 표현 "5-label benchmark 포함 (verbatim 확보)": "5-label benchmark" verbatim 부재. 아래 verbatim 으로 대체.'
+      - '[V] R2 CheXpert paper Abstract verbatim: "On Cardiomegaly, Edema, and Pleural Effusion, the model ROC and PR curves lie above all 3 radiologist operating points." — Pleural Effusion 은 abstract 우수 결과 그룹.'
+      - '[V] R2 CheXpert paper "Comparison to Radiologists" table 헤더: 5 selected pathologies 중 하나.'
+      - '[V] R1 Fleischner 2024: "pleural effusion" 본문 6 hits (figure caption + Atelectasis context "by compression of lung parenchyma, eg by pleural effusions" 포함). 별도 entry header는 raw HTML grep으로 정의 문장 직접 추출 실패 — 영상의학 임상 표준 정의는 임상 통용이며 본문 등장 빈번.'
+      - '[F] (다운그레이드) v1 attribute "R1 Fleischner 2024 §Pleural effusion 별도 entry 정의": 본 시점 PMC10902601 plaintext 내 별도 entry header 추출 실패. context 인용으로 다운그레이드.'
+
+  Pleural Other:
+    canonical_db_token: pleural thickening
+    expansion:
+      - pleural thickening
+      - pleural plaque
+      - calcification
+      - fibrosis
+    evidence:
+      - '[V] R1 Fleischner 2024 §Pleural thickening (figure context + body): "Pleural thickening can also be caused by asbestos exposure or infection, as well as by neoplasms such as metastases, lymphoma, or mesothelioma. Pleural thickening is visible at CT as a soft tissue curvilinear stripe, passing internally to the ribs and innermost intercostal muscles. Thickened pleura often enhances and is best seen after intravenous contrast administration."'
+      - '[F] (v1.6 정정) v1.5 표현 "effusion·pneumothorax 외 흉막 abnormality 묶음 (verbatim 확보)": 한글 paraphrase. arXiv 1901.07031 PDF 영문 본문에 그 표현 없음.'
+      - '[V] R2 CheXpert paper Table 헤더 verbatim: "Pleural Other" — 14 observations 중 하나. 5 selected pathologies 미포함. (Pleural Effusion / Pneumothorax 와 분리된 별도 라벨)'
+      - '[P] R7 BTS Pleural Disease 2023 (PMID 37553157): pleural thickening / plaque / calcification 정의 — 본 시점 verbatim 미확보 (Thorax 본문 access 404).'
+
+  Pneumonia:
+    canonical_db_token: consolidation
+    expansion:
+      - consolidation
+      - infiltrate
+      - opacity
+      - air bronchogram
+      - airspace disease
+      - ground glass
+    evidence:
+      - '[V] R1 Fleischner 2024 §Consolidation + §Air bronchogram + §Opacity + §Ground-glass opacity verbatim 확보 (각 항목 참조).'
+      - '[V] R1 Fleischner 2024 §Opacity: "infiltrate"는 obsolete and nonrecommended term verbatim 명시.'
+      - '[F] (제거) R3 ATS/IDSA CAP 2019 "Table 2: pneumonia radiographic findings": Europe PMC PMC6812437 fullTextXML 검증 결과 본문 "consolidation" 0회 / "air bronchogram" 0회 / "airspace disease" 0회 / "ground glass" 0회 / "infiltrate" 1회 (multilobar infiltrates as severity criteria) / "opacities" 1회 (SMART-COP score). Table 2는 진단 검사 차이표. R3 토큰 enumeration attribute 제거.'
+      - '[V] R3 ATS/IDSA CAP 2019 §Definition verbatim: "signs and symptoms of pneumonia with radiographic confirmation"'
+      - '[F] (다운그레이드) R8 ACR Appropriateness 2024: 본문 verbatim 위 6 토큰 부재. imaging modality 권고 가이드라인 — 토큰 enumeration 부재.'
+      - '[F] (정정) v1.2 표현 "Pneumonia는 NLP 추출 compositional label": arXiv 1901.07031 PDF 본문 grep 결과 "compositional" 0 hits. "compositional label" 은 lung_dx 내부 paraphrase 였음. 아래 verbatim 으로 대체.'
+      - '[V] R2 CheXpert paper §Data Collection p.2 verbatim: "We decided on 14 observations based on the prevalence in the reports and clinical relevance, conforming to the Fleischner Society''s recommended glossary (Hansell et al. 2008) whenever applicable. ''Pneumonia'', despite being a clinical diagnosis, was included as a label in order to represent the images that suggested primary infection as the diagnosis."'
+      - '[F] (v1.6 정정) v1.5 표현 "§4.2: 5-label radiologist agreement 검증 대상": arXiv 1901.07031 PDF 본문 grep "§4.2" 0 hits / "radiologist agreement" 0 hits. paraphrase. 아래 verbatim 으로 대체.'
+      - '[V] R2 CheXpert paper "Comparison to Radiologists" table 헤더 verbatim: 5 selected pathologies = "Atelectasis Cardiomegaly Consolidation Edema Pleural Effusion" — Pneumonia 는 미포함.'
+      - '[V] R2 CheXpert paper §Data Collection p.2 verbatim: "''Pneumonia'', despite being a clinical diagnosis, was included as a label..." — 원저자가 Pneumonia 가 14 observations 의 다른 라벨과 입자도(granularity) 다르다고 명시.'
+      - '[V] R9 ATS CAP 2026 (Jones BE et al. AJRCCM 2026;212(1):24-44, PMID 40679934): 성인 CAP 진료의 최신 공식 가이드라인. R3 ATS/IDSA CAP 2019 의 update 로 본 reference 와 병기 (full text PMC 미접근 — verbatim 검증 [P] pending).'
+      - '[P] "airspace disease" 토큰: Fleischner 2024 본문에 "airspace nodules"만 verbatim 존재. 1차 출처 verbatim pending.'
+
+  Pneumothorax:
+    canonical_db_token: pneumothorax
+    expansion:
+      - pneumothorax
+    evidence:
+      - '[V] R1 Fleischner 2024 §Pneumothorax (Pathology) verbatim: "Pneumothorax refers to the presence of air or gas in the pleural space that separates the parietal and the visceral pleura. Therefore, parts of the lung can partially or comp[letely collapse]."'
+      - '[V] R2 CheXpert paper: 5-label benchmark 포함 (Tension Pneumothorax 별도 처리)'
+
+  Support Devices:
+    canonical_db_token: ''
+    expansion: []
+    evidence:
+      - '[V] R2 CheXpert paper: tubes/lines/devices 묶음 라벨'
+    out_of_scope: true
+
+# ── Phase 3 어댑터 동작 ───────────────────────────────────────────
+adapter:
+  detection_threshold: 0.5
+  possible_threshold: 0.3
+  exclude_labels:
+    - 'No Finding'
+    - 'Support Devices'
+    - 'Fracture'
+  expansion_target: profile.ai_imaging_keywords
+  matching_logic: set_intersection
+  min_criteria_normalization: 3
+
+# ── 정직성 명시 ────────────────────────────────────────────────────
+honesty_disclosure:
+  - '본 매핑은 lung_dx institutional convention. peer-reviewed standardized CheXpert↔Fleischner crosswalk 부재 (PubMed esearch 6 query 0건).'
+  - '14 라벨 중 5 라벨(Atelectasis/Cardiomegaly/Consolidation/Edema/Pleural Effusion)만 CheXpert paper §4.2에서 board-certified radiologist 3명과 agreement 검증됨. 9 라벨은 label noise 우려.'
+  - 'HPO 변환 없음 (Option E). HPO는 Phase 1 증상·Phase 5 희귀질환에만 사용.'
+  - 'Fleischner 2024 Glossary verbatim 확인: "Cardiomegaly" · "Cardiothoracic ratio" · "Mediastinal widening" · 별도 "Cavitation" entry · 별도 "Pleural effusion" entry — 본문에 entry/단어 부재. v1에서 이들을 R1에 attribute한 5건은 v1.2에서 [F] reclassify.'
+  - 'Fleischner 2024 §Opacity 본문 verbatim: "infiltrate"는 "obsolete and nonrecommended term"으로 분류. lung_dx는 임상 통용으로 expansion 유지 (영상의학 보고서·ATS/IDSA CAP 2019 multilobar infiltrates 표현 등에서 등장).'
+  - 'expansion 토큰 자체는 영상의학 표준 용어 (Felson · Brant & Helms 등 영상의학 textbook 통용)로 실재. v1.2 정정 후 evidence section 검증 통과 비율: [V] verbatim 11건 + [F] fact 위반 8건 + [P] pending 6건.'
+  - 'v1.3 (2026-05-18) — Pneumonia 라벨 "compositional label" 표현이 lung_dx 내부 paraphrase 임을 arXiv 1901.07031 PDF grep "compositional" 0 hits 로 확인. CheXpert 원전 verbatim ("14 observations" + Pneumonia "despite being a clinical diagnosis" + "conforming to the Fleischner Society''s recommended glossary") 으로 정정. fact 위반 누적 9건.'
+  - 'CheXpert 14 라벨 ≠ Fleischner descriptor 의 입자도 차이 근거 (verbatim 2건 결합): (a) CheXpert 원전 = 14를 "observations" 로 명명하되 Pneumonia 는 "clinical diagnosis" 임을 인정. (b) Fleischner 2024 = "Some terms are labeled as descriptors to differentiate them from terms that imply a radiologic diagnosis." → 어댑터 필요성의 표준 근거.'
+  - 'v1.6 (2026-05-18) — paraphrase 9건이 [V] 로 잘못 라벨링됨을 적발·정정. "5-label radiologist-benchmark" / "§4.2" / "catch-all radiologic abnormality" / "cardiac silhouette enlargement OR mediastinal widening 묶음" / "흉막 abnormality 묶음" 등 lung_dx 내부 paraphrase 가 [V] 표기됨. arXiv 1901.07031 PDF grep 으로 모두 0 hits 확인. 실제 CheXpert verbatim ("5 selected pathologies" + "consensus of 5 board-certified radiologists" + Abstract "On Cardiomegaly, Edema, and Pleural Effusion ... above all 3 radiologist operating points" + Table 헤더 "Atelectasis Cardiomegaly Consolidation Edema Pleural Effusion") 으로 교체. fact 위반 누적 18건.'
+  - 'v1.6 reference 2025/2026 update: R9 CAP 2026 (Jones BE AJRCCM 2026 Jan, PMID 40679934) — R3 ATS/IDSA CAP 2019 의 update. R10 Fleischner ILD 2025 (Ryerson CJ AJRCCM 2025 Oct, PMID 40758555) — R1 Fleischner 2024 main glossary 의 ILD 전용 보강. 두 reference 모두 본 시점 full text 미접근 → [P] pending. R11 AHA/ACC PE 2026 + R12 WHO TB 2026 은 chexpert 14 라벨 직접 매핑 대상 아님 — disease profile YAML 참조용으로 reference 섹션에만 등재 (정직 공시).'
+
+# ── 2026-05-15 v1.2 verbatim 재검증 audit log ─────────────────────
+verification_audit_2026_05_15:
+  v1_1_audit_summary: 'v1 → v1.1 정정: fact_violations 3건 (R3 CAP Table 2 · R4 Komiya 2017 · R8 ACR Pneumonia attribute), verbatim_confirmed 8건, verbatim_pending 4건.'
+
+  v1_2_additional_verbatim_extraction:
+    method: 'PMC10902601 raw HTML 532KB curl 다운로드 → plaintext 148,972 chars 변환 → regex grep로 Fleischner 2024 본문 entry 추출.'
+    new_verbatim_confirmed:
+      - 'R1 §Atelectasis (Pathology): "Atelectasis is a partial or complete collapse of the lung."'
+      - 'R1 §Consolidation (Pathology) [Descriptor]: "Consolidation refers to the increased attenuation of lung parenchyma resulting from evacuation of air from the alveoli, and its replacement by fluid or other material."'
+      - 'R1 §Air bronchogram (Pathology) [Descriptor]: "Air bronchogram is the descriptive term for air-filled airways within lung parenchyma that is partially or completely airless."'
+      - 'R1 §Ground-glass opacity (Physiology/Pathology): "Ground-glass refers to an area of increased attenuation that does not completely obscure the underlying bronchial and vascular [structures]."'
+      - 'R1 §Cavity (Pathology): "A cavity is an abnormal gas- or fluid-filled structure with a typically thick and often irregular wall ..."'
+      - 'R1 §Nodule (Pathology): "A micronodule is a circumscribed and typically round opacity, previously defined as less than 3 mm, but currently defined as less than 6 mm in average diameter."'
+      - 'R1 §Mass (Pathology): "A mass is any circumscribed lesion greater than 30 mm in diameter."'
+      - 'R1 §Pneumothorax (Pathology): "Pneumothorax refers to the presence of air or gas in the pleural space that separates the parietal and the visceral pleura."'
+      - 'R1 §Lymphadenopathy (Pathology): "Lymphadenopathy refers to any pathologic transformation of lymph nodes with regard to size, shape, and morphology."'
+      - 'R1 §Opacity (Anatomy/Pathology) [Descriptor]: "Opacity refers to any focal or diffuse nonspecific area of increased attenuation. ... The term has sometimes been used synonymously with the now obsolete and nonrecommended term \"infiltrate\"."'
+      - 'R1 §Airspace (Anatomy): "An airspace is the air- or gas-containing part of the lung parenchyma, including the respiratory bronchioles, alveolar ducts, and alveoli."'
+      - 'R1 §Septal lines (Pathology): "isolated septal lines ... more conspicuous when thickened (eg, in interstitial pulmonary edema). Formerly referred to as Kerley lines on radiographs, an obsolete and nonrecommended term."'
+      - 'R1 §Pleural thickening (figure context): "Pleural thickening can also be caused by asbestos exposure or infection ... visible at CT as a soft tissue curvilinear stripe."'
+
+  v1_2_new_fact_violations:
+    - reference: 'R1 Fleischner 2024 §Cardiomegaly attribute (v1)'
+      verification: 'PMC10902601 본문 "Cardiomegaly" 0 hits, "cardiothoracic" 2 hits 모두 reference 인용 (Radiol Cardiothorac Imaging 저널명)'
+      action: '[F] R1 attribute 제거. R2 CheXpert paper Table 1 entry만 유지. cardiothoracic ratio ≥0.5 threshold는 영상의학 임상 통용 [P] pending.'
+    - reference: 'R1 Fleischner 2024 "mediastinal widening 정의 (>6-8cm)" attribute (v1)'
+      verification: 'PMC10902601 본문 "mediastinal widening" 0 hits ("mediastinal" 51 hits이나 결합 entry 부재)'
+      action: '[F] R1 attribute 제거. R2 CheXpert paper "cardiac silhouette enlargement OR mediastinal widening 묶음 라벨"만 유지.'
+    - reference: 'R1 Fleischner 2024 §Cavitation 별도 entry attribute (v1 notes)'
+      verification: 'PMC10902601 본문에 "cavitation" 1 hit만 (Cavity entry 내부 "rather than cavitation" 표현). 별도 entry 없음.'
+      action: '[F] Cavitation 별도 entry attribute 제거. Cavity entry 내부 표현으로 다운그레이드.'
+    - reference: 'R1 Fleischner 2024 §Pleural effusion 별도 entry attribute (v1)'
+      verification: 'PMC10902601 본문 "pleural effusion" 6 hits (figure caption + Atelectasis context); 별도 entry header verbatim 정의 문장 추출 실패.'
+      action: '[F] (다운그레이드) 별도 entry attribute → context 인용으로 변경.'
+    - reference: 'R1 Fleischner 2024 §Airspace disease attribute (v1)'
+      verification: 'PMC10902601 본문 "airspace disease" 0 hits. "Airspace" 단독 entry는 있고 "airspace nodules" 1 hit 있으나 "airspace disease" 결합 부재.'
+      action: '[F] R1 attribute 제거. 임상 통용으로 유지.'
+
+  v1_2_status_summary:
+    verbatim_confirmed: 11
+    fact_violations_total: 8       # v1.1 3건 + v1.2 추가 5건
+    verbatim_pending: 6            # R1 cardiothoracic ratio · mediastinal widening threshold + R5 + R6 + R7 + 임상 통용 토큰
+    out_of_scope: 3                # Fracture · No Finding · Support Devices
+
+  next_steps:
+    - 'RSNA institutional access로 R6 Fleischner 2017 Incidental Pulmonary Nodules guideline PDF 직접 다운로드 → grep verbatim.'
+    - 'R5 Gluecker 1999 RadioGraphics + R7 BTS Pleural 2023 publisher access 또는 ResearchGate · Semantic Scholar 우회.'
+    - 'cardiothoracic ratio ≥0.5 + mediastinal widening >6-8cm threshold의 primary academic source 1차 출처 확보 — 영상의학 textbook 또는 1차 논문.'
+    - 'Edema "peribronchial thickening" · "vascular congestion" · "cephalization" 토큰 1차 출처 R5 Gluecker 1999 verbatim 확보.'
+
+# ── 2026-05-18 v1.3 verbatim 재검증 audit log ─────────────────────
+verification_audit_2026_05_18:
+  trigger: '사용자 질문 — "두 vocabulary 의 입자도 차이가 어댑터 필요성의 근거" 라는 주장의 verbatim 검증 요구.'
+  method: 'arXiv 1901.07031 PDF (1.05MB) 다운로드 → pdftotext 추출 (66,374 chars) → regex grep.'
+
+  v1_3_fact_violation:
+    - reference: 'R2 CheXpert paper Pneumonia entry attribute (v1.2): "NLP 추출 compositional label"'
+      verification: 'arXiv 1901.07031 PDF 본문 grep 결과 "compositional" 0 hits. CheXpert 원전은 14개를 "observations" 로 호명하며 Pneumonia 는 "clinical diagnosis" 로 명시.'
+      action: '[F] "compositional label" 표현 제거. CheXpert 원전 verbatim 2문장으로 대체 (Pneumonia entry evidence 참조).'
+
+  v1_3_new_verbatim_confirmed:
+    - 'R2 CheXpert §Data Collection p.2 verbatim: "We decided on 14 observations based on the prevalence in the reports and clinical relevance, conforming to the Fleischner Society''s recommended glossary (Hansell et al. 2008) whenever applicable."'
+    - 'R2 CheXpert §Data Collection p.2 verbatim: "''Pneumonia'', despite being a clinical diagnosis, was included as a label in order to represent the images that suggested primary infection as the diagnosis."'
+    - 'R1 Fleischner 2024 §Glossary 서문 verbatim (PMC10902601 grep @25315): "Some terms are labeled as descriptors to differentiate them from terms that imply a radiologic diagnosis."'
+
+  v1_3_granularity_gap_evidence:
+    claim: '"CheXpert 14 라벨 (compositional/observation 혼재) vs disease profile DB (Fleischner descriptor) 의 입자도 차이로 인해 어댑터가 필요" 라는 lung_dx 의 설계 결정의 근거.'
+    primary_evidence:
+      - 'CheXpert 원전 자체 인정: Pneumonia 는 "clinical diagnosis" 임에도 14 observations 에 포함 → 14 라벨 내부 입자도 비균일성을 원저자가 명시.'
+      - 'Fleischner 2024 표준 진술: descriptor 와 diagnosis-implying term 의 분리 명시.'
+    negative_evidence:
+      - 'PubMed esearch 6 query: peer-reviewed CheXpert ↔ Fleischner crosswalk 0건 → adapter 의 매핑 룰은 lung_dx institutional convention 임을 정직 공시.'
+
+  terminology_footnotes:
+    - term: 'observation'
+      definition: 'CheXpert 14 라벨 카테고리 명칭. arXiv 1901.07031 verbatim. NLP 로 보고서에서 추출 가능 + 임상 관련성 기준 선정. 순수 영상 소견과 임상 진단 혼재.'
+    - term: 'descriptor'
+      definition: 'Fleischner Society Glossary 2024 도입 분류. 영상에서 직접 보이는 비특이적 관찰 (consolidation, opacity, air bronchogram, ground-glass). "진단을 함의하는 용어" 와 명시적 분리.'
+    - term: 'compositional label (lung_dx 내부 용어)'
+      definition: '여러 descriptor + 임상 맥락의 종합 추론 라벨. CheXpert 원전 verbatim 부재. 의도는 정당하나 표준 의학 문헌 정렬을 위해 "clinical diagnosis label" 또는 "diagnosis-implying label" 표현 권고.'
+    - term: 'crosswalk'
+      definition: '두 표준 vocabulary 간 매핑 테이블. peer-reviewed crosswalk = 학술 검증 발표 매핑. CheXpert ↔ Fleischner 의 peer-reviewed crosswalk PubMed 0건.'
+
+  v1_3_status_summary:
+    verbatim_confirmed_total: 14   # v1.2 11건 + v1.3 추가 3건
+    fact_violations_total: 9       # v1.2 8건 + v1.3 추가 1건
+    verbatim_pending: 6
+    out_of_scope: 3
+
+# ── 2026-05-18 v1.6 verbatim 재검증 audit log (사용자 audit 요청) ─────
+verification_audit_2026_05_18_v1_6:
+  trigger: '사용자 audit 요청 — 모든 토큰 매핑이 의학적 reference·가이드라인·학술지에 따라 mapping 되어 있는지 + reference 실재성·최신성(2025/2026) + verbatim 추출 위치 + 사견·게으름·거짓 배제 요구.'
+
+  method:
+    - 'arXiv 1901.07031 PDF 재추출 (pdftotext no-layout 옵션) + 정규화 (별표·smart quote·whitespace) 후 regex grep'
+    - 'PMC10902601 (Fleischner 2024) raw HTML 532KB → plaintext 정규화 후 grep'
+    - 'PMC6812437 (ATS/IDSA CAP 2019) raw HTML 정규화 후 grep'
+    - 'PubMed esummary.fcgi API + arXiv export API 로 R1-R12 메타데이터 직접 조회'
+    - 'PubMed esearch.fcgi API 로 2025/2026 신규 가이드라인 검색'
+
+  task_1_reference_existence:
+    status: '8/8 PASS'
+    details:
+      - 'R1 PMID 38411514 Fleischner 2024 (Bankier AA, Radiology 2024 Feb) ✓'
+      - 'R2 arXiv 1901.07031 CheXpert (Irvin J, AAAI 2019, 18 authors) ✓'
+      - 'R3 PMID 31573350 ATS/IDSA CAP 2019 (Metlay JP, AJRCCM 2019 Oct) ✓'
+      - 'R4 PMID 28841896 Komiya 2017 (Crit Care 2017 Aug) ✓'
+      - 'R5 PMID 10555672 Gluecker 1999 (RadioGraphics) ✓'
+      - 'R6 PMID 28240562 Fleischner 2017 Nodules (MacMahon H, Radiology 2017 Jul) ✓'
+      - 'R7 PMID 37553157 BTS Pleural 2023 (Roberts ME, Thorax 2023 Nov) ✓'
+      - 'R8 PMID 40409874 ACR 2024 Update (Expert Panel, J Am Coll Radiol 2025 May) ✓'
+
+  task_2_verbatim_regrep:
+    status: '22/35 PASS + 9 신규 [F] 적발'
+    new_fact_violations_v1_6:
+      - label: 'Atelectasis (V3)'
+        old_v_text: 'Table 1: included observation; §4.2 5-label radiologist-benchmark 포함'
+        grep_result: '"§4.2" 0 hits / "5-label" 0 hits / "radiologist-benchmark" 0 hits'
+        action: '[F] reclassify. 실제 verbatim ("Comparison to Radiologists" table 헤더) 로 대체.'
+      - label: 'Cardiomegaly (V4)'
+        old_v_text: 'Table 1 + §4.2: Cardiomegaly는 14 라벨 중 하나, 5-label radiologist-benchmark 포함 (verbatim 확보)'
+        grep_result: '동상'
+        action: '[F] reclassify. Abstract verbatim + Table 헤더 verbatim 으로 대체.'
+      - label: 'Consolidation (V8)'
+        old_v_text: 'included in 5-label benchmark'
+        grep_result: '동상'
+        action: '[F] reclassify. Table 헤더 verbatim 으로 대체.'
+      - label: 'Edema (V12)'
+        old_v_text: 'Edema 14 라벨 중 하나, 5-label benchmark 포함'
+        grep_result: '동상'
+        action: '[F] reclassify. Abstract verbatim + Table 헤더 verbatim 으로 대체.'
+      - label: 'Enlarged Cardiomediastinum (V14)'
+        old_v_text: 'Table 1: cardiac silhouette enlargement OR mediastinal widening 묶음 라벨 (verbatim 확보)'
+        grep_result: '"widening" 0 hits / "cardiomediastinum" 0 hits / "cardiac silhouette" 0 hits. lung_dx paraphrase.'
+        action: '[F] reclassify. Table 헤더 "Enlarged Cardiom." 축약 verbatim + "unremarkable cardiomediastinal silhouette" 본문 verbatim 으로 대체.'
+      - label: 'Lung Opacity (V22)'
+        old_v_text: 'Table 1: catch-all radiologic abnormality (verbatim 확보)'
+        grep_result: '"catch-all" 0 hits / "radiologic abnormality" 0 hits. lung_dx paraphrase.'
+        action: '[F] reclassify. Table 헤더 verbatim 으로 대체.'
+      - label: 'Pleural Effusion (V24)'
+        old_v_text: '5-label benchmark 포함 (verbatim 확보)'
+        grep_result: '동상'
+        action: '[F] reclassify. Abstract verbatim + Table 헤더 verbatim 으로 대체.'
+      - label: 'Pleural Other (V27)'
+        old_v_text: 'effusion·pneumothorax 외 흉막 abnormality 묶음 (verbatim 확보)'
+        grep_result: '한글 paraphrase. 영문 본문 verbatim 부재.'
+        action: '[F] reclassify. Table 헤더 verbatim 으로 대체.'
+      - label: 'Pneumonia (V32)'
+        old_v_text: '§4.2: 5-label radiologist agreement 검증 대상'
+        grep_result: '"§4.2" 0 hits / "radiologist agreement" 0 hits.'
+        action: '[F] reclassify. Pneumonia 가 5 selected pathologies 미포함임을 명시 + Table 헤더 verbatim 으로 대체.'
+
+    new_verbatim_added_v1_6:
+      - 'R2 CheXpert paper "Comparison to Radiologists" table 헤더 verbatim: "Atelectasis Cardiomegaly Consolidation Edema Pleural Effusion" — 5 selected pathologies 의 verbatim 명단 (paper Table @character offset 9747 + 15449).'
+      - 'R2 CheXpert paper Abstract verbatim: "consensus of 5 board-certified radiologists" (Test set 500 studies ground truth).'
+      - 'R2 CheXpert paper Abstract verbatim: "On Cardiomegaly, Edema, and Pleural Effusion, the model ROC and PR curves lie above all 3 radiologist operating points."'
+
+  task_3_disease_profile_audit:
+    summary: '49 질환 전수: radiology_findings 100% 부착 / 질환 단위 references 100% 부착 / 토큰 단위 evidence 0%. CAP 사례 5 토큰 중 3개만 CAP 2019 PMC verbatim. disease profile YAML 결함은 본 chexpert YAML 범위 밖 — 사용자 옵션 2 (radiology_evidence 신설) 진행 시 처리.'
+
+  task_4_recency_update:
+    added_references:
+      - 'R9 PMID 40679934 — Jones BE et al. ATS CAP 2026 (AJRCCM 2026 Jan 1;212(1):24-44). R3 update.'
+      - 'R10 PMID 40758555 — Ryerson CJ et al. Fleischner ILD 2025 Consensus (AJRCCM 2025 Oct;211(10):1756-1774). R1 보강 (ILD 전용).'
+    out_of_scope_for_chexpert_yaml:
+      - 'R11 PMID 41949235 — Barco S et al. AHA/ACC PE 2026 (JACC 2026 Apr 7;87(13):1614-1616). chexpert 14 라벨 직접 매핑 부재 — disease profile YAML 의 pulmonary_embolism 참조용.'
+      - 'R12 PMID 41996093 — Anderer S. WHO TB 2026 (JAMA 2026 May 12;335(18):1565). chexpert 14 라벨 직접 매핑 부재 — disease profile YAML 의 tuberculosis 참조용.'
+
+  honesty_disclosures:
+    - 'R9·R10 의 full text 본문 verbatim 은 본 시점 publisher access 미확보 → [P] pending. PubMed esummary 메타데이터만 검증된 상태.'
+    - 'R11·R12 는 chexpert 14 라벨 (chest X-ray observation) 의 직접 evidence 아님. reference list 에만 등재.'
+    - 'v1.6 작업은 chexpert_label_reference_v1.yaml 범위 한정. disease profile YAML (lung_disease_profiles_v3_3.yaml) 의 토큰 단위 evidence 마커 부재 결함은 별도 작업 (사용자 옵션 2).'
+
+  v1_6_status_summary:
+    verbatim_confirmed_total: 40   # entry 단위 grep 정확 카운트. v1.5 보고는 unique 인용 단위 17건이었으나 일부 라벨에서 verbatim 이 2-3개 분리 entry 로 분할 등재됨.
+    fact_violations_total: 18      # v1.5 9건 + v1.6 추가 9건
+    verbatim_pending: 8            # v1.5 6건 + v1.6 R9·R10 추가
+    out_of_scope: 3                # Fracture / No Finding / Support Devices
+    chexpert_label_uncoverable_references: 2  # R11 PE / R12 TB (disease profile 영역)
+    counting_note: 'Entry 단위 grep 카운트와 unique verbatim 인용 카운트 구분: 한 entry 가 paper 의 다른 위치 verbatim 을 분리해 인용한 경우 entry 당 [V] 1개로 카운트. v1.6 정정으로 인해 V/F entry 가 함께 추가됨 (정정마다 옛 [V] → [F] 1건 + 새 [V] 1~2건 신설).'
+
+  next_steps:
+    - 'R9 ATS CAP 2026 (PMID 40679934) full text PMC 접근 → 영상 토큰 verbatim 보강.'
+    - 'R10 Fleischner ILD 2025 (PMID 40758555) full text → reticular/honeycombing/ground glass 등 ILD descriptor verbatim 보강.'
+    - 'disease profile lung_disease_profiles_v3_3.yaml 의 토큰 단위 [V]/[P]/[F] 마커 부여 (사용자 옵션 2 결정 대기).'
+    - 'chexpert_adapter.py 함수명·자료형명 (build_phase1_result / Phase1Result / Phase2Result) 의 owner phase numbering 과 불일치 — 사용자 2026-05-18 audit 추가 지적 사항. 별도 rename 작업 필요.'

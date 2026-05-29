@@ -1,0 +1,120 @@
+{
+  "_meta": {
+    "description": "Phase 4 출력 예시 (v4, owner-aligned) — 가상 환자 P00123 (65세 남성, CAP 의심).",
+    "_schema": "rarelinkai.phase4_llm_rerank (단일 row)",
+    "_format": "PostgreSQL row의 JSON view. JSON 파일 자체는 운영에서 생성 안 됨.",
+    "_link_to_phase3": "동일 session_id로 phase3_integrated_ranking과 join. session_id는 Phase 1~5 전체 흐름의 단일 식별자."
+  },
+
+  "session_id": "5b7a634d-387f-42ab-b882-955e64ae93d7",
+  "phase": 4,
+  "executed_at": "2026-05-14T09:38:42+09:00",
+  "p3_executed_at": "2026-05-14T09:36:18+09:00",
+
+  "_section_core_result": "── 핵심 결과 ──",
+  "agrees_with_top1": true,
+  "reranked": [
+    {
+      "rank": 1,
+      "disease_key": "community_acquired_pneumonia",
+      "name_kr": "지역사회획득폐렴 (CAP)",
+      "icd10": ["J18.9"],
+      "score_phase3": 0.8421,
+      "score_phase4": 0.8421,
+      "delta": 0.0,
+      "reason": "임상상(발열·화농성객담·NEWS2 8) + 영상(Pneumonia 0.92/Consolidation 0.78) + Lab(critical CRP 184·PCT 2.8·Leukocytosis) + Sputum culture S. pneumoniae 양성 — 4축 모두 강하게 부합. ATS/IDSA CAP 2019 (PMID 31573350) 진단 기준 충족."
+    },
+    {
+      "rank": 2,
+      "disease_key": "bacterial_pneumonia_nec",
+      "name_kr": "기타 명시된 세균성 폐렴",
+      "icd10": ["J15.8"],
+      "score_phase3": 0.6259,
+      "score_phase4": 0.6259,
+      "delta": 0.0,
+      "reason": "CAP의 sub-classification. S. pneumoniae 양성 → 'NEC' 라벨보다 일반 CAP 우선."
+    },
+    {
+      "rank": 3,
+      "disease_key": "viral_pneumonia",
+      "name_kr": "바이러스성 폐렴",
+      "icd10": ["J12.9"],
+      "score_phase3": 0.4187,
+      "score_phase4": 0.3687,
+      "delta": -0.05,
+      "reason": "Procalcitonin 2.8 ng/mL은 세균성 감염 강력 시사 (cut-off 0.5, Schuetz 2017 Cochrane PMID 29025194). 바이러스성 가능성 낮음 → score 감점 제안."
+    }
+  ],
+
+  "flagged_concerns": [
+    {
+      "disease_key": "viral_pneumonia",
+      "concern": "PCT 2.8 ng/mL >> cut-off 0.5 → 세균성 감염 우세, 바이러스성 가능성 감소",
+      "severity": "info",
+      "reference": "Schuetz 2017 Cochrane PMID 29025194"
+    },
+    {
+      "disease_key": "community_acquired_pneumonia",
+      "concern": "Hypoxemia (SpO2 91%, pO2 62) 동반 — 즉시 산소 공급 + ICU 평가 권고",
+      "severity": "warning",
+      "reference": "ATS/IDSA CAP 2019 §Site of care"
+    },
+    {
+      "disease_key": "community_acquired_pneumonia",
+      "concern": "CURB-65 2점 (BUN 22 +1, Age ≥65 +1) — 입원 적응증",
+      "severity": "info",
+      "reference": "Lim WS et al. Thorax 2003 PMID 12728155"
+    }
+  ],
+
+  "rank_changes": [
+    {"disease_key": "community_acquired_pneumonia", "p3_rank": 1, "p4_rank": 1, "delta": 0},
+    {"disease_key": "bacterial_pneumonia_nec",      "p3_rank": 2, "p4_rank": 2, "delta": 0},
+    {"disease_key": "viral_pneumonia",              "p3_rank": 3, "p4_rank": 3, "delta": 0}
+  ],
+
+  "_section_reasoning": "── LLM 추론 (요약 + S3 전체) ──",
+  "reasoning_summary": "환자는 65세 남성으로 3일간 발열·기침·화농성 객담·우측 흉막성 흉통을 호소. 활력징후 이상(T 39.2℃, HR 112, RR 28, SpO2 91%) 및 NEWS2 8점(High clinical risk)으로 급성 중증 폐감염 시사. CheXpert Pneumonia 0.92 + Consolidation 0.78 + Lung Opacity 0.65로 영상학적 폐렴 패턴 확인. CRP 184(critical)·Procalcitonin 2.8(critical, 세균성 강력 시사)·WBC 18.5로 lab 4축 모두 부합. Sputum culture S. pneumoniae 양성으로 원인균 확정. 종합 진단: CAP (S. pneumoniae). STRONG confidence. 입원 + IV antibiotics (β-lactam + macrolide) 권고. 본 결과는 임상의 최종 판단을 대체하지 않음 (FDA SaMD).",
+
+  "s3_reasoning_full": "s3://say2-2team-bucket/llm_reasoning/2026/05/14/session_5b7a634d-387f-42ab-b882-955e64ae93d7.txt",
+
+  "_section_llm_meta": "── LLM 호출 메타 ──",
+  "llm_model": "claude-sonnet-4-6",
+  "prompt_ver": "v4_diagnostic_verifier_v2",
+  "input_tokens": 3120,
+  "output_tokens": 942,
+  "inference_cost_usd": 0.018960,
+  "inference_time_ms": 2384,
+
+  "_section_meta": "── 운영 메타 ──",
+  "input_data_meta": {
+    "input_collected_at": "2026-05-14T09:38:36+09:00",
+    "source_phase_executed_at": {
+      "phase3": "2026-05-14T09:36:18+09:00"
+    },
+    "result_emitted_at": "2026-05-14T09:38:42+09:00",
+    "data_age": {
+      "phase3_age_seconds": 144
+    },
+    "count_summary": {
+      "input_top_k": 3,
+      "reranked_count": 3,
+      "flagged_concerns_count": 3,
+      "rank_changes_with_delta_nonzero": 1
+    },
+    "guard_rails_applied": [
+      "safety_critical_finding_check",
+      "rare_screen_trigger_check",
+      "rule_out_disclaimer",
+      "evidence_hallucination_check",
+      "korean_clinical_terminology",
+      "fda_samd_compliance_phrasing"
+    ],
+    "owner_status_check": {
+      "scoring_formula": "owner (clip 0-1) preserved",
+      "option_e_phase2": "applied — xray_hpo_inferred not used",
+      "positive_hpo_only": "confirmed — no negative HPO in prompt",
+      "disease_scope": 105
+    }
+  }
+}
