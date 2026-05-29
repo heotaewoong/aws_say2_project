@@ -1,0 +1,359 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  [담당 스택 1/3] VPC + Subnet + NAT + VPC Endpoint + 보안 그룹
+  architecture_final.html 기준 네트워킹 계층 전체 구현
+  ㅇ Multi-AZ HA (ap-northeast-2a, 2c)
+  ㅇ Public Subnet ×2 (NAT 배치)
+  ㅇ Private Subnet ×3 (Phase 1·2·3 / Phase 4·5 / RAG·Report)
+  ㅇ VPC Endpoint: S3, Bedrock, DynamoDB, SageMaker (NAT 우회 → 비용/보안)
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: rare-link
+
+Resources:
+  # ══════════════════════════════════════════════════════════════
+  # VPC
+  # ══════════════════════════════════════════════════════════════
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-vpc" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-igw" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # ══════════════════════════════════════════════════════════════
+  # Public Subnets (AZ 분산)
+  # ══════════════════════════════════════════════════════════════
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-public-a" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  PublicSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Sub "${AWS::Region}c"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-public-c" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  # ══════════════════════════════════════════════════════════════
+  # Private Subnets — 3개 (Phase 그룹별 격리)
+  # ══════════════════════════════════════════════════════════════
+  # Subnet ① — Phase 1·2·3 (Input Agents: Vision/NLP/Lab)
+  PrivateSubnet1A:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-private-phase123-a" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  PrivateSubnet1C:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.12.0/24
+      AvailabilityZone: !Sub "${AWS::Region}c"
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-private-phase123-c" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  # Subnet ② — Phase 4·5 (Scoring/Trigger)
+  PrivateSubnet2A:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.21.0/24
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-private-phase45-a" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  PrivateSubnet2C:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.22.0/24
+      AvailabilityZone: !Sub "${AWS::Region}c"
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-private-phase45-c" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  # Subnet ③ — RAG & Report (RDS pgvector, Aurora FHIR)
+  PrivateSubnet3A:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.31.0/24
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-private-rag-a" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  PrivateSubnet3C:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.32.0/24
+      AvailabilityZone: !Sub "${AWS::Region}c"
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-private-rag-c" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  # ══════════════════════════════════════════════════════════════
+  # NAT Gateways (Multi-AZ HA)
+  # ══════════════════════════════════════════════════════════════
+  NatEipA:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-nat-eip-a" }
+
+  NatEipC:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-nat-eip-c" }
+
+  NatGatewayA:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEipA.AllocationId
+      SubnetId: !Ref PublicSubnetA
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-nat-a" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  NatGatewayC:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEipC.AllocationId
+      SubnetId: !Ref PublicSubnetC
+      Tags:
+        - { Key: Name,    Value: !Sub "${ProjectName}-nat-c" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  # ══════════════════════════════════════════════════════════════
+  # Route Tables
+  # ══════════════════════════════════════════════════════════════
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-rt-public" }
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IGWAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicRouteAssocA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { RouteTableId: !Ref PublicRouteTable, SubnetId: !Ref PublicSubnetA }
+
+  PublicRouteAssocC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { RouteTableId: !Ref PublicRouteTable, SubnetId: !Ref PublicSubnetC }
+
+  # Private Route Table — AZ별 NAT 분리
+  PrivateRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-rt-private-a" }
+
+  PrivateRouteA:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableA
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayA
+
+  PrivateRouteTableC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-rt-private-c" }
+
+  PrivateRouteC:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableC
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayC
+
+  # Private Subnet → AZ별 RT 연결
+  Priv1AAssoc: { Type: AWS::EC2::SubnetRouteTableAssociation, Properties: { RouteTableId: !Ref PrivateRouteTableA, SubnetId: !Ref PrivateSubnet1A } }
+  Priv1CAssoc: { Type: AWS::EC2::SubnetRouteTableAssociation, Properties: { RouteTableId: !Ref PrivateRouteTableC, SubnetId: !Ref PrivateSubnet1C } }
+  Priv2AAssoc: { Type: AWS::EC2::SubnetRouteTableAssociation, Properties: { RouteTableId: !Ref PrivateRouteTableA, SubnetId: !Ref PrivateSubnet2A } }
+  Priv2CAssoc: { Type: AWS::EC2::SubnetRouteTableAssociation, Properties: { RouteTableId: !Ref PrivateRouteTableC, SubnetId: !Ref PrivateSubnet2C } }
+  Priv3AAssoc: { Type: AWS::EC2::SubnetRouteTableAssociation, Properties: { RouteTableId: !Ref PrivateRouteTableA, SubnetId: !Ref PrivateSubnet3A } }
+  Priv3CAssoc: { Type: AWS::EC2::SubnetRouteTableAssociation, Properties: { RouteTableId: !Ref PrivateRouteTableC, SubnetId: !Ref PrivateSubnet3C } }
+
+  # ══════════════════════════════════════════════════════════════
+  # Security Groups
+  # ══════════════════════════════════════════════════════════════
+  # SG: Lambda (Private Subnet에서 실행)
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${ProjectName}-sg-lambda"
+      GroupDescription: "Lambda 함수 — Outbound 전용 (외부 API + VPC Endpoint)"
+      VpcId: !Ref VPC
+      SecurityGroupEgress:
+        - { IpProtocol: -1, CidrIp: 0.0.0.0/0, Description: "NAT 경유 외부 API 및 VPC Endpoint 접근" }
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-sg-lambda" }
+
+  # SG: SageMaker Endpoint (GPU 추론 서버)
+  SageMakerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${ProjectName}-sg-sagemaker"
+      GroupDescription: "SageMaker Endpoint — Lambda로부터만 Inbound 허용"
+      VpcId: !Ref VPC
+      SecurityGroupEgress:
+        - { IpProtocol: -1, CidrIp: 0.0.0.0/0, Description: "VPC Endpoint 접근용" }
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-sg-sagemaker" }
+
+  # Lambda → SageMaker Inbound 규칙 (순환 참조 방지 위해 분리)
+  SageMakerIngressFromLambda:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref SageMakerSecurityGroup
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !Ref LambdaSecurityGroup
+      Description: "Lambda → SageMaker Endpoint HTTPS 호출"
+
+  # SG: VPC Endpoint (ENI 수준)
+  VPCEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${ProjectName}-sg-vpce"
+      GroupDescription: "VPC Endpoint — Lambda/SageMaker로부터 HTTPS만 허용"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, SourceSecurityGroupId: !Ref LambdaSecurityGroup }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, SourceSecurityGroupId: !Ref SageMakerSecurityGroup }
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-sg-vpce" }
+
+  # ══════════════════════════════════════════════════════════════
+  # VPC Endpoints (Bedrock, S3, DynamoDB, SageMaker 내부 트래픽)
+  # ══════════════════════════════════════════════════════════════
+  # Gateway Endpoint: S3 (Route Table 경유 — 무료)
+  S3VPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref PrivateRouteTableA
+        - !Ref PrivateRouteTableC
+
+  # Gateway Endpoint: DynamoDB
+  DynamoDBVPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.dynamodb"
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref PrivateRouteTableA
+        - !Ref PrivateRouteTableC
+
+  # Interface Endpoint: Bedrock Runtime (Claude 호출)
+  BedrockRuntimeEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.bedrock-runtime"
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet1A
+        - !Ref PrivateSubnet1C
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+
+  # Interface Endpoint: SageMaker Runtime (Lambda → Endpoint 호출)
+  SageMakerRuntimeEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.sagemaker.runtime"
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet1A
+        - !Ref PrivateSubnet1C
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+    Export: { Name: !Sub "${ProjectName}-vpc-id" }
+
+  PrivateSubnet1A:
+    Value: !Ref PrivateSubnet1A
+    Export: { Name: !Sub "${ProjectName}-private-1a" }
+  PrivateSubnet1C:
+    Value: !Ref PrivateSubnet1C
+    Export: { Name: !Sub "${ProjectName}-private-1c" }
+  PrivateSubnet2A:
+    Value: !Ref PrivateSubnet2A
+    Export: { Name: !Sub "${ProjectName}-private-2a" }
+  PrivateSubnet2C:
+    Value: !Ref PrivateSubnet2C
+    Export: { Name: !Sub "${ProjectName}-private-2c" }
+
+  LambdaSecurityGroup:
+    Value: !Ref LambdaSecurityGroup
+    Export: { Name: !Sub "${ProjectName}-sg-lambda" }
+
+  SageMakerSecurityGroup:
+    Value: !Ref SageMakerSecurityGroup
+    Export: { Name: !Sub "${ProjectName}-sg-sagemaker" }

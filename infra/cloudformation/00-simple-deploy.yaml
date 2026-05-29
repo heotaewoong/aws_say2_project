@@ -1,0 +1,290 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  [현실 배포 1-스택] RAG 파이프라인 전체를 Lambda 컨테이너 이미지로 배포
+  ㅇ SageMaker 없음 (Lambda CPU 추론)
+  ㅇ Single-AZ (데모 시연용, HA 불필요)
+  ㅇ VPC + NAT ×1 + Lambda + API Gateway + S3 + DynamoDB
+  ㅇ 예상 비용: 1일 $1~2 (시연 제외)
+
+  배포 전 사전 작업:
+    1) docker build -t rare-link-rag -f infra/lambda/Dockerfile .
+    2) ECR 리포지토리에 push
+    3) 이 스택 배포 시 EcrImageUri 파라미터로 이미지 전달
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: rare-link-simple
+
+  EcrImageUri:
+    Type: String
+    Description: "Lambda 컨테이너 이미지 URI (ECR에 푸시 후)"
+
+Resources:
+  # ══════════════════════════════════════════════════════════════
+  # VPC (Single-AZ, 최소 리소스)
+  # ══════════════════════════════════════════════════════════════
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-vpc" }
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - { Key: project, Value: pre-vpc-2-2-team }
+
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-public" }
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-private" }
+
+  NatEip:
+    Type: AWS::EC2::EIP
+    Properties: { Domain: vpc }
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEip.AllocationId
+      SubnetId: !Ref PublicSubnet
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectName}-nat" }
+
+  PublicRT:
+    Type: AWS::EC2::RouteTable
+    Properties: { VpcId: !Ref VPC }
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IGWAttachment
+    Properties:
+      RouteTableId: !Ref PublicRT
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicRTAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { RouteTableId: !Ref PublicRT, SubnetId: !Ref PublicSubnet }
+
+  PrivateRT:
+    Type: AWS::EC2::RouteTable
+    Properties: { VpcId: !Ref VPC }
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRT
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateRTAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { RouteTableId: !Ref PrivateRT, SubnetId: !Ref PrivateSubnet }
+
+  # ── VPC Endpoint (비용 절감: Bedrock, S3, DynamoDB) ──
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcEndpointType: Gateway
+      RouteTableIds: [!Ref PrivateRT]
+
+  DynamoDBEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.dynamodb"
+      VpcEndpointType: Gateway
+      RouteTableIds: [!Ref PrivateRT]
+
+  LambdaSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Lambda outbound only
+      VpcId: !Ref VPC
+      SecurityGroupEgress:
+        - { IpProtocol: -1, CidrIp: 0.0.0.0/0 }
+
+  VpceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: VPC Endpoint (Bedrock)
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, SourceSecurityGroupId: !Ref LambdaSG }
+
+  BedrockEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.bedrock-runtime"
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds: [!Ref PrivateSubnet]
+      SecurityGroupIds: [!Ref VpceSG]
+
+  # ══════════════════════════════════════════════════════════════
+  # 저장소
+  # ══════════════════════════════════════════════════════════════
+  XrayBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - { ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 } }
+      LifecycleConfiguration:
+        Rules:
+          - { Id: Expire, Status: Enabled, Prefix: uploads/, ExpirationInDays: 30 }
+      Tags:
+        - { Key: project, Value: pre-s3-2-2-team }
+
+  ResultsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${ProjectName}-results"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: diagnosis_id, AttributeType: S }
+      KeySchema:
+        - { AttributeName: diagnosis_id, KeyType: HASH }
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+      Tags:
+        - { Key: project, Value: pre-dynamodb-2-2-team }
+
+  # ══════════════════════════════════════════════════════════════
+  # Lambda (RAG 파이프라인 전체)
+  # ══════════════════════════════════════════════════════════════
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - { Effect: Allow, Principal: { Service: lambda.amazonaws.com }, Action: sts:AssumeRole }
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: RagAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - { Effect: Allow, Action: [s3:GetObject, s3:PutObject], Resource: !Sub "arn:aws:s3:::${XrayBucket}/*" }
+              - { Effect: Allow, Action: [dynamodb:PutItem, dynamodb:GetItem], Resource: !GetAtt ResultsTable.Arn }
+              - Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource:
+                  - !Sub "arn:aws:bedrock:${AWS::Region}::foundation-model/apac.anthropic.claude-3-5-sonnet-20241022-v2:0"
+                  - !Sub "arn:aws:bedrock:${AWS::Region}::foundation-model/apac.anthropic.claude-3-5-haiku-20241022-v1:0"
+
+  RagLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-pipeline"
+      PackageType: Image
+      Code: { ImageUri: !Ref EcrImageUri }
+      Role: !GetAtt LambdaRole.Arn
+      MemorySize: 3008
+      Timeout: 300
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref XrayBucket
+          RESULT_TABLE: !Ref ResultsTable
+      VpcConfig:
+        SecurityGroupIds: [!Ref LambdaSG]
+        SubnetIds: [!Ref PrivateSubnet]
+      Tags:
+        - { Key: project, Value: pre-lambda-2-2-team }
+
+  # ══════════════════════════════════════════════════════════════
+  # API Gateway
+  # ══════════════════════════════════════════════════════════════
+  Api:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "${ProjectName}-api"
+      EndpointConfiguration: { Types: [REGIONAL] }
+      Tags:
+        - { Key: project, Value: pre-apigw-2-2-team }
+
+  Resource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref Api
+      ParentId: !GetAtt Api.RootResourceId
+      PathPart: diagnose
+
+  Method:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref Api
+      ResourceId: !Ref Resource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RagLambda.Arn}/invocations"
+
+  LambdaPerm:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref RagLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*/*"
+
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: Method
+    Properties:
+      RestApiId: !Ref Api
+      StageName: prod
+
+Outputs:
+  ApiUrl:
+    Description: POST /diagnose 호출 URL
+    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/prod/diagnose"
+
+  XrayBucketName:
+    Value: !Ref XrayBucket
+
+  ResultsTableName:
+    Value: !Ref ResultsTable
+
+  LambdaName:
+    Value: !Ref RagLambda

@@ -41,6 +41,14 @@
   --c-cw:        #E7157B;
   --c-ds:        #3F9142;
   --c-pubmed:    #546E7A;
+  --c-secrets:   #DD344C;
+  --c-kms:       #8C4FFF;
+  --c-trail:     #E7157B;
+  --c-guard:     #DD344C;
+  --c-sqs:       #FF9900;
+  --c-sns:       #E7157B;
+  --c-backup:    #3F9142;
+  --c-budget:    #FF9900;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -163,6 +171,14 @@ h1 { font-size:19px; font-weight:800; text-align:center; color:#1a1a2e; margin-b
 .c-cw       { border-color:var(--c-cw);      }  .ico-cw       { color:var(--c-cw);      }
 .c-ds       { border-color:var(--c-ds);      }  .ico-ds       { color:var(--c-ds);      }
 .c-pubmed   { border-color:var(--c-pubmed);  }  .ico-pubmed   { color:var(--c-pubmed);  }
+.c-secrets  { border-color:var(--c-secrets); }  .ico-secrets  { color:var(--c-secrets); }
+.c-kms      { border-color:var(--c-kms);     }  .ico-kms      { color:var(--c-kms);     }
+.c-trail    { border-color:var(--c-trail);   }  .ico-trail    { color:var(--c-trail);   }
+.c-guard    { border-color:var(--c-guard);   }  .ico-guard    { color:var(--c-guard);   }
+.c-sqs      { border-color:var(--c-sqs);     }  .ico-sqs      { color:var(--c-sqs);     }
+.c-sns      { border-color:var(--c-sns);     }  .ico-sns      { color:var(--c-sns);     }
+.c-backup   { border-color:var(--c-backup);  }  .ico-backup   { color:var(--c-backup);  }
+.c-budget   { border-color:var(--c-budget);  }  .ico-budget   { color:var(--c-budget);  }
 </style>
 </head>
 <body>
@@ -177,6 +193,10 @@ h1 { font-size:19px; font-weight:800; text-align:center; color:#1a1a2e; margin-b
       style="padding:12px 24px; background:#1a1a2e; color:#90A4AE; border:none; cursor:pointer; font-size:13px; font-weight:700; border-bottom:3px solid transparent; transition:all 0.2s;">
       📖 초보자 설명
     </button>
+    <button onclick="showTab('security')" id="tab-security"
+      style="padding:12px 24px; background:#1a1a2e; color:#90A4AE; border:none; cursor:pointer; font-size:13px; font-weight:700; border-bottom:3px solid transparent; transition:all 0.2s;">
+      🔐 보안·복원력
+    </button>
   </div>
 </div>
 
@@ -184,10 +204,11 @@ h1 { font-size:19px; font-weight:800; text-align:center; color:#1a1a2e; margin-b
 function showTab(name) {
   document.getElementById('panel-arch').style.display = name === 'arch' ? 'block' : 'none';
   document.getElementById('panel-beginner').style.display = name === 'beginner' ? 'block' : 'none';
-  document.getElementById('tab-arch').style.borderBottomColor = name === 'arch' ? '#4FC3F7' : 'transparent';
-  document.getElementById('tab-arch').style.color = name === 'arch' ? '#4FC3F7' : '#90A4AE';
-  document.getElementById('tab-beginner').style.borderBottomColor = name === 'beginner' ? '#4FC3F7' : 'transparent';
-  document.getElementById('tab-beginner').style.color = name === 'beginner' ? '#4FC3F7' : '#90A4AE';
+  document.getElementById('panel-security').style.display = name === 'security' ? 'block' : 'none';
+  ['arch','beginner','security'].forEach(t => {
+    document.getElementById('tab-'+t).style.borderBottomColor = name === t ? '#4FC3F7' : 'transparent';
+    document.getElementById('tab-'+t).style.color = name === t ? '#4FC3F7' : '#90A4AE';
+  });
 }
 window.onload = function() { showTab('arch'); };
 </script>
@@ -223,6 +244,41 @@ window.onload = function() { showTab('arch'); };
       <div class="ico ico-cw">🔍</div>
       <div class="lbl">X-Ray</div>
       <div class="sub2">분산 추적<br>Tracing</div>
+    </div>
+    <div class="svc c-secrets" style="min-width:72px;">
+      <div class="ico ico-secrets">🔒</div>
+      <div class="lbl">Secrets Manager</div>
+      <div class="sub2">API 키 관리<br>런타임 로드</div>
+    </div>
+    <div class="svc c-kms" style="min-width:72px;">
+      <div class="ico ico-kms">🗝️</div>
+      <div class="lbl">AWS KMS</div>
+      <div class="sub2">S3·DynamoDB<br>암호화 키</div>
+    </div>
+    <div class="svc c-trail" style="min-width:72px;">
+      <div class="ico ico-trail">📜</div>
+      <div class="lbl">CloudTrail</div>
+      <div class="sub2">감사 로그<br>HIPAA 대응</div>
+    </div>
+    <div class="svc c-guard" style="min-width:72px;">
+      <div class="ico ico-guard">🛡️</div>
+      <div class="lbl">GuardDuty</div>
+      <div class="sub2">위협 탐지<br>비정상 접근</div>
+    </div>
+    <div class="svc c-budget" style="min-width:72px;">
+      <div class="ico ico-budget">💰</div>
+      <div class="lbl">AWS Budgets</div>
+      <div class="sub2">월 예산 알림<br>과금 방지</div>
+    </div>
+    <div class="svc c-guard" style="min-width:72px;">
+      <div class="ico ico-guard">🔎</div>
+      <div class="lbl">Detective</div>
+      <div class="sub2">GuardDuty 탐지 후<br>심층 원인 조사</div>
+    </div>
+    <div class="svc c-iam" style="min-width:72px;">
+      <div class="ico ico-iam">🔬</div>
+      <div class="lbl">Inspector</div>
+      <div class="sub2">Lambda 취약점<br>자동 스캔</div>
     </div>
   </div>
 </div>
@@ -439,6 +495,43 @@ window.onload = function() { showTab('arch'); };
       </div>
 
     </div>
+
+    <!-- EC2 FHIR Server + ALB + SQS (회의 신규 추가) -->
+    <div style="margin-top:10px; padding-top:8px; border-top:1.5px dashed var(--pub-bd);">
+      <div style="font-size:9px; font-weight:800; color:var(--pub-bd); margin-bottom:6px;">
+        🩻 EMR 연동 계층 (FHIR Gateway) <span class="note note-purple" style="font-size:8px;">🆕 회의 후 추가</span>
+      </div>
+      <div class="row" style="gap:10px; justify-content:center; align-items:stretch;">
+        <div class="svc c-sqs" style="min-width:90px;">
+          <div class="ico ico-sqs">📬</div>
+          <div class="lbl">Amazon SQS</div>
+          <div class="sub2">FHIR 요청 큐잉<br>EMR 트래픽 흡수</div>
+        </div>
+        <div class="arr" style="align-self:center;">→</div>
+        <div class="svc c-alb" style="min-width:90px;">
+          <div class="ico ico-alb">⚖️</div>
+          <div class="lbl">ALB</div>
+          <div class="sub2">FHIR 트래픽 분산<br>SSL 종료</div>
+        </div>
+        <div class="arr" style="align-self:center;">→</div>
+        <div class="svc c-ecr" style="min-width:110px; border-color:#0972d3;">
+          <div class="ico" style="color:#0972d3;">🖥️</div>
+          <div class="lbl">EC2 (HAPI FHIR)</div>
+          <div class="sub2">Stateful Java 서버<br>Auto Scaling Group<br>t3.medium · Multi-AZ</div>
+        </div>
+        <div class="arr" style="align-self:center;">→</div>
+        <div class="svc c-rds" style="min-width:100px;">
+          <div class="ico ico-rds">🛢️</div>
+          <div class="lbl">Aurora 환자맥 DB</div>
+          <div class="sub2">FHIR 백엔드<br>(Subnet ③)</div>
+        </div>
+      </div>
+      <div style="font-size:8.5px; color:#546E7A; margin-top:6px; line-height:1.6;">
+        <strong>왜 EC2인가</strong>: HAPI FHIR는 Stateful Java 앱이라 Lambda(Stateless)로 호스팅 불가.
+        EC2 + Auto Scaling + ALB로 표준 배포. SQS는 EMR(BESTCare 등)이 한꺼번에 호출할 때
+        큐로 흡수해 EC2가 죽지 않게 함.
+      </div>
+    </div>
   </div><!-- end public -->
 
   <!-- PRIVATE SUBNETS — 3 columns -->
@@ -446,12 +539,12 @@ window.onload = function() { showTab('arch'); };
 
     <!-- ── COLUMN 1: Input Agents ── -->
     <div class="pri-box">
-      <span class="box-label box-label-pri">Private Subnet — Input Agents (Phase 1)</span>
+      <span class="box-label box-label-pri">Private Subnet ① — Phase 1·2·3 (1차 Output)</span>
 
       <!-- Vision Agent -->
       <div style="background:#fff; border:1.5px solid var(--c-sm); border-radius:8px; padding:8px; margin-bottom:8px;">
         <div style="font-size:9px;font-weight:800;color:var(--c-sm); margin-bottom:6px;">
-          🧠 Phase 1A — Vision Agent
+          🩻 Phase 2 — X-ray Vision (SooNet)
         </div>
         <div class="svc c-sm" style="width:100%; flex-direction:row; gap:8px; padding:7px 10px;">
           <div style="font-size:22px;">🩻</div>
@@ -469,7 +562,7 @@ window.onload = function() { showTab('arch'); };
       <!-- NLP Agent -->
       <div style="background:#fff; border:1.5px solid var(--c-lambda); border-radius:8px; padding:8px; margin-bottom:8px;">
         <div style="font-size:9px;font-weight:800;color:var(--c-lambda); margin-bottom:6px;">
-          📝 Phase 1B — NLP Agent
+          📝 Phase 1 — Symptom NLP (LLM-Bedrock)
         </div>
         <div class="row" style="gap:6px; align-items:center;">
           <div class="svc c-lambda" style="min-width:75px;">
@@ -496,7 +589,7 @@ window.onload = function() { showTab('arch'); };
       <!-- Lab Agent -->
       <div style="background:#fff; border:1.5px solid var(--c-lambda); border-radius:8px; padding:8px;">
         <div style="font-size:9px;font-weight:800;color:var(--c-lambda); margin-bottom:6px;">
-          🩸 Phase 1C — Lab Agent
+          🩸 Phase 3 — Multimodal Scoring (Lab + Micro)
         </div>
         <div class="svc c-lambda" style="width:100%;">
           <div class="ico ico-lambda">λ</div>
@@ -512,12 +605,12 @@ window.onload = function() { showTab('arch'); };
 
     <!-- ── COLUMN 2: Sync + RAG Logic ── -->
     <div class="pri-box">
-      <span class="box-label box-label-pri">Private Subnet — Sync &amp; RAG (Phase 2·3·4)</span>
+      <span class="box-label box-label-pri">Private Subnet ② — 가중치 ~ 2차 Output (Phase 4·5)</span>
 
       <!-- ElastiCache -->
       <div style="background:#fff; border:1.5px solid var(--c-redis); border-radius:8px; padding:8px; margin-bottom:8px;">
         <div style="font-size:9px;font-weight:800;color:var(--c-redis); margin-bottom:5px;">
-          ⚡ Phase 2 — HPO 집계 버퍼
+          ⚡ 1차 Output — HPO 집계 버퍼
         </div>
         <div class="svc c-redis" style="width:100%;">
           <div class="ico ico-redis">🗄️</div>
@@ -530,10 +623,10 @@ window.onload = function() { showTab('arch'); };
         </div>
       </div>
 
-      <!-- Phase 2: LIRICAL + 일반 질환 스코어링 -->
+      <!-- Phase 5: LIRICAL Scoring (희귀질환) -->
       <div style="background:#fff; border:1.5px solid #7B1FA2; border-radius:8px; padding:8px; margin-bottom:8px;">
         <div style="font-size:9px;font-weight:800;color:#7B1FA2; margin-bottom:5px;">
-          🔬 Phase 2A — LIRICAL Scoring (희귀질환)
+          🔬 Phase 5 — LIRICAL Scoring (희귀 LR + Threshold)
         </div>
         <div class="svc" style="border-color:#7B1FA2; width:100%;">
           <div class="ico" style="color:#7B1FA2;">🧬</div>
@@ -542,10 +635,10 @@ window.onload = function() { showTab('arch'); };
         </div>
       </div>
 
-      <!-- Phase 2B: 일반 질환 스코어링 -->
+      <!-- Phase 4: 일반 질환 스코어링 + 검증 -->
       <div style="background:#fff; border:1.5px solid #2E7D32; border-radius:8px; padding:8px; margin-bottom:8px;">
         <div style="font-size:9px;font-weight:800;color:#2E7D32; margin-bottom:5px;">
-          📊 Phase 2B — 일반 질환 Scoring (Rule-based)
+          📊 Phase 4 — 일반 Ranking 검증 (Rule-based + Cross-check)
         </div>
         <div class="svc" style="border-color:#2E7D32; width:100%;">
           <div class="ico" style="color:#2E7D32;">🫁</div>
@@ -555,24 +648,24 @@ window.onload = function() { showTab('arch'); };
         </div>
       </div>
 
-      <!-- Phase 3: RAG Trigger -->
+      <!-- 2차 Output 트리거 -->
       <div style="background:#fff; border:1.5px solid #1565C0; border-radius:8px; padding:8px; margin-bottom:8px;">
         <div style="font-size:9px;font-weight:800;color:#1565C0; margin-bottom:5px;">
-          🎯 Phase 3 — RAG 트리거 판단
+          🎯 2차 Output — RAG 트리거 판단
         </div>
         <div style="font-size:9px; color:#37474F; line-height:1.7;">
           <strong>RAG 실행 조건 (OR)</strong><br>
-          ① Top 질환 = 희귀 (Orphanet flag)<br>
+          ① Top 질환 = 희귀 (Phase 5 Threshold 통과)<br>
           ② Score ratio (1위/2위) &lt; 3.0<br>
-          <span class="note note-green" style="margin-top:4px;display:block;">→ True: Phase 4 RAG 실행</span>
+          <span class="note note-green" style="margin-top:4px;display:block;">→ True: RAG &amp; Report 실행 (Subnet ③)</span>
           <span class="note note-gray" style="margin-top:2px;display:block;">→ False: 기본 리포트 반환</span>
         </div>
       </div>
 
-      <!-- Phase 4: RAG Logic -->
+      <!-- RAG &amp; Report (Subnet ③로 이동) -->
       <div style="background:#fff; border:1.5px solid var(--c-lambda); border-radius:8px; padding:8px;">
         <div style="font-size:9px;font-weight:800;color:var(--c-lambda); margin-bottom:5px;">
-          📋 Phase 4 — RAG &amp; Report Agent
+          📋 RAG &amp; Report Agent (→ Subnet ③)
         </div>
         <div class="svc c-lambda" style="width:100%;">
           <div class="ico ico-lambda">λ</div>
@@ -592,7 +685,7 @@ window.onload = function() { showTab('arch'); };
 
     <!-- ── COLUMN 3: Knowledge + Output ── -->
     <div class="pri-box">
-      <span class="box-label box-label-pri">Private Subnet — 지식베이스 &amp; 출력 (Phase 4·5)</span>
+      <span class="box-label box-label-pri">Private Subnet ③ — RAG &amp; 최종 보고서 DB화</span>
 
       <!-- RDS pgvector -->
       <div style="background:#fff; border:1.5px solid var(--c-rds); border-radius:8px; padding:8px; margin-bottom:8px;">
@@ -604,6 +697,14 @@ window.onload = function() { showTab('arch'); };
           <div class="lbl">RDS PostgreSQL</div>
           <div class="sub2">pgvector 확장<br>Orphanet ORDO 임베딩<br>528 희귀질환 의미 검색<br>OpenSearch 대비 비용 1/10</div>
           <span class="note note-blue" style="font-size:8px;margin-top:3px;">Replace OpenSearch ✅</span>
+        </div>
+        <div style="margin-top:5px; display:flex; gap:4px; flex-wrap:wrap;">
+          <span class="note note-green" style="font-size:8px;">Multi-AZ ✅ (자동 장애조치)</span>
+          <span class="note note-blue" style="font-size:8px;">Read Replica (읽기 부하 분산)</span>
+        </div>
+        <div style="font-size:8px; color:#546E7A; margin-top:4px; line-height:1.6;">
+          Primary (AZ1) → Standby (AZ2) 자동 페일오버<br>
+          Read Replica: RAG 검색 쿼리 전용 (쓰기/읽기 분리)
         </div>
       </div>
 
@@ -641,10 +742,10 @@ window.onload = function() { showTab('arch'); };
         </div>
       </div>
 
-      <!-- DynamoDB — 두 테이블 분리 -->
+      <!-- DB 4종 — 회의 후 명확화 -->
       <div style="background:#fff; border:1.5px solid var(--c-dynamo); border-radius:8px; padding:8px; margin-bottom:6px;">
         <div style="font-size:9px;font-weight:800;color:var(--c-dynamo); margin-bottom:5px;">
-          💾 진단 이력 저장 (Phase 5)
+          💾 사용자 데이터 DB
         </div>
         <div class="svc c-dynamo" style="width:100%;">
           <div class="ico ico-dynamo">⚡</div>
@@ -654,15 +755,40 @@ window.onload = function() { showTab('arch'); };
         </div>
       </div>
 
-      <div style="background:#fff; border:1.5px solid var(--c-dynamo); border-radius:8px; padding:8px;">
+      <div style="background:#fff; border:1.5px solid var(--c-dynamo); border-radius:8px; padding:8px; margin-bottom:6px;">
         <div style="font-size:9px;font-weight:800;color:var(--c-dynamo); margin-bottom:5px;">
-          🧬 희귀 케이스 축적 (MLOps 트리거)
+          🧬 Case Report DB (희귀 RAG 결과)
         </div>
         <div class="svc c-dynamo" style="width:100%;">
           <div class="ico ico-dynamo">⚡</div>
           <div class="lbl">DynamoDB — rare-case-collection</div>
-          <div class="sub2">희귀질환 케이스 축적 DB<br>PK: orpha_id · SK: case_id<br>100건 도달 → EventBridge 트리거</div>
+          <div class="sub2">희귀질환 RAG 결과 누적<br>PK: orpha_id · SK: case_id<br>100건 도달 → EventBridge 트리거</div>
           <span class="note note-orange" style="font-size:8px;margin-top:3px;">⚠️ 미생성 (구현 예정)</span>
+        </div>
+      </div>
+
+      <!-- Aurora 환자맥 DB (회의 신규 추가) -->
+      <div style="background:#fff; border:1.5px solid var(--c-rds); border-radius:8px; padding:8px; margin-bottom:6px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-rds); margin-bottom:5px;">
+          🩺 환자맥 DB (FHIR R4 형태)
+        </div>
+        <div class="svc c-rds" style="width:100%;">
+          <div class="ico ico-rds">🛢️</div>
+          <div class="lbl">Aurora PostgreSQL</div>
+          <div class="sub2">FHIR R4 호환 영구 저장소<br>Patient · Observation · DiagnosticReport<br>Multi-AZ + Read Replica<br>EMR 연동 백엔드</div>
+          <span class="note note-purple" style="font-size:8px;margin-top:3px;">🆕 회의 후 추가 (2026-05-04)</span>
+        </div>
+      </div>
+
+      <!-- 백업 DB -->
+      <div style="background:#fff; border:1.5px solid var(--c-backup); border-radius:8px; padding:8px;">
+        <div style="font-size:9px;font-weight:800;color:var(--c-backup); margin-bottom:5px;">
+          🗄️ 백업 DB (모델·데이터)
+        </div>
+        <div class="svc c-backup" style="width:100%;">
+          <div class="ico ico-backup">💾</div>
+          <div class="lbl">S3 + AWS Backup</div>
+          <div class="sub2">모델 가중치 (.pth) 버저닝<br>X-ray 원본 이미지<br>DynamoDB/Aurora 일별 스냅샷<br>Lifecycle: Standard → IA → Glacier</div>
         </div>
       </div>
 
@@ -798,39 +924,229 @@ window.onload = function() { showTab('arch'); };
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════ -->
-<!-- FULL DATA FLOW SUMMARY                                        -->
+<!-- SECURITY HARDENING SECTION                                   -->
 <!-- ══════════════════════════════════════════════════════════════ -->
+<div style="margin-top:10px; background:#FFF3E0; border:2px solid #E65100; border-radius:8px; padding:12px 14px;">
+  <div style="font-size:10px; font-weight:800; color:#BF360C; margin-bottom:8px;">
+    🔐 보안 강화 레이어 (Security Hardening) — 필수 적용 항목
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
+
+    <!-- Secrets Manager -->
+    <div style="background:#fff; border:1.5px solid var(--c-secrets); border-radius:8px; padding:8px;">
+      <div style="font-size:9px;font-weight:800;color:var(--c-secrets);margin-bottom:5px;">🔒 자격증명 관리</div>
+      <div class="svc c-secrets" style="width:100%;">
+        <div class="ico ico-secrets">🔒</div>
+        <div class="lbl">Secrets Manager</div>
+        <div class="sub2">Bedrock API Key<br>NCBI API Key<br>런타임 동적 로드<br>환경변수 하드코딩 대체</div>
+        <span class="note note-red" style="font-size:8px;margin-top:3px;">✅ 필수</span>
+      </div>
+    </div>
+
+    <!-- KMS -->
+    <div style="background:#fff; border:1.5px solid var(--c-kms); border-radius:8px; padding:8px;">
+      <div style="font-size:9px;font-weight:800;color:var(--c-kms);margin-bottom:5px;">🗝️ 암호화 키 관리</div>
+      <div class="svc c-kms" style="width:100%;">
+        <div class="ico ico-kms">🗝️</div>
+        <div class="lbl">AWS KMS</div>
+        <div class="sub2">S3 SSE-KMS<br>(X-ray·모델 가중치)<br>DynamoDB 암호화<br>환자 의료 데이터 보호</div>
+        <span class="note note-red" style="font-size:8px;margin-top:3px;">✅ 필수 (HIPAA)</span>
+      </div>
+    </div>
+
+    <!-- CloudTrail -->
+    <div style="background:#fff; border:1.5px solid var(--c-trail); border-radius:8px; padding:8px;">
+      <div style="font-size:9px;font-weight:800;color:var(--c-trail);margin-bottom:5px;">📜 감사 로그</div>
+      <div class="svc c-trail" style="width:100%;">
+        <div class="ico ico-trail">📜</div>
+        <div class="lbl">CloudTrail</div>
+        <div class="sub2">누가·언제·어떤<br>환자 데이터 접근<br>S3에 로그 저장<br>HIPAA 감사 대응</div>
+        <span class="note note-red" style="font-size:8px;margin-top:3px;">✅ 필수</span>
+      </div>
+    </div>
+
+    <!-- GuardDuty + Security Hub -->
+    <div style="background:#fff; border:1.5px solid var(--c-guard); border-radius:8px; padding:8px;">
+      <div style="font-size:9px;font-weight:800;color:var(--c-guard);margin-bottom:5px;">🛡️ 위협 탐지</div>
+      <div class="svc c-guard" style="width:100%;">
+        <div class="ico ico-guard">🛡️</div>
+        <div class="lbl">GuardDuty</div>
+        <div class="sub2">비정상 API 호출<br>자격증명 탈취 탐지<br>+ Security Hub<br>통합 보안 대시보드</div>
+        <span class="note note-orange" style="font-size:8px;margin-top:3px;">✅ 권장</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 암호화 적용 범위 -->
+  <div style="margin-top:8px; background:#FFF8E1; border:1px solid #F57F17; border-radius:6px; padding:8px 12px;">
+    <div style="font-size:9px; font-weight:800; color:#E65100; margin-bottom:4px;">🔑 암호화 적용 범위</div>
+    <div style="display:flex; gap:20px; font-size:8.5px; color:#37474F; line-height:1.8;">
+      <div>
+        <strong style="color:#BF360C;">저장 중 암호화 (At Rest)</strong><br>
+        • S3 → SSE-KMS (X-ray 이미지, 모델 가중치)<br>
+        • DynamoDB → AWS 관리형 키 암호화<br>
+        • ElastiCache → 저장 암호화 활성화
+      </div>
+      <div>
+        <strong style="color:#BF360C;">전송 중 암호화 (In Transit)</strong><br>
+        • API Gateway → TLS 1.2+ (기본)<br>
+        • Lambda ↔ SageMaker → TLS<br>
+        • Lambda ↔ Bedrock → TLS (VPC PrivateLink)
+      </div>
+      <div>
+        <strong style="color:#BF360C;">Security Group 설계</strong><br>
+        • Lambda SG: 443 아웃바운드만<br>
+        • SageMaker SG: Lambda SG 인바운드만<br>
+        • ElastiCache SG: 6379 Lambda SG만
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- DATA RESILIENCE SECTION                                       -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div style="margin-top:10px; background:#E8F5E9; border:2px solid #2E7D32; border-radius:8px; padding:12px 14px;">
+  <div style="font-size:10px; font-weight:800; color:#1B5E20; margin-bottom:8px;">
+    💾 데이터 복원력 &amp; 비동기 처리 (Resilience &amp; Async)
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
+
+    <!-- S3 Versioning + Lifecycle -->
+    <div style="background:#fff; border:1.5px solid var(--c-s3); border-radius:8px; padding:8px;">
+      <div style="font-size:9px;font-weight:800;color:var(--c-s3);margin-bottom:5px;">🗂️ S3 복원 + 비용 최적화</div>
+      <div class="svc c-s3" style="width:100%;">
+        <div class="ico ico-s3">🗂️</div>
+        <div class="lbl">S3 Versioning</div>
+        <div class="sub2">모델 가중치 버전 관리<br>실수 덮어쓰기 복구</div>
+      </div>
+      <div style="font-size:8.5px;color:#546E7A;margin-top:5px;line-height:1.7;">
+        <strong>Lifecycle Policy:</strong><br>
+        30일 → Standard-IA<br>
+        90일 → Glacier Instant<br>
+        365일 → Glacier (X-ray)
+      </div>
+    </div>
+
+    <!-- DynamoDB PITR + Backup -->
+    <div style="background:#fff; border:1.5px solid var(--c-dynamo); border-radius:8px; padding:8px;">
+      <div style="font-size:9px;font-weight:800;color:var(--c-dynamo);margin-bottom:5px;">⚡ DynamoDB 복원</div>
+      <div class="svc c-dynamo" style="width:100%;">
+        <div class="ico ico-dynamo">⚡</div>
+        <div class="lbl">DynamoDB PITR</div>
+        <div class="sub2">Point-in-Time Recovery<br>35일 이내 임의 복구<br>diagnosis-history<br>rare-case-collection</div>
+        <span class="note note-green" style="font-size:8px;margin-top:3px;">✅ 필수</span>
+      </div>
+    </div>
+
+    <!-- SQS -->
+    <div style="background:#fff; border:1.5px solid var(--c-sqs); border-radius:8px; padding:8px;">
+      <div style="font-size:9px;font-weight:800;color:var(--c-sqs);margin-bottom:5px;">📬 비동기 큐</div>
+      <div class="svc c-sqs" style="width:100%;">
+        <div class="ico ico-sqs">📬</div>
+        <div class="lbl">Amazon SQS</div>
+        <div class="sub2">진단 요청 큐잉<br>Lambda 타임아웃 방지<br>DLQ (실패 재처리)<br>MLOps 트리거 버퍼</div>
+        <span class="note note-orange" style="font-size:8px;margin-top:3px;">✅ 권장</span>
+      </div>
+    </div>
+
+    <!-- SNS -->
+    <div style="background:#fff; border:1.5px solid var(--c-sns); border-radius:8px; padding:8px;">
+      <div style="font-size:9px;font-weight:800;color:var(--c-sns);margin-bottom:5px;">🔔 알림</div>
+      <div class="svc c-sns" style="width:100%;">
+        <div class="ico ico-sns">🔔</div>
+        <div class="lbl">Amazon SNS</div>
+        <div class="sub2">CloudWatch Alarm<br>→ 이메일/Slack<br>Lambda 에러율 &gt;5%<br>모델 재학습 완료</div>
+        <span class="note note-orange" style="font-size:8px;margin-top:3px;">✅ 권장</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DR Strategy -->
+  <div style="margin-top:8px; background:#F1F8E9; border:1px solid #558B2F; border-radius:6px; padding:8px 12px;">
+    <div style="font-size:9px; font-weight:800; color:#1B5E20; margin-bottom:4px;">🌏 재해 복구 전략 — Pilot Light (권장)</div>
+    <div style="display:flex; gap:20px; font-size:8.5px; color:#37474F; line-height:1.8;">
+      <div>
+        <strong style="color:#2E7D32;">메인: ap-northeast-2 (서울)</strong><br>
+        풀 운영 — 모든 서비스 활성
+      </div>
+      <div>
+        <strong style="color:#2E7D32;">파일럿: ap-southeast-1 (싱가포르)</strong><br>
+        S3 크로스 리전 복제 (모델 가중치)<br>
+        DynamoDB Global Tables (진단 이력)<br>
+        재해 시 Lambda + API GW 스케일 업 → 수분 내 복구
+      </div>
+      <div>
+        <strong style="color:#2E7D32;">RPO/RTO: 분 단위</strong><br>
+        Backup &amp; Restore보다 빠름<br>
+        Warm Standby보다 비용 절감<br>
+        의료 시스템 적합 수준
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- COST MANAGEMENT SECTION                                       -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div style="margin-top:10px; background:#FFF8E1; border:2px solid #F57F17; border-radius:8px; padding:10px 14px;">
+  <div style="font-size:10px; font-weight:800; color:#E65100; margin-bottom:6px;">
+    💰 비용 관리 (Cost Management)
+  </div>
+  <div style="display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+    <div class="svc c-budget" style="min-width:100px;">
+      <div class="ico ico-budget">💰</div>
+      <div class="lbl">AWS Budgets</div>
+      <div class="sub2">월 $100 예산<br>80% 도달 시 알림<br>과금 폭탄 방지</div>
+      <span class="note note-orange" style="font-size:8px;margin-top:3px;">✅ 즉시 설정</span>
+    </div>
+    <div class="svc c-cw" style="min-width:100px;">
+      <div class="ico ico-cw">📊</div>
+      <div class="lbl">Cost Explorer</div>
+      <div class="sub2">서비스별 비용 분석<br>SageMaker 과금 추적</div>
+    </div>
+    <div style="font-size:8.5px; color:#37474F; line-height:1.9; flex:1; min-width:200px;">
+      <strong style="color:#E65100;">비용 절감 포인트</strong><br>
+      • SageMaker Endpoint: 테스트 시만 켜기 ($0.736/hr)<br>
+      • S3 Lifecycle Policy: 이전 모델 → Standard-IA → Glacier 자동 전환<br>
+      • VPC Endpoint (Gateway): S3·DynamoDB 접근 시 NAT GW 비용 절감<br>
+      • Lambda: 요청 없을 때 비용 $0 (서버리스 장점)
+    </div>
+  </div>
+</div>
 <div style="margin-top:12px; background:#FAFAFA; border:1.5px solid #90A4AE; border-radius:8px; padding:12px 14px;">
   <div style="font-size:10px; font-weight:800; color:#37474F; margin-bottom:8px;">
     📋 완전한 요청 데이터 흐름 (5단계 파이프라인)
   </div>
   <div class="pipe" style="justify-content:center; flex-wrap:wrap; gap:6px; font-size:9.5px;">
     <div style="background:#E3F2FD; border:1px solid #1565C0; border-radius:6px; padding:6px 10px; text-align:center;">
-      <strong style="color:#1565C0;">Phase 1A</strong><br>X-ray → S3<br>→ SageMaker GPU<br>→ 14 HPO
+      <strong style="color:#1565C0;">Phase 1</strong><br>증상(문진) → Lambda<br>→ Bedrock Haiku<br>→ HPO + 근거
     </div>
     <div style="color:#90A4AE; font-size:16px; align-self:center;">+</div>
     <div style="background:#E8F5E9; border:1px solid #2E7D32; border-radius:6px; padding:6px 10px; text-align:center;">
-      <strong style="color:#2E7D32;">Phase 1B</strong><br>임상문 → Lambda<br>→ Bedrock Haiku<br>→ HPO 추출
+      <strong style="color:#2E7D32;">Phase 2</strong><br>X-ray → S3<br>→ SageMaker GPU<br>→ 14 HPO%
     </div>
     <div style="color:#90A4AE; font-size:16px; align-self:center;">+</div>
     <div style="background:#FFF3E0; border:1px solid #E65100; border-radius:6px; padding:6px 10px; text-align:center;">
-      <strong style="color:#E65100;">Phase 1C</strong><br>혈액검사 → Lambda<br>→ Lab Rules<br>→ HPO 매핑
+      <strong style="color:#E65100;">Phase 3</strong><br>Lab+Micro → Lambda<br>→ Multimodal Scoring<br>→ HPO + 추가 가중치
     </div>
     <div style="color:#90A4AE; font-size:16px; align-self:center;">→</div>
     <div style="background:#EDE7F6; border:1px solid #6A1B9A; border-radius:6px; padding:6px 10px; text-align:center;">
-      <strong style="color:#6A1B9A;">Phase 2</strong><br>HPO 집계<br>→ LIRICAL LR<br>→ Top 10 질환
+      <strong style="color:#6A1B9A;">1차 Output</strong><br>HPO 통합<br>→ 가중치 적용<br>→ 일반 Ranking
     </div>
     <div style="color:#90A4AE; font-size:16px; align-self:center;">→</div>
     <div style="background:#FCE4EC; border:1px solid #C62828; border-radius:6px; padding:6px 10px; text-align:center;">
-      <strong style="color:#C62828;">Phase 3</strong><br>RAG 트리거<br>희귀? ratio&lt;3?<br>조건 판단
+      <strong style="color:#C62828;">Phase 4</strong><br>일반 Ranking 검증<br>→ Cross-check<br>→ 일반 확정
     </div>
     <div style="color:#90A4AE; font-size:16px; align-self:center;">→</div>
     <div style="background:#E0F2F1; border:1px solid #004D40; border-radius:6px; padding:6px 10px; text-align:center;">
-      <strong style="color:#004D40;">Phase 4</strong><br>PubCase+PubMed<br>+ClinicalTrials+Monarch<br>→ Bedrock Sonnet<br>→ 진단 리포트
+      <strong style="color:#004D40;">Phase 5</strong><br>희귀 LR + Threshold<br>→ Orphanet 통과만<br>→ 희귀 Listing
     </div>
     <div style="color:#90A4AE; font-size:16px; align-self:center;">→</div>
     <div style="background:#F1F8E9; border:1px solid #33691E; border-radius:6px; padding:6px 10px; text-align:center;">
-      <strong style="color:#33691E;">Phase 5</strong><br>DynamoDB 저장<br>→ API 응답<br>→ React UI
+      <strong style="color:#33691E;">2차 Output</strong><br>RAG (PubCase+PubMed)<br>→ Bedrock Sonnet<br>→ 최종 보고서 + DB 저장
     </div>
   </div>
 </div>
@@ -859,10 +1175,29 @@ window.onload = function() { showTab('arch'); };
 
 <!-- ══ PANEL: 초보자 설명 ══════════════════════════════════════ -->
 <div id="panel-beginner" style="display:none; background:#0d1117; min-height:100vh; padding:32px 24px; font-family:'Segoe UI',Arial,sans-serif; color:#e6edf3;">
-<div style="max-width:900px; margin:0 auto;">
+<div style="max-width:1000px; margin:0 auto;">
 
-<h1 style="font-size:22px; font-weight:800; color:#58a6ff; margin-bottom:6px;">📖 Rare-Link AI — 초보자용 동작 원리 설명</h1>
-<p style="font-size:13px; color:#8b949e; margin-bottom:28px;">의사가 X-ray + 혈액검사 + 증상을 입력하면, AI가 자동으로 HPO 코드로 변환 → 희귀질환 후보 랭킹 → 외부 논문 검색 → Claude가 소견서 작성 → 의사에게 전달.</p>
+<h1 style="font-size:22px; font-weight:800; color:#58a6ff; margin-bottom:6px;">📖 Rare-Link AI — 초보자용 완전 동작 원리 설명</h1>
+<p style="font-size:13px; color:#8b949e; margin-bottom:8px;">아키텍처의 모든 서비스를 누락 없이 설명합니다. 의사가 X-ray + 혈액검사 + 증상을 입력하는 순간부터 진단 리포트가 돌아오기까지 전 과정.</p>
+
+<!-- 전체 서비스 맵 -->
+<div style="background:#161b22; border:1px solid #30363d; border-radius:10px; padding:14px 18px; margin-bottom:20px;">
+  <div style="font-size:12px; font-weight:800; color:#f0f6fc; margin-bottom:8px;">🗺️ 이 시스템에 등장하는 모든 AWS 서비스 한눈에 보기</div>
+  <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px; font-size:11px;">
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#58a6ff;"><strong>엣지/CDN</strong><br><span style="color:#8b949e;">Route 53, CloudFront, WAF(Global)</span></div>
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#3fb950;"><strong>프론트엔드</strong><br><span style="color:#8b949e;">S3(React), DataSync</span></div>
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#e7157b;"><strong>API/인증</strong><br><span style="color:#8b949e;">API GW, WAF(Regional), Cognito, Step Functions</span></div>
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#ffa657;"><strong>컴퓨팅</strong><br><span style="color:#8b949e;">Lambda(×4), SageMaker Endpoint, ECR</span></div>
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#d2a8ff;"><strong>AI/ML</strong><br><span style="color:#8b949e;">Bedrock Haiku, Bedrock Sonnet, SageMaker Training</span></div>
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#c7131f;"><strong>캐시/버퍼</strong><br><span style="color:#8b949e;">ElastiCache(Redis), SQS, SNS</span></div>
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#3b48cc;"><strong>데이터베이스</strong><br><span style="color:#8b949e;">DynamoDB(×2), RDS PostgreSQL(pgvector)</span></div>
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#3f9142;"><strong>스토리지</strong><br><span style="color:#8b949e;">S3(X-ray/모델), S3 Versioning, Lifecycle</span></div>
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#e7157b;"><strong>MLOps</strong><br><span style="color:#8b949e;">EventBridge, SageMaker Training, ECR</span></div>
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#dd344c;"><strong>보안/감사</strong><br><span style="color:#8b949e;">IAM, KMS, Secrets Manager, CloudTrail, GuardDuty, Detective, Inspector, Security Hub</span></div>
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#8c4fff;"><strong>네트워크</strong><br><span style="color:#8b949e;">VPC, Public/Private Subnet, NAT GW(×2), VPC Endpoint</span></div>
+    <div style="background:#0d1117; border-radius:6px; padding:7px 10px; color:#ff9900;"><strong>모니터링/비용</strong><br><span style="color:#8b949e;">CloudWatch, X-Ray, AWS Budgets, Cost Explorer</span></div>
+  </div>
+</div>
 
 <!-- 전체 흐름 요약 -->
 <div style="background:#161b22; border:1px solid #30363d; border-radius:10px; padding:18px 22px; margin-bottom:24px;">
@@ -891,22 +1226,107 @@ window.onload = function() { showTab('arch'); };
   </div>
 </div>
 
-<!-- STEP 2 -->
+<!-- STEP 1-B: Route 53 + DataSync -->
+<div style="background:#161b22; border:1.5px solid #8c4fff; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#8c4fff; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">1-B</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">DNS 라우팅 + 초기 데이터 이전</span>
+    </div>
+    <span style="font-size:10px; background:#8c4fff22; border:1px solid #8c4fff; color:#8c4fff; padding:2px 10px; border-radius:4px;">Route 53 + DataSync</span>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#8c4fff;">Route 53 — DNS 전화번호부</strong><br>
+      사용자가 <code style="color:#ffa657;">rare-link.ai</code> 주소를 입력하면 Route 53이 "이 주소는 CloudFront 여기로 가세요"라고 알려줍니다.<br>
+      인터넷의 전화번호부 역할. 도메인 → IP 주소 변환.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#8c4fff;">DataSync — 초기 배치 이전 전용</strong><br>
+      기존 병원 서버에 있던 X-ray 이미지들을 처음 한 번 S3로 대량 이전할 때만 사용합니다.<br>
+      평소 진단 요청에는 사용 안 함. 초기 세팅 도구.
+    </div>
+  </div>
+</div>
+
+<!-- STEP 1-C: VPC 네트워크 구조 -->
+<div style="background:#161b22; border:1.5px solid #1a73c8; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#1a73c8; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">1-C</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">VPC — 우리만의 가상 사설 네트워크</span>
+    </div>
+    <span style="font-size:10px; background:#1a73c822; border:1px solid #1a73c8; color:#58a6ff; padding:2px 10px; border-radius:4px;">Amazon VPC</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 12px 0;">
+    VPC(Virtual Private Cloud)는 AWS 안에 우리만 쓰는 격리된 네트워크 공간입니다.<br>
+    마치 회사 내부 인트라넷처럼, 외부에서 직접 접근할 수 없고 우리가 허용한 경로로만 통신합니다.
+  </p>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+    <div style="background:#fff3e0; border:1px solid #e65100; border-radius:6px; padding:10px 12px; font-size:12px; color:#37474f; line-height:1.8;">
+      <strong style="color:#e65100;">🌐 Public Subnet (AZ1 + AZ2)</strong><br>
+      인터넷과 직접 연결되는 구역.<br>
+      <strong>NAT Gateway</strong>가 여기 있음.<br>
+      Private Subnet이 외부 인터넷에 나갈 때 이 NAT GW를 거침.<br>
+      AZ1, AZ2 두 곳에 각각 배치 → 한 곳 장애 시 다른 곳으로 자동 전환.
+    </div>
+    <div style="background:#e8f5e9; border:1px solid #2e7d32; border-radius:6px; padding:10px 12px; font-size:12px; color:#37474f; line-height:1.8;">
+      <strong style="color:#2e7d32;">🔒 Private Subnet</strong><br>
+      인터넷에서 직접 접근 불가능한 안전한 구역.<br>
+      Lambda, SageMaker, ElastiCache, RDS가 여기 있음.<br>
+      외부 API 호출 시 NAT GW를 통해서만 나갈 수 있음.<br>
+      S3·DynamoDB·Bedrock은 VPC Endpoint로 인터넷 없이 접근.
+    </div>
+    <div style="background:#e8eaf6; border:1px solid #3949ab; border-radius:6px; padding:10px 12px; font-size:12px; color:#37474f; line-height:1.8;">
+      <strong style="color:#3949ab;">🔗 VPC Endpoint</strong><br>
+      Private Subnet → S3, DynamoDB, Bedrock 접근 시 인터넷을 거치지 않고 AWS 내부망으로 직접 연결.<br>
+      <strong>Gateway Endpoint</strong>: S3, DynamoDB (무료)<br>
+      <strong>Interface Endpoint</strong>: Bedrock, SageMaker (PrivateLink, 유료)<br>
+      보안 강화 + NAT GW 비용 절감.
+    </div>
+  </div>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>NAT Gateway가 뭔가요:</strong> Private Subnet 안의 Lambda가 PubMed API 같은 외부 인터넷에 접근할 때 쓰는 출구입니다. 외부에서 안으로는 들어올 수 없고, 안에서 밖으로만 나갈 수 있어요. AZ1, AZ2 각각 하나씩 두어서 한 곳이 죽어도 서비스가 계속됩니다.
+  </div>
+</div>
 <div style="background:#161b22; border:1.5px solid #e7157b; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
     <div style="display:flex; align-items:center; gap:10px;">
       <span style="background:#e7157b; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">2</span>
-      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">요청이 API Gateway로 전달</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">보안 관문 통과 — WAF → API Gateway → Cognito → Step Functions</span>
     </div>
-    <span style="font-size:10px; background:#e7157b22; border:1px solid #e7157b; color:#e7157b; padding:2px 10px; border-radius:4px;">API Gateway</span>
+    <span style="font-size:10px; background:#e7157b22; border:1px solid #e7157b; color:#e7157b; padding:2px 10px; border-radius:4px;">VPC 외부 Regional Services</span>
   </div>
-  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
-    브라우저가 보낸 HTTP 요청이 <strong style="color:#e7157b;">API Gateway</strong>로 들어옵니다.<br>
-    API Gateway는 <strong>문지기</strong> 역할: 인증 확인, 초당 요청 수 제한, 요청을 뒤에 있는 Lambda로 전달합니다.<br>
-    FHIR R4 표준을 따르면 BESTCare 같은 기존 EMR 시스템과도 바로 연동 가능합니다.
-  </p>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#dd344c;">🛡️ WAF (Web Application Firewall)</strong><br>
+      CloudFront 앞(Global)과 API Gateway 앞(Regional) 두 곳에 배치.<br>
+      SQL 인젝션, XSS, DDoS 공격 패턴 자동 차단.<br>
+      의료 시스템 해킹 시도 1차 방어선.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#e7157b;">🔌 API Gateway</strong><br>
+      우리 시스템의 정문. 5개 엔드포인트 관리.<br>
+      Rate Limiting: 초당 요청 수 제한 (과부하 방지).<br>
+      FHIR R4 호환 → BESTCare 등 EMR 시스템과 바로 연동 가능.<br>
+      VPC 외부에 있어서 인터넷에서 직접 접근 가능.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#dd344c;">🔑 Cognito — 로그인 인증</strong><br>
+      의사 계정 로그인 처리. JWT 토큰 발급.<br>
+      "MD role" 확인 → 의사만 진단 API 호출 가능.<br>
+      API Gateway Authorizer로 연결 → 토큰 없으면 요청 차단.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#e7157b;">⚙️ Step Functions — 파이프라인 지휘자</strong><br>
+      API Gateway에서 직접 통합(Service Integration)으로 호출.<br>
+      Phase 1A + 1B + 1C를 병렬(Parallel State)로 동시 실행.<br>
+      3개 에이전트 모두 완료되면 Phase 2로 넘김.<br>
+      VPC 외부 Regional Service → Lambda들은 VPC 내부에서 실행.
+    </div>
+  </div>
   <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
-    💡 <strong>왜 필요한가:</strong> API Gateway 없이 Lambda를 직접 노출하면 보안/인증/속도 제한을 모두 직접 구현해야 합니다.
+    💡 <strong>Step Functions가 뭔가요:</strong> 여러 Lambda를 순서대로 또는 동시에 실행하는 워크플로우 관리자입니다. "X-ray 분석, 텍스트 분석, 혈액검사 분석을 동시에 시작하고, 셋 다 끝나면 다음 단계로 가라"는 로직을 코드 없이 상태 머신으로 정의합니다.
   </div>
 </div>
 
@@ -944,6 +1364,77 @@ window.onload = function() { showTab('arch'); };
   </div>
   <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
     💡 <strong>왜 필요한가:</strong> Lambda는 요청이 없을 때 비용이 0원. 서버를 24시간 켜두지 않아도 됩니다.
+  </div>
+</div>
+
+<!-- STEP 3-B: ElastiCache + SQS + SNS -->
+<div style="background:#161b22; border:1.5px solid #c7131f; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#c7131f; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">3-B</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">캐시 · 큐 · 알림 — ElastiCache, SQS, SNS</span>
+    </div>
+    <span style="font-size:10px; background:#c7131f22; border:1px solid #c7131f; color:#c7131f; padding:2px 10px; border-radius:4px;">Private Subnet</span>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#c7131f;">🗄️ ElastiCache (Redis) — HPO 캐시 버퍼</strong><br>
+      Phase 1A + 1B + 1C가 각각 계산한 HPO 코드를 임시 저장하는 버퍼.<br>
+      Step Functions가 3개 에이전트 완료를 확인하고 Redis에서 결과를 읽어 Phase 2로 전달.<br>
+      같은 HPO 조합이 반복되면 API 재호출 없이 캐시에서 바로 반환 → 속도 향상.<br>
+      <strong>주의:</strong> 동기화 주체는 Step Functions. Redis는 캐싱/버퍼 목적만.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ff9900;">📬 SQS — 비동기 요청 큐</strong><br>
+      진단 요청이 한꺼번에 몰릴 때 Lambda 타임아웃(900초) 위험 방지.<br>
+      요청을 큐에 쌓아두고 Lambda가 순서대로 처리.<br>
+      Dead Letter Queue(DLQ): 처리 실패한 요청을 별도 큐에 보관 → 나중에 재처리 가능.<br>
+      MLOps 트리거 버퍼로도 활용 (EventBridge → SQS → SageMaker Training).
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#e7157b;">🔔 SNS — 알림 발송</strong><br>
+      CloudWatch Alarm이 이상 감지 → SNS Topic → 이메일/Slack 자동 발송.<br>
+      알림 예시:<br>
+      • Lambda 에러율 &gt;5% → 즉시 알림<br>
+      • SageMaker 응답 지연 &gt;30초 → 즉시 알림<br>
+      • 모델 재학습 완료 → 완료 알림<br>
+      • DynamoDB 쓰기 실패 → 즉시 알림
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3-C: RDS pgvector + Multi-AZ -->
+<div style="background:#161b22; border:1.5px solid #3b48cc; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#3b48cc; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">3-C</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">벡터 지식베이스 — RDS PostgreSQL (pgvector)</span>
+    </div>
+    <span style="font-size:10px; background:#3b48cc22; border:1px solid #3b48cc; color:#8b9cf7; padding:2px 10px; border-radius:4px;">Private Subnet · Multi-AZ</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    Orphanet에 등록된 희귀질환 528개의 설명을 AI가 숫자 벡터로 변환해서 저장해둔 데이터베이스입니다.<br>
+    RAG 단계에서 환자 HPO 코드를 벡터로 변환 → 가장 유사한 희귀질환을 의미 기반으로 검색합니다.
+  </p>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#8b9cf7;">pgvector가 뭔가요?</strong><br>
+      PostgreSQL에 벡터 검색 기능을 추가하는 확장 플러그인.<br>
+      "이 증상 조합과 가장 비슷한 질환이 뭔가요?"를 수학적으로 계산.<br>
+      OpenSearch(비싼 검색 서비스) 대비 비용 1/10.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#8b9cf7;">Multi-AZ — 자동 장애 복구</strong><br>
+      Primary DB (AZ1) → Standby DB (AZ2) 실시간 동기 복제.<br>
+      AZ1 서버가 죽으면 60~120초 내 AZ2로 자동 전환.<br>
+      의사가 진단 중에 DB 서버가 죽어도 서비스 계속.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#8b9cf7;">Read Replica — 읽기 부하 분산</strong><br>
+      Primary: 쓰기 전용 (새 질환 임베딩 추가).<br>
+      Read Replica: 읽기 전용 (RAG 벡터 검색).<br>
+      동시에 여러 의사가 검색해도 Primary에 부하 없음.
+    </div>
   </div>
 </div>
 
@@ -1161,24 +1652,154 @@ window.onload = function() { showTab('arch'); };
   </div>
 </div>
 
-<!-- 보안/모니터링 -->
-<div style="background:#161b22; border:1.5px solid #dd344c; border-radius:10px; padding:18px 22px; margin-bottom:24px;">
-  <div style="font-size:15px; font-weight:800; color:#f0f6fc; margin-bottom:10px;">🔐 보안 & 모니터링</div>
-  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
-      <strong style="color:#dd344c;">AWS WAF</strong><br>
-      해킹 시도, SQL 인젝션, DDoS 공격 차단.<br>
-      CloudFront 앞단 + API Gateway 앞단 이중 보호.
+<!-- STEP 11-B: ECR -->
+<div style="background:#161b22; border:1.5px solid #ff9900; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#ff9900; color:#0d1117; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">11-B</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">컨테이너 이미지 저장소 — Amazon ECR</span>
     </div>
-    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
-      <strong style="color:#dd344c;">AWS IAM</strong><br>
-      누가 어떤 서비스에 접근할 수 있는지 권한 관리.<br>
-      Lambda가 S3에 접근하려면 IAM 권한 필요.
+    <span style="font-size:10px; background:#ff990022; border:1px solid #ff9900; color:#ff9900; padding:2px 10px; border-radius:4px;">Elastic Container Registry</span>
+  </div>
+  <p style="font-size:13px; color:#8b949e; line-height:1.7; margin:0 0 10px 0;">
+    SageMaker Training Job이 SooNet 모델을 학습할 때 필요한 Python 환경(코드 + 라이브러리)을 Docker 이미지로 패키징해서 저장하는 곳입니다.
+  </p>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ff9900;">Docker 이미지가 뭔가요?</strong><br>
+      "이 코드를 실행하려면 Python 3.10, PyTorch 2.0, numpy 1.24가 필요합니다"를 하나의 패키지로 묶은 것.<br>
+      어떤 서버에서 실행해도 동일한 환경 보장.<br>
+      SageMaker Training Job이 ECR에서 이미지를 가져와서 학습 실행.
     </div>
-    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.7;">
-      <strong style="color:#dd344c;">CloudWatch</strong><br>
-      모든 Lambda, SageMaker, API Gateway 로그 수집.<br>
-      에러 발생 시 알림, 비용 모니터링.
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ff9900;">Inspector와 연동</strong><br>
+      Amazon Inspector가 ECR 이미지를 자동 스캔.<br>
+      PyTorch, numpy 등 의존성 패키지의 CVE 취약점 탐지.<br>
+      취약점 발견 시 Security Hub에 자동 보고.
+    </div>
+  </div>
+</div>
+
+<!-- STEP 12: 보안 서비스 전체 -->
+<div style="background:#161b22; border:1.5px solid #dd344c; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#dd344c; color:#fff; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">12</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">보안 체계 전체 — IAM · KMS · Secrets Manager · CloudTrail · GuardDuty · Detective · Inspector · Security Hub</span>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#dd344c;">🔐 IAM — 권한 관리</strong><br>
+      "Lambda는 S3 읽기만 가능, 쓰기는 불가"처럼 최소 권한 원칙 적용.<br>
+      각 서비스마다 필요한 권한만 부여.<br>
+      역할(Role) 기반 → 키 없이 서비스 간 안전한 통신.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#8c4fff;">🗝️ KMS — 암호화 키 관리</strong><br>
+      S3에 저장된 X-ray 이미지, 모델 가중치를 암호화.<br>
+      DynamoDB 환자 진단 이력 암호화.<br>
+      KMS가 암호화 키를 안전하게 보관 → 키 없이는 데이터 읽기 불가.<br>
+      HIPAA 의료 데이터 보호 필수 요건.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#dd344c;">🔒 Secrets Manager — API 키 금고</strong><br>
+      Bedrock API 키, NCBI API Key를 코드에 직접 쓰지 않고 여기 저장.<br>
+      Lambda가 실행될 때 런타임에 동적으로 가져옴.<br>
+      키가 코드에 노출되면 GitHub에 올라갈 위험 → Secrets Manager로 완전 차단.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#e7157b;">📜 CloudTrail — 감사 로그</strong><br>
+      "누가 언제 어떤 환자 데이터에 접근했는지" 모든 API 호출 기록.<br>
+      S3에 로그 저장 → 90일 보관.<br>
+      HIPAA 감사 요건 충족.<br>
+      보안 사고 발생 시 "언제 무슨 일이 있었는지" 추적 가능.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#dd344c;">🛡️ GuardDuty — 위협 탐지기</strong><br>
+      비정상 API 호출 패턴 감지.<br>
+      예: "Lambda가 갑자기 대량의 S3 파일을 다운로드" → 자격증명 탈취 의심.<br>
+      CloudTrail + VPC Flow Logs + DNS 로그를 ML로 분석.<br>
+      탐지 즉시 Security Hub에 보고.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#dd344c;">🔎 Detective — 침해 조사관</strong><br>
+      GuardDuty가 "이상하다"고 탐지하면, Detective가 "왜, 어떻게 일어났는지" 조사.<br>
+      어떤 IAM 역할 → 어떤 API 호출 → 어떤 리소스 접근했는지 시각화.<br>
+      의료 데이터 침해 사고 원인 파악에 필수.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#dd344c;">🔬 Inspector — 취약점 스캐너</strong><br>
+      Lambda 함수의 Python 패키지 CVE 취약점 자동 스캔.<br>
+      ECR 이미지(SageMaker 학습용 Docker) 취약점 탐지.<br>
+      "boto3 1.26.0에 보안 취약점 있음 → 업그레이드 필요" 자동 알림.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#dd344c;">📊 Security Hub — 보안 통합 대시보드</strong><br>
+      GuardDuty + CloudTrail + Inspector + Config 결과를 한 화면에서 확인.<br>
+      보안 점수(Security Score) 자동 계산.<br>
+      "현재 우리 시스템 보안 상태가 몇 점인지" 한눈에 파악.
+    </div>
+  </div>
+  <div style="background:#0d1117; border-radius:6px; padding:10px 14px; font-size:12px; color:#8b949e;">
+    💡 <strong>보안 탐지 체인 요약:</strong> GuardDuty(탐지) → Detective(조사) → Inspector(스캔) → Security Hub(통합) → WAF/Shield(차단). 각 서비스가 역할을 나눠서 다층 방어를 구성합니다.
+  </div>
+</div>
+
+<!-- STEP 13: 모니터링 + 비용 -->
+<div style="background:#161b22; border:1.5px solid #ff9900; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background:#ff9900; color:#0d1117; font-size:12px; font-weight:800; padding:3px 10px; border-radius:20px;">13</span>
+      <span style="font-size:15px; font-weight:800; color:#f0f6fc;">모니터링 + 비용 관리 — CloudWatch · X-Ray · Budgets</span>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#e7157b;">📊 CloudWatch — 시스템 계기판</strong><br>
+      모든 Lambda, SageMaker, API Gateway, RDS 로그 수집.<br>
+      메트릭 대시보드: 응답 시간, 에러율, 메모리 사용량 실시간 확인.<br>
+      알람 설정: 에러율 &gt;5% → SNS → 이메일 자동 발송.<br>
+      비용 모니터링: 서비스별 사용량 추적.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#e7157b;">🔍 X-Ray — 분산 추적</strong><br>
+      진단 요청 하나가 어떤 경로로 처리됐는지 추적.<br>
+      "Phase 1A Lambda → SageMaker → Phase 2 Lambda → RDS → Bedrock" 전체 경로 시각화.<br>
+      어느 단계에서 느린지, 어디서 에러 났는지 정확히 파악.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ff9900;">💰 AWS Budgets + Cost Explorer</strong><br>
+      Budgets: 월 $100 예산 설정 → 80% 도달 시 이메일 알림.<br>
+      SageMaker Endpoint가 켜져 있으면 시간당 $0.736 → 발표 전날만 켜기.<br>
+      Cost Explorer: 서비스별 비용 분석 → "이번 달 Bedrock에 얼마 썼는지" 확인.
+    </div>
+  </div>
+</div>
+
+<!-- 보안/모니터링 (기존 간단 버전 대체) -->
+<div style="background:#161b22; border:1.5px solid #3f9142; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="font-size:15px; font-weight:800; color:#f0f6fc; margin-bottom:12px;">💾 데이터 복원력 — S3 Versioning · DynamoDB PITR · Pilot Light DR</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#3f9142;">🗂️ S3 Versioning + Lifecycle</strong><br>
+      모델 가중치(.pth) 파일을 실수로 덮어써도 이전 버전 복구 가능.<br>
+      Lifecycle Policy: 30일 후 Standard-IA(30% 절감) → 90일 후 Glacier(90% 절감) 자동 전환.<br>
+      X-ray 이미지 1년 이상 → Glacier 자동 이동.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#3b48cc;">⚡ DynamoDB PITR</strong><br>
+      Point-in-Time Recovery: 35일 이내 임의 시점으로 복구.<br>
+      "어제 오후 3시 상태로 되돌려주세요" 가능.<br>
+      diagnosis-history, rare-case-collection 양쪽 모두 활성화.<br>
+      AWS Backup으로 중앙 관리.
+    </div>
+    <div style="background:#0d1117; border-radius:6px; padding:10px 12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#1a73c8;">🌏 Pilot Light DR</strong><br>
+      메인: ap-northeast-2 (서울) 풀 운영.<br>
+      파일럿: ap-southeast-1 (싱가포르) 핵심만 최소 실행.<br>
+      S3 크로스 리전 복제 + DynamoDB Global Tables.<br>
+      서울 리전 전체 장애 시 수분 내 싱가포르로 전환.
     </div>
   </div>
 </div>
@@ -1190,10 +1811,164 @@ window.onload = function() { showTab('arch'); };
 </div>
 
 <p style="text-align:center; font-size:11px; color:#484f58; margin-top:20px;">
-  Rare-Link AI · 초보자용 설명 · 2026-04-29
+  Rare-Link AI · 초보자용 설명 완전판 · 2026-04-30
 </p>
 
 </div><!-- end max-width -->
 </div><!-- end #panel-beginner -->
+
+<!-- ══ PANEL: 보안·복원력 ══════════════════════════════════════ -->
+<div id="panel-security" style="display:none; background:#0d1117; min-height:100vh; padding:32px 24px; font-family:'Segoe UI',Arial,sans-serif; color:#e6edf3;">
+<div style="max-width:1100px; margin:0 auto;">
+
+<h1 style="font-size:22px; font-weight:800; color:#f85149; margin-bottom:6px;">🔐 보안 · 복원력 · 비용 관리 상세</h1>
+<p style="font-size:13px; color:#8b949e; margin-bottom:28px;">의료 데이터(HIPAA) 기준 필수 적용 항목 + 포트폴리오 완성도 향상 항목 정리</p>
+
+<!-- 필수 항목 -->
+<div style="background:#161b22; border:1.5px solid #f85149; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="font-size:15px; font-weight:800; color:#f0f6fc; margin-bottom:12px;">✅ 반드시 추가 (보안/안정성 필수)</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#f85149;">🔒 Secrets Manager</strong><br>
+      Bedrock API 키, NCBI API Key를 환경변수 대신 런타임에 동적 로드.<br>
+      키 노출 위험 제거. Lambda에서 boto3로 호출.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#f85149;">🗝️ AWS KMS</strong><br>
+      S3 SSE-KMS: X-ray 이미지, 모델 가중치 암호화.<br>
+      DynamoDB: 환자 진단 이력 암호화.<br>
+      HIPAA 의료 데이터 보호 필수.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#f85149;">📜 CloudTrail</strong><br>
+      누가 언제 어떤 환자 데이터에 접근했는지 감사 로그.<br>
+      S3에 로그 저장. HIPAA 감사 요건 충족.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#f85149;">⚡ DynamoDB PITR</strong><br>
+      Point-in-Time Recovery 활성화.<br>
+      35일 이내 임의 시점으로 복구 가능.<br>
+      diagnosis-history, rare-case-collection 양쪽 적용.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#f85149;">🗂️ S3 Versioning</strong><br>
+      모델 가중치(.pth) 실수 덮어쓰기 방지.<br>
+      이전 버전 복구 가능.<br>
+      Lifecycle Policy로 비용 자동 최적화.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#f85149;">💰 AWS Budgets</strong><br>
+      월 $100 예산 설정.<br>
+      80% 도달 시 이메일 알림.<br>
+      SageMaker 과금 폭탄 방지. 즉시 설정 권장.
+    </div>
+  </div>
+</div>
+
+<!-- 권장 항목 -->
+<div style="background:#161b22; border:1.5px solid #ffa657; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="font-size:15px; font-weight:800; color:#f0f6fc; margin-bottom:12px;">⭐ 추가하면 완성도 향상 (포트폴리오 가치)</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ffa657;">🛡️ GuardDuty + Security Hub</strong><br>
+      비정상 API 호출, 자격증명 탈취 탐지.<br>
+      Security Hub: 보안 결과 통합 대시보드.<br>
+      비용 저렴, 켜두기만 하면 됨.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ffa657;">📬 SQS + DLQ</strong><br>
+      진단 요청 비동기 큐잉.<br>
+      Lambda 타임아웃(900초) 위험 방지.<br>
+      Dead Letter Queue로 실패 요청 재처리.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ffa657;">🔔 SNS 알림</strong><br>
+      CloudWatch Alarm → SNS → 이메일/Slack.<br>
+      Lambda 에러율 &gt;5%, SageMaker 지연 &gt;30초,<br>
+      모델 재학습 완료 알림.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ffa657;">🌏 Pilot Light DR</strong><br>
+      메인: ap-northeast-2 (서울) 풀 운영.<br>
+      파일럿: ap-southeast-1 (싱가포르) 최소 실행.<br>
+      S3 크로스 리전 복제 + DynamoDB Global Tables.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ffa657;">📊 S3 Lifecycle Policy</strong><br>
+      30일 → Standard-IA (이전 모델 버전)<br>
+      90일 → Glacier Instant (학습 데이터)<br>
+      365일 → Glacier (X-ray 이미지)
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ffa657;">🔐 Security Group 명시</strong><br>
+      Lambda SG: 443 아웃바운드만.<br>
+      SageMaker SG: Lambda SG 인바운드만.<br>
+      ElastiCache SG: 6379 Lambda SG만.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ffa657;">🔎 Amazon Detective</strong><br>
+      GuardDuty 탐지 후 심층 원인 조사.<br>
+      "누가 어떤 경로로 침입했는지" 시각화.<br>
+      의료 데이터 침해 사고 분석에 유용.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ffa657;">🔬 Amazon Inspector</strong><br>
+      Lambda 함수 취약점 자동 스캔.<br>
+      CVE 기반 코드 의존성 취약점 탐지.<br>
+      포트폴리오 보안 완성도 향상.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#ffa657;">🛢️ RDS Multi-AZ + Read Replica</strong><br>
+      Multi-AZ: Primary(AZ1) → Standby(AZ2) 자동 페일오버.<br>
+      Read Replica: RAG 벡터 검색 쿼리 전용 (읽기/쓰기 분리).<br>
+      pgvector 검색 부하 분산 + 가용성 향상.
+    </div>
+  </div>
+</div>
+
+<!-- 불필요 항목 -->
+<div style="background:#161b22; border:1.5px solid #484f58; border-radius:10px; padding:18px 22px; margin-bottom:16px;">
+  <div style="font-size:15px; font-weight:800; color:#f0f6fc; margin-bottom:12px;">❌ 넣지 않아도 됨 (오버스펙)</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#484f58;">Shield Advanced</strong><br>
+      월 $3,000. 이 프로젝트에 완전 오버스펙.<br>
+      Shield Standard(무료)로 충분.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#484f58;">NACL</strong><br>
+      Security Group이 Stateful이라 충분.<br>
+      NACL은 Stateless라 관리 복잡도만 증가.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#484f58;">ALB / NLB</strong><br>
+      Lambda 기반 아키텍처에 불필요.<br>
+      API Gateway가 자동으로 가용성 관리.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#484f58;">Firewall Manager</strong><br>
+      여러 계정/리전 통합 관리용.<br>
+      단일 계정 프로젝트에 불필요.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#484f58;">Kinesis / Glue</strong><br>
+      실시간 스트리밍 불필요 (환자 1명씩 처리).<br>
+      포트폴리오 그림에만 언급 가능.
+    </div>
+    <div style="background:#0d1117; border-radius:8px; padding:12px; font-size:12px; color:#8b949e; line-height:1.8;">
+      <strong style="color:#484f58;">Multi-Site Active/Active DR</strong><br>
+      RPO/RTO ≈ 0이지만 비용 최고.<br>
+      Pilot Light로 충분.
+    </div>
+  </div>
+</div>
+
+<p style="text-align:center; font-size:11px; color:#484f58; margin-top:20px;">
+  Rare-Link AI · 보안·복원력 가이드 · 2026-04-30
+</p>
+
+</div><!-- end max-width -->
+</div><!-- end #panel-security -->
+
 </body>
 </html>

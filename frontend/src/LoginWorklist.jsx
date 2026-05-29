@@ -2815,6 +2815,7 @@ function ChartReport({ patient }) {
         >
           <ReportPage patient={patient} pageNo={1} totalPages={2} />
           <ReportPage patient={patient} pageNo={2} totalPages={2} />
+          {patient.finalReport && <AIRagReport finalReport={patient.finalReport} />}
         </div>
       </Panel>
     </div>
@@ -3008,6 +3009,52 @@ function ReportSection({ title, children }) {
   );
 }
 
+/* AI RAG 리포트 팝업 페이지 HTML 생성 헬퍼 */
+function buildAiPageHtml(fr) {
+  if (!fr) return '';
+  const data = fr.diagnosis_json || fr;
+  const rec = data.recommendation || {};
+  const notes = data.clinical_notes || {};
+  const conf = data.confidence_metrics || {};
+  const score = conf.overall_confidence_score || 0;
+  const scoreColor = score >= 0.8 ? '#0E8574' : score >= 0.6 ? '#B45309' : '#A32D2D';
+  const scoreLabel = score >= 0.8 ? 'High' : score >= 0.6 ? 'Medium' : 'Low';
+  const listHtml = (items) => (items || []).map(i => `<li>${i}</li>`).join('');
+  const suf = conf.data_sufficiency || {};
+  const sufColor = (v) => v === 'High' ? '#0E8574' : v === 'Medium' ? '#B45309' : '#64748B';
+  const sufRow = Object.entries(suf).map(([k, v]) => {
+    const label = k === 'genomic_evidence' ? '유전체' : k === 'clinical_case_match' ? '임상케이스' : '임상시험';
+    return `<span style="margin-right:12px;font-size:10px;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${sufColor(v)};margin-right:3px;vertical-align:middle;"></span>${label}: <b style="color:${sufColor(v)}">${v}</b></span>`;
+  }).join('');
+
+  return `
+  <div class="page">
+    <div class="letterhead">
+      <div class="name" style="font-size:15px;">AI 진단 보조 리포트</div>
+      <div class="div">Rare-Link RAG Phase 5</div>
+      <div class="label">${(fr.llm_model || 'Claude 3.5 Sonnet').replace('anthropic.', '').slice(0, 35)}</div>
+    </div>
+    <div class="meta">
+      <span>신뢰도 · <b style="color:${scoreColor}">${(score * 100).toFixed(0)}% (${scoreLabel})</b> &nbsp; ${sufRow}</span>
+      <span style="font-size:9px;">${fr.generated_at ? new Date(fr.generated_at).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}</span>
+    </div>
+    ${conf.rationale ? `<div style="font-size:10px;color:#64748B;margin-bottom:10px;padding:6px 8px;background:#F8FAFC;border:1px solid #E2E8F0;">${conf.rationale}</div>` : ''}
+    ${notes.summary ? `<div class="section"><div class="title">임상 종합 소견</div><div style="margin-bottom:5px;">${notes.summary}</div>${notes.top1_reasoning ? `<div style="margin-top:5px;"><span class="mono muted">TOP 1 근거 ·</span> ${notes.top1_reasoning}</div>` : ''}${notes.differential_note ? `<div style="margin-top:5px;"><span class="mono muted">감별 진단 ·</span> ${notes.differential_note}</div>` : ''}${notes.epidemiology_note ? `<div style="margin-top:5px;"><span class="rare mono" style="font-size:9px;">희귀질환 역학 ·</span> <span style="color:#6B21A8;">${notes.epidemiology_note}</span></div>` : ''}</div>` : ''}
+    ${rec.immediate_workup?.length ? `<div class="section"><div class="title">즉각 검사 권고</div><ul>${listHtml(rec.immediate_workup)}</ul></div>` : ''}
+    ${rec.specialist_referral?.length ? `<div class="section"><div class="title">전문과 의뢰 <span class="amber">(MDT)</span></div><ul>${listHtml(rec.specialist_referral)}</ul></div>` : ''}
+    ${rec.treatment_guideline?.length ? `<div class="section"><div class="title">치료 가이드라인</div><ul>${listHtml(rec.treatment_guideline)}</ul></div>` : ''}
+    ${rec.genetic_test?.length ? `<div class="section"><div class="title" style="color:#6B21A8;">유전자 검사 (희귀질환)</div><ul>${listHtml(rec.genetic_test)}</ul></div>` : ''}
+    ${rec.additional_lab?.length ? `<div class="section"><div class="title">추가 Lab 권고</div><ul>${listHtml(rec.additional_lab)}</ul></div>` : ''}
+    ${rec.clinical_trial_info?.length ? `<div class="section"><div class="title">임상시험 정보</div><ul>${listHtml(rec.clinical_trial_info)}</ul></div>` : ''}
+    ${notes.rag_evidence ? `<div class="section"><div class="title">RAG 근거 (DB·API 교차검증)</div><div>${notes.rag_evidence}</div></div>` : ''}
+    ${notes.case_comparison ? `<div class="section"><div class="title">PubMed 케이스 비교</div><div>${notes.case_comparison}</div></div>` : ''}
+    <div class="footer">
+      <div class="warn">⚠ AI-Assisted RAG · Rare-Link Phase 5 · Final diagnosis requires physician review</div>
+      <div class="disc">${notes.disclaimer || 'AI 결과는 진단 보조이며 최종 진단은 주치의의 임상 판단과 추가 검사 결과를 종합하여 확정합니다.'} [EU AI Act Art. 22]</div>
+    </div>
+  </div>`;
+}
+
 /* PDF 전체화면 popup · 같은 리포트 콘텐츠를 새 창에 풀스크린으로 */
 function openReportPopup(patient) {
   const w = window.open('', `rpt-${patient.mrn}`, 'width=900,height=1100,resizable=yes,scrollbars=yes');
@@ -3177,9 +3224,326 @@ function openReportPopup(patient) {
       <div class="disc">본 리포트의 AI 분석 결과는 진단 보조용이며 최종 진단 및 치료 결정은 주치의의 임상적 판단에 따릅니다. [EU AI Act Art. 22]</div>
     </div>
   </div>
+${patient.finalReport ? buildAiPageHtml(patient.finalReport) : ''}
 </body>
 </html>`);
   w.document.close();
+}
+
+/* ---- AIRagReport · Bedrock Phase 5 결과 렌더링 (React 인라인 컴포넌트) ---- */
+function AIRagReport({ finalReport }) {
+  if (!finalReport) return null;
+  const data = finalReport.diagnosis_json || finalReport;
+  const rec = data.recommendation || {};
+  const notes = data.clinical_notes || {};
+  const conf = data.confidence_metrics || {};
+  const score = conf.overall_confidence_score || 0;
+  const scoreColor = score >= 0.8 ? 'var(--rl-teal)' : score >= 0.6 ? 'var(--rl-amber)' : 'var(--rl-critical)';
+  const scoreLabel = score >= 0.8 ? 'High' : score >= 0.6 ? 'Medium' : 'Low';
+  const suf = conf.data_sufficiency || {};
+  const sufColor = (v) => v === 'High' ? 'var(--rl-teal)' : v === 'Medium' ? 'var(--rl-amber)' : 'var(--rl-ink-3)';
+  const sufLabel = { genomic_evidence: '유전체 근거', clinical_case_match: '임상케이스', trial_availability: '임상시험' };
+
+  // MDT 필요 여부: specialist_referral에 MDT 키워드 있으면 true
+  const hasMDT = (rec.specialist_referral || []).some(s => /MDT|multidisciplinary|다학제/i.test(s));
+
+  // PubCaseFinder 실패 여부
+  const pcfFailed = finalReport.self_check?.pcf_failed
+    || (notes.rag_evidence || '').includes('PubCaseFinder 수집 실패');
+
+  // PMID 텍스트에서 추출해 PubMed 링크로 변환
+  const linkifyPMID = (text) => {
+    if (!text) return text;
+    const parts = text.split(/(PMID[:\s]*\d{7,9})/g);
+    return parts.map((part, i) => {
+      const m = part.match(/PMID[:\s]*(\d{7,9})/);
+      if (m) {
+        return (
+          <a key={i} href={`https://pubmed.ncbi.nlm.nih.gov/${m[1]}/`} target="_blank" rel="noreferrer"
+            style={{ color: 'var(--rl-primary)', fontFamily: 'monospace', fontSize: 9,
+              background: 'rgba(12,68,124,0.07)', padding: '1px 4px', borderRadius: 3,
+              textDecoration: 'none', marginLeft: 2 }}>
+            PMID:{m[1]}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
+  // NCT ID를 ClinicalTrials.gov 링크로 변환
+  const linkifyNCT = (text) => {
+    if (!text) return text;
+    const parts = text.split(/(NCT\d{8})/g);
+    return parts.map((part, i) => {
+      if (/^NCT\d{8}$/.test(part)) {
+        return (
+          <a key={i} href={`https://clinicaltrials.gov/study/${part}`} target="_blank" rel="noreferrer"
+            style={{ color: 'var(--rl-teal)', fontFamily: 'monospace', fontSize: 9,
+              background: 'rgba(14,133,116,0.08)', padding: '1px 4px', borderRadius: 3,
+              textDecoration: 'none', marginLeft: 2 }}>
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
+  return (
+    <div className="mx-auto mb-3" style={{ maxWidth: 540, background: 'white', boxShadow: '0 4px 16px rgba(10,22,40,0.12)', border: '1px solid var(--rl-border-soft)', fontSize: 11, color: 'var(--rl-ink)' }}>
+
+      {/* ── 헤더 ── */}
+      <div style={{ background: '#0A1628', color: 'white', padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div className="font-mono text-[8px] uppercase tracking-widest" style={{ opacity: 0.5, marginBottom: 2 }}>Rare-Link · RAG Phase 5 · Bedrock</div>
+          <div className="font-serif" style={{ fontSize: 13 }}>AI 진단 보조 리포트</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div className="font-mono text-[8px]" style={{ opacity: 0.5 }}>
+            {(finalReport.llm_model || 'Claude 3.5 Sonnet').replace('anthropic.', '').replace(/-v\d+:\d+$/, '')}
+          </div>
+          {finalReport.generated_at && (
+            <div className="font-mono text-[8px]" style={{ opacity: 0.5, marginTop: 1 }}>
+              {new Date(finalReport.generated_at).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })} KST
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── MDT 필요 배너 ── */}
+      {hasMDT && (
+        <div style={{ background: '#FFF7ED', borderBottom: '2px solid #B45309', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 14 }}>⚠️</span>
+          <div>
+            <div className="font-mono text-[9px] font-semibold uppercase tracking-widest" style={{ color: '#B45309' }}>MDT 의뢰 필요</div>
+            <div className="text-[10px]" style={{ color: '#92400E' }}>희귀질환 후보 포함 — 다학제팀 협진 권고 (Orphanet 지침 기반)</div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PubCaseFinder 실패 경고 ── */}
+      {pcfFailed && (
+        <div style={{ background: '#FEF3C7', borderBottom: '1px solid #FCD34D', padding: '5px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 12, flexShrink: 0 }}>⚠</span>
+          <div className="text-[10px]" style={{ color: '#92400E' }}>
+            <b>PubCaseFinder 데이터 수집 실패</b> — 글로벌 HPO 매칭 교차검증 미수행.
+            Orphanet·Monarch·PubMed·ClinicalTrials 데이터로만 분석됨.
+          </div>
+        </div>
+      )}
+
+      <div style={{ padding: '10px 14px' }}>
+
+        {/* ── 신뢰도 + 데이터 충분도 ── */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 10, padding: '8px 10px', background: 'var(--rl-bg-2)', border: '1px solid var(--rl-border-soft)', borderRadius: 4 }}>
+          <div style={{ flex: 1 }}>
+            <div className="font-mono text-[8px] uppercase tracking-widest" style={{ color: 'var(--rl-ink-3)', marginBottom: 5 }}>종합 신뢰도</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <div style={{ flex: 1, height: 6, background: 'var(--rl-border)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ width: `${score * 100}%`, height: '100%', background: scoreColor, borderRadius: 3 }} />
+              </div>
+              <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 700, color: scoreColor }}>{(score * 100).toFixed(0)}%</span>
+              <span className="font-mono text-[9px]" style={{ color: scoreColor, background: `${scoreColor}18`, padding: '1px 5px', borderRadius: 10 }}>{scoreLabel}</span>
+            </div>
+            {conf.rationale && (
+              <div className="text-[10px] leading-relaxed" style={{ color: 'var(--rl-ink-3)', marginTop: 4, fontStyle: 'italic' }}>{conf.rationale}</div>
+            )}
+          </div>
+          {Object.keys(suf).length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, flexShrink: 0, justifyContent: 'center' }}>
+              {Object.entries(suf).map(([k, v]) => (
+                <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: sufColor(v), flexShrink: 0 }} />
+                  <span className="font-mono text-[9px]" style={{ color: 'var(--rl-ink-3)', minWidth: 56 }}>{sufLabel[k] || k}</span>
+                  <span className="font-mono text-[9px] font-semibold" style={{ color: sufColor(v) }}>{v}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── 임상 종합 소견 ── */}
+        {(notes.summary || notes.top1_reasoning || notes.differential_note || notes.epidemiology_note) && (
+          <RagSection title="임상 종합 소견" color="var(--rl-primary)">
+            {notes.summary && (
+              <RagBlock label="요약">
+                <div className="text-[11px] leading-relaxed">{notes.summary}</div>
+              </RagBlock>
+            )}
+            {notes.top1_reasoning && (
+              <RagBlock label="Top 1 근거">
+                <div className="text-[10px] leading-relaxed">{linkifyPMID(notes.top1_reasoning)}</div>
+              </RagBlock>
+            )}
+            {notes.differential_note && (
+              <RagBlock label="감별 진단 (Top 2·3 배제)">
+                <div className="text-[10px] leading-relaxed" style={{ color: 'var(--rl-ink-2)' }}>{linkifyPMID(notes.differential_note)}</div>
+              </RagBlock>
+            )}
+            {notes.epidemiology_note && (
+              <RagBlock label="희귀질환 역학" labelColor="var(--rl-rare)">
+                <div className="text-[10px] leading-relaxed" style={{ color: '#6B21A8' }}>{notes.epidemiology_note}</div>
+              </RagBlock>
+            )}
+          </RagSection>
+        )}
+
+        {/* ── 즉각 검사 권고 ── */}
+        {rec.immediate_workup?.length > 0 && (
+          <RagSection title="즉각 검사 권고" color="var(--rl-primary)">
+            <RagChecklist items={rec.immediate_workup} />
+          </RagSection>
+        )}
+
+        {/* ── 전문과 의뢰 / MDT ── */}
+        {rec.specialist_referral?.length > 0 && (
+          <RagSection title={hasMDT ? '전문과 의뢰 · MDT 필수' : '전문과 의뢰'} color="var(--rl-amber)">
+            <RagChecklist items={rec.specialist_referral} color="#B45309" bullet="→" />
+          </RagSection>
+        )}
+
+        {/* ── 치료 가이드라인 ── */}
+        {rec.treatment_guideline?.length > 0 && (
+          <RagSection title="치료 가이드라인" color="var(--rl-primary)">
+            <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
+              {rec.treatment_guideline.map((item, i) => (
+                <li key={i} className="text-[10px] leading-relaxed" style={{ marginBottom: 5, paddingLeft: 12, position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 0, color: 'var(--rl-primary)', fontWeight: 700 }}>·</span>
+                  {linkifyPMID(item)}
+                </li>
+              ))}
+            </ul>
+          </RagSection>
+        )}
+
+        {/* ── 유전자 검사 ── */}
+        {rec.genetic_test?.length > 0 && (
+          <RagSection title="유전자 검사 권고" color="var(--rl-rare)">
+            <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
+              {rec.genetic_test.map((item, i) => (
+                <li key={i} className="text-[10px] leading-relaxed" style={{ marginBottom: 5, paddingLeft: 12, position: 'relative', color: '#6B21A8' }}>
+                  <span style={{ position: 'absolute', left: 0, fontWeight: 700 }}>·</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </RagSection>
+        )}
+
+        {/* ── 추가 Lab ── */}
+        {rec.additional_lab?.length > 0 && (
+          <RagSection title="추가 Lab 권고" color="var(--rl-ink-3)">
+            <RagChecklist items={rec.additional_lab} color="var(--rl-ink-2)" />
+          </RagSection>
+        )}
+
+        {/* ── 임상시험 ── */}
+        {rec.clinical_trial_info?.length > 0 && (
+          <RagSection title="모집 중 임상시험" color="var(--rl-teal)">
+            <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
+              {rec.clinical_trial_info.map((item, i) => (
+                <li key={i} className="text-[10px] leading-relaxed" style={{ marginBottom: 5, paddingLeft: 12, position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 0, color: 'var(--rl-teal)', fontWeight: 700 }}>·</span>
+                  {linkifyNCT(item)}
+                </li>
+              ))}
+            </ul>
+          </RagSection>
+        )}
+
+        {/* ── RAG 근거 분석 ── */}
+        {(notes.rag_evidence || notes.case_comparison) && (
+          <RagSection title="RAG 근거 분석 (DB · API 교차검증)" color="var(--rl-ink-3)">
+            {notes.rag_evidence && (
+              <RagBlock label="DB·API 교차검증">
+                <div className="text-[10px] leading-relaxed" style={{ color: 'var(--rl-ink-2)' }}>{linkifyPMID(notes.rag_evidence)}</div>
+              </RagBlock>
+            )}
+            {notes.case_comparison && (
+              <RagBlock label="PubMed 케이스 비교">
+                <div className="text-[10px] leading-relaxed" style={{ color: 'var(--rl-ink-2)' }}>{linkifyPMID(notes.case_comparison)}</div>
+              </RagBlock>
+            )}
+          </RagSection>
+        )}
+
+        {/* ── 면책 고지 ── */}
+        <div style={{ marginTop: 8, padding: '7px 10px', background: 'rgba(180,83,9,0.05)', border: '1px solid rgba(180,83,9,0.2)', borderRadius: 4 }}>
+          <div className="font-mono text-[8px] uppercase tracking-widest" style={{ color: 'var(--rl-amber)', marginBottom: 3 }}>
+            ⚠ AI-Assisted · Human-in-the-Loop Required · EU AI Act Art. 22
+          </div>
+          <div className="text-[10px] leading-relaxed" style={{ color: 'var(--rl-ink-3)' }}>
+            {notes.disclaimer || 'AI 결과는 진단 보조이며 최종 진단은 주치의의 임상 판단과 추가 검사 결과를 종합하여 확정합니다.'}
+          </div>
+          {finalReport.rag_citations && (
+            <div className="font-mono text-[8px] mt-2" style={{ color: 'var(--rl-ink-3)' }}>
+              유효 PMID {finalReport.rag_citations.pmid_valid?.length || 0}건
+              {finalReport.rag_citations.pmid_invalid?.length > 0 && (
+                <span style={{ color: 'var(--rl-critical)', marginLeft: 6 }}>
+                  · 환각 PMID {finalReport.rag_citations.pmid_invalid.length}건 검출
+                </span>
+              )}
+              {' · '}RAG APIs: {(finalReport.rag_apis_used || []).join(', ')}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* AIRagReport 내부 서브 컴포넌트 */
+function RagSection({ title, color, children }) {
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div className="font-mono text-[9px] uppercase tracking-widest"
+        style={{ color: color || 'var(--rl-primary)', borderBottom: `1px solid ${color || 'var(--rl-primary)'}30`,
+          paddingBottom: 3, marginBottom: 6, letterSpacing: '0.08em' }}>
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function RagBlock({ label, labelColor, children }) {
+  return (
+    <div style={{ marginBottom: 6 }}>
+      <div className="font-mono text-[8px] uppercase tracking-widest"
+        style={{ color: labelColor || 'var(--rl-ink-3)', marginBottom: 2 }}>
+        {label}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function RagChecklist({ items, color, bullet = '·' }) {
+  if (!items?.length) return null;
+  return (
+    <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
+      {items.map((item, i) => (
+        <li key={i} className="text-[10px] leading-relaxed"
+          style={{ marginBottom: 4, paddingLeft: 12, position: 'relative', color: color || 'var(--rl-ink)' }}>
+          <span style={{ position: 'absolute', left: 0, fontWeight: 700, color: color || 'var(--rl-primary)' }}>{bullet}</span>
+          {item}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/* 하위 호환 — 기존 코드가 참조하는 경우 대비 */
+function AIRagSection({ title, children }) {
+  return <RagSection title={title}>{children}</RagSection>;
+}
+function AIRagItem({ label, value, accent }) {
+  return <RagBlock label={label} labelColor={accent}><div className="text-[10px] leading-relaxed">{value}</div></RagBlock>;
+}
+function AIRagList({ label, items, accent }) {
+  if (!items?.length) return null;
+  return <RagBlock label={label} labelColor={accent}><RagChecklist items={items} color={accent} /></RagBlock>;
 }
 
 /* ----------- TAB · HISTORY (과거 방문 + 클릭 새 창 상세) ----------- */
@@ -4330,6 +4694,112 @@ function AnnouncementDetail({ n }) {
    - acknowledged: 의사가 결과를 이미 확인했는지
    - resultAt:     AI 분석 완료 시각 (HH:mm KST)
    ============================================================ */
+
+/* ---- Demo용 finalReport mock 데이터 · Bedrock JSON 포맷 ---- */
+const DEMO_FINAL_REPORT_IPF = {
+  generated_at: '2026-04-23T09:14:00+09:00',
+  llm_model: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+  rag_apis_used: ['pubcasefinder', 'monarch', 'pubmed', 'clinicaltrials'],
+  recommendation: {
+    immediate_workup: [
+      'HRCT 흉부 고해상도 — UIP/NSIP 패턴 감별 (우선 시행)',
+      '폐기능검사 (PFT): FVC, DLCO, TLC — 기저치 확립',
+      '6분 보행거리검사 (6MWT) — 운동 내성 평가',
+      'BAL (기관지폐포세척) — HRCT 비전형 소견 시 추가 고려',
+    ],
+    specialist_referral: [
+      '[MDT 필수 · ORPHA:2032] 희귀질환센터 다학제팀 — 호흡기내과 + 영상의학과 + 병리과',
+      '유전체 의학과 — 가족성 IPF 가능성 평가 (TERT/TERC 변이)',
+      '호흡 재활팀 — 폐 재활 프로그램 조기 의뢰',
+    ],
+    treatment_guideline: [
+      '[IPF] Nintedanib 150mg bid (1차 선택) · INPULSIS trial (PMID: 24937360)',
+      '[IPF] Pirfenidone 801mg tid (대안) · ATS/ERS/JRS/ALAT 2022 (PMID: 35167184)',
+      '[IPF] 안정 시 SpO₂ < 88% 이면 장기 산소 요법 처방',
+    ],
+    clinical_trial_info: [
+      'NCT04052334 — FIBRONEER-IPF: Zinpentraxin alfa vs. Placebo (모집 중 · 성인 IPF)',
+      'NCT05607745 — BBT-877 Phase 2 (한국 포함 다국가 · 모집 중)',
+    ],
+    genetic_test: [
+      'TERT, TERC — 복수 소스 확인 (Orphadata + Monarch 일치)',
+      'SFTPC, SFTPA2 — 가족성 ILD 관련',
+      'MUC5B rs35705950 — IPF 최대 단일 유전적 위험 인자 (OR ~5.0)',
+    ],
+    additional_lab: [
+      'KL-6 (혈청) — ILD 활성도 지표',
+      'SP-D (Surfactant Protein D)',
+      '자가항체 패널: ANA, RF, Anti-CCP, Anti-MDA5 — RA-ILD 감별',
+      'NT-proBNP — 폐고혈압 동반 여부 스크리닝',
+    ],
+  },
+  clinical_notes: {
+    summary: '58세 남성, 3개월간 진행성 호흡곤란·마른기침·체중 4kg 감소 내원. SpO₂ 93% (RA). CXR 양측 하부 reticular opacity. DenseNet-121: IPF 84%, Sarcoidosis 62%, HP 41%. Penicillin 알레르기.',
+    top1_reasoning: '【Positive HPO】 HP:0002094 호흡곤란·HP:0006510 진행성 폐섬유증 패턴·HP:0045051 CXR reticular opacity 3개 일치. 【Lab】 SpO₂ 93% 저하·KL-6 예상 상승. 【CXR】 DenseNet 84% 하부 reticular — UIP 패턴 강력 의심. 3개월 점진 진행 경과가 IPF 자연경과와 합치.',
+    differential_note: 'Sarcoidosis(62%): 상부폐 침범·림프절종대 미확인, serum ACE 정상이면 우선순위 낮음. HP(41%): 항원 노출력 없음·BAL 림프구증다증 확인 필요. 두 질환 모두 HRCT에서 UIP 외 다른 패턴 예상.',
+    rag_evidence: 'DB·API 교차검증 일치 — Orphadata ORPHA:2032: 유전자 TERT/TERC/SFTPC (Disease-causing). Monarch 데이터 일치. PubCaseFinder 상위 매칭 확인. PubMed INPULSIS(PMID:24937360) 치료 근거. 유병률 10/100,000 (성인 40대↑ 남성 호발).',
+    case_comparison: 'PubMed(PMID:35167184): 56세 남성, 6개월 호흡곤란·UIP 패턴 HRCT, TERT 변이 확인 → Nintedanib 치료 반응 양호. 본 환자와 발병 연령·성별·진행 경과 유사. TERT 유전자 검사 및 가족력 추가 청취 권고.',
+    epidemiology_note: 'ORPHA:2032 · 특발성 폐섬유증(IPF) · 유병률 10/100,000 (성인). 발병: 주로 50대↑ 남성. 상염색체 우성 (가족성 일부). Monarch + Orphadata 데이터 일치.',
+    disclaimer: 'AI 결과는 진단 보조이며 최종 진단은 주치의의 임상 판단과 추가 검사 결과를 종합하여 확정합니다.',
+  },
+  confidence_metrics: {
+    overall_confidence_score: 0.87,
+    rationale: 'DenseNet 84% + HPO 3개 양성 일치 + Orphadata-Monarch 교차검증 일치 + PubMed 케이스 유사도 높음. HRCT/PFT 미확인으로 0.87.',
+    data_sufficiency: { genomic_evidence: 'High', clinical_case_match: 'High', trial_availability: 'Medium' },
+  },
+};
+
+const DEMO_FINAL_REPORT_LAM = {
+  generated_at: '2026-04-23T08:58:00+09:00',
+  llm_model: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+  rag_apis_used: ['pubcasefinder', 'monarch', 'pubmed', 'clinicaltrials'],
+  recommendation: {
+    immediate_workup: [
+      'HRCT 흉부 고해상도 — thin-walled bilateral cyst 패턴 확인',
+      '혈청 VEGF-D 측정 — LAM 진단 바이오마커 (cutoff ≥800 pg/mL)',
+      '폐기능검사: FEV1/FVC ratio (폐쇄성 패턴 예상)',
+      '복부/골반 MRI — 신장 혈관근지방종(AML) 동반 확인',
+    ],
+    specialist_referral: [
+      '[MDT 필수 · ORPHA:538] 희귀질환센터 다학제팀 — LAM Foundation 프로토콜',
+      '신장내과 협진 — AML 동반 시 출혈 위험 평가',
+      '유전자 상담 — TSC2 변이 검사 (TSC-LAM vs. sporadic LAM 감별)',
+    ],
+    treatment_guideline: [
+      '[LAM] Sirolimus (Rapamycin) 2mg/day — ATS 가이드라인 권고 (PMID: 23985991)',
+      '[LAM] 폐기능 FEV1 진행성 저하 시 조기 시작 권고',
+      '[기흉 예방] 재발성 기흉 기왕력 — 흉막 유착술 고려 (양측 발생 시)',
+    ],
+    clinical_trial_info: [
+      'NCT05431972 — LAM 바이오마커 종단 연구 (모집 중 · 여성 환자 대상)',
+      'NCT03155399 — mTOR 억제제 최적 용량 연구 (결과 발표 예정)',
+    ],
+    genetic_test: [
+      'TSC1, TSC2 — 복수 소스 확인 (Orphadata + Monarch 일치)',
+      'MTOR 경로 변이 패널 — Somatic/germline 구분',
+    ],
+    additional_lab: [
+      'VEGF-D (혈청) — LAM 진단 바이오마커 (≥800 pg/mL 진단적)',
+      '소변 세포학 — LAM 세포 확인',
+      'ESR, CRP — 기저 염증 평가',
+    ],
+  },
+  clinical_notes: {
+    summary: '29세 여성, 재발성 기흉 및 호흡곤란 내원. SpO₂ 94% (RA). CXR 양측 cystic change 의심. DenseNet-121: LAM 58%, PLCH 31%, 재발성 기흉 18%. 생식연령 여성에서 재발성 기흉은 LAM 강력 시사.',
+    top1_reasoning: '【Positive HPO】 HP:0002107 기흉·HP:0002094 호흡곤란 일치. 【인구통계】 29세 가임기 여성 — LAM의 전형적 발병 집단. 【CXR】 bilateral cystic pattern DenseNet 58%. 재발성 기흉 기왕력이 LAM 가장 특징적 임상 발현.',
+    differential_note: 'PLCH(31%): 흡연력 없음 → 가능성 낮음. PLCH는 성인 흡연자 호발. 단순 재발성 기흉(18%): bilateral cystic pattern이 원발성 자연기흉과 불일치. VEGF-D + HRCT thin-walled cyst 확인 시 LAM 확진 가능.',
+    rag_evidence: 'DB·API 교차검증 일치 — Orphadata ORPHA:538: TSC1/TSC2 Disease-causing, Monarch 교차확인. PubCaseFinder HPO 매칭 Top 1. VEGF-D 진단적 cutoff 확인(PMID:23985991). 유병률 1/100,000 여성. 발병 20~40대 가임기 여성.',
+    case_comparison: 'PubMed(PMID:23985991): 31세 여성, 재발성 기흉 3회, HRCT thin-walled cyst, VEGF-D 1,240 pg/mL → LAM 확진, Sirolimus 치료. 본 환자와 연령·성별·주증상 거의 동일. VEGF-D 즉시 측정 권고.',
+    epidemiology_note: 'ORPHA:538 · Lymphangioleiomyomatosis · 유병률 1/100,000 (여성). 발병: 주로 20~40대 가임기 여성. mTOR 경로 이상 (TSC2 변이). Sporadic/TSC-related 두 형태.',
+    disclaimer: 'AI 결과는 진단 보조이며 최종 진단은 주치의의 임상 판단과 추가 검사 결과를 종합하여 확정합니다.',
+  },
+  confidence_metrics: {
+    overall_confidence_score: 0.82,
+    rationale: '가임기 여성 + 재발성 기흉 + bilateral cystic pattern = LAM 전형적 3요소. VEGF-D 미측정으로 0.82. HRCT + VEGF-D 확인 후 0.92+ 예상.',
+    data_sufficiency: { genomic_evidence: 'High', clinical_case_match: 'High', trial_availability: 'Medium' },
+  },
+};
+
 const MOCK_PATIENTS = [
   {
     time: '08:30', visit: '초진',
@@ -4346,6 +4816,7 @@ const MOCK_PATIENTS = [
       { name: 'Sarcoidosis',         prob: 0.62, rare: false },
       { name: '과민성 폐렴 (HP)',       prob: 0.41, rare: false },
     ],
+    finalReport: DEMO_FINAL_REPORT_IPF,
   },
   {
     time: '09:00', visit: '재진',
@@ -4401,6 +4872,7 @@ const MOCK_PATIENTS = [
       { name: 'Pulmonary Langerhans Cell Histiocytosis', prob: 0.31, rare: true, orpha: 'ORPHA:99874' },
       { name: '재발성 기흉 (idiopathic)',     prob: 0.18, rare: false },
     ],
+    finalReport: DEMO_FINAL_REPORT_LAM,
   },
   {
     time: '11:00', visit: '재진',

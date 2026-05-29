@@ -1,0 +1,243 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  [담당 스택 2/3] Phase 2 — X-ray Vision (SooNet) 전체 배포
+  ㅇ S3 버킷 (X-ray 업로드 + 모델 아티팩트)
+  ㅇ SageMaker Endpoint (ml.g4dn.xlarge · GPU T4)
+  ㅇ Lambda (S3 → SageMaker 호출 → HPO 변환)
+  ㅇ IAM Role (Lambda + SageMaker)
+
+  의존성: 01-network.yaml 스택이 먼저 배포돼 있어야 함.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: rare-link
+
+  ModelS3Key:
+    Type: String
+    Default: models/soonet/model.tar.gz
+    Description: "SageMaker가 사용할 model.tar.gz S3 키"
+
+  SageMakerInstanceType:
+    Type: String
+    Default: ml.g4dn.xlarge
+    AllowedValues: [ml.g4dn.xlarge, ml.m5.large, ml.m5.xlarge]
+    Description: "GPU 비용 이슈 시 ml.m5.large로 다운그레이드 가능"
+
+  PyTorchImageUri:
+    Type: String
+    # ap-northeast-2 공식 PyTorch 2.0 CPU/GPU 이미지
+    Default: "763104351884.dkr.ecr.ap-northeast-2.amazonaws.com/pytorch-inference:2.0.0-gpu-py310-cu118-ubuntu20.04-sagemaker"
+
+Resources:
+  # ══════════════════════════════════════════════════════════════
+  # S3 — X-ray 업로드 + 모델 아티팩트 (서로 다른 프리픽스)
+  # ══════════════════════════════════════════════════════════════
+  XrayBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain    # 실수 삭제 방지 (데모 후 수동 삭제)
+    Properties:
+      BucketName: !Sub "${ProjectName}-phase2-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      LifecycleConfiguration:
+        Rules:
+          # uploads/ 경로: 30일 후 자동 삭제 (X-ray는 개인정보)
+          - Id: DeleteUploadsAfter30Days
+            Status: Enabled
+            Prefix: uploads/
+            ExpirationInDays: 30
+          # results/ 경로: 90일 후 Glacier
+          - Id: ArchiveResultsAfter90Days
+            Status: Enabled
+            Prefix: results/
+            Transitions:
+              - { StorageClass: GLACIER, TransitionInDays: 90 }
+      Tags:
+        - { Key: project, Value: pre-s3-2-2-team }
+        - { Key: phase, Value: phase2 }
+
+  # ══════════════════════════════════════════════════════════════
+  # IAM — SageMaker 실행 Role
+  # ══════════════════════════════════════════════════════════════
+  SageMakerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-sagemaker-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: sagemaker.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+      Policies:
+        - PolicyName: S3ModelAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject, s3:ListBucket]
+                Resource:
+                  - !Sub "arn:aws:s3:::${XrayBucket}"
+                  - !Sub "arn:aws:s3:::${XrayBucket}/*"
+      Tags:
+        - { Key: project, Value: pre-iam-2-2-team }
+
+  # ══════════════════════════════════════════════════════════════
+  # IAM — Phase 2 Lambda 실행 Role
+  # ══════════════════════════════════════════════════════════════
+  Phase2LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-phase2-lambda-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        # VPC 내 실행 권한 (ENI 생성)
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: Phase2Access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # S3 X-ray 읽기 + 결과 저장
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject]
+                Resource: !Sub "arn:aws:s3:::${XrayBucket}/*"
+              # SageMaker Endpoint 호출
+              - Effect: Allow
+                Action: sagemaker:InvokeEndpoint
+                Resource: !Sub "arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:endpoint/${ProjectName}-soonet-endpoint"
+
+  # ══════════════════════════════════════════════════════════════
+  # SageMaker — Model + Endpoint Config + Endpoint
+  # ══════════════════════════════════════════════════════════════
+  SageMakerModel:
+    Type: AWS::SageMaker::Model
+    Properties:
+      ModelName: !Sub "${ProjectName}-soonet-model"
+      ExecutionRoleArn: !GetAtt SageMakerExecutionRole.Arn
+      PrimaryContainer:
+        Image: !Ref PyTorchImageUri
+        ModelDataUrl: !Sub "s3://${XrayBucket}/${ModelS3Key}"
+        Environment:
+          SAGEMAKER_PROGRAM: inference.py
+          SAGEMAKER_SUBMIT_DIRECTORY: !Sub "s3://${XrayBucket}/${ModelS3Key}"
+      # VPC 내부 배치 (Private Subnet)
+      VpcConfig:
+        SecurityGroupIds:
+          - !ImportValue
+            Fn::Sub: "${ProjectName}-sg-sagemaker"
+        Subnets:
+          - !ImportValue
+            Fn::Sub: "${ProjectName}-private-1a"
+          - !ImportValue
+            Fn::Sub: "${ProjectName}-private-1c"
+      Tags:
+        - { Key: project, Value: pre-sagemaker-2-2-team }
+
+  SageMakerEndpointConfig:
+    Type: AWS::SageMaker::EndpointConfig
+    Properties:
+      EndpointConfigName: !Sub "${ProjectName}-soonet-config"
+      ProductionVariants:
+        - ModelName: !GetAtt SageMakerModel.ModelName
+          VariantName: primary
+          InitialInstanceCount: 1
+          InstanceType: !Ref SageMakerInstanceType
+          InitialVariantWeight: 1.0
+      Tags:
+        - { Key: project, Value: pre-sagemaker-2-2-team }
+
+  SageMakerEndpoint:
+    Type: AWS::SageMaker::Endpoint
+    Properties:
+      EndpointName: !Sub "${ProjectName}-soonet-endpoint"
+      EndpointConfigName: !GetAtt SageMakerEndpointConfig.EndpointConfigName
+      Tags:
+        - { Key: project, Value: pre-sagemaker-2-2-team }
+
+  # ══════════════════════════════════════════════════════════════
+  # Lambda — Phase 2 Vision Agent
+  # (S3 X-ray → SageMaker 호출 → 14-class 확률 + HPO 반환)
+  # ══════════════════════════════════════════════════════════════
+  Phase2LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-phase2-vision"
+      Runtime: python3.11
+      Handler: phase2_handler.lambda_handler
+      Role: !GetAtt Phase2LambdaRole.Arn
+      MemorySize: 1024
+      Timeout: 60
+      Code:
+        # 실제 배포 시 S3에 업로드된 zip 참조. 아래는 placeholder.
+        ZipFile: |
+          """
+          Phase 2 Lambda — 실배포 전 placeholder.
+          배포 명령:
+              cd infra/lambda/phase2
+              zip phase2.zip phase2_handler.py
+              aws s3 cp phase2.zip s3://{BUCKET}/lambda/phase2.zip
+              aws lambda update-function-code \
+                  --function-name rare-link-phase2-vision \
+                  --s3-bucket {BUCKET} --s3-key lambda/phase2.zip
+          """
+          def lambda_handler(event, context):
+              return {"statusCode": 501, "body": "not deployed yet"}
+      Environment:
+        Variables:
+          SAGEMAKER_ENDPOINT: !Sub "${ProjectName}-soonet-endpoint"
+          S3_BUCKET: !Ref XrayBucket
+          XRAY_THRESHOLD: "0.3"
+      VpcConfig:
+        SecurityGroupIds:
+          - !ImportValue
+            Fn::Sub: "${ProjectName}-sg-lambda"
+        SubnetIds:
+          - !ImportValue
+            Fn::Sub: "${ProjectName}-private-1a"
+          - !ImportValue
+            Fn::Sub: "${ProjectName}-private-1c"
+      Tags:
+        - { Key: project, Value: pre-lambda-2-2-team }
+        - { Key: phase, Value: phase2 }
+
+  # CloudWatch 로그 그룹 (보존 기간 명시)
+  Phase2LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectName}-phase2-vision"
+      RetentionInDays: 14
+
+Outputs:
+  XrayBucketName:
+    Description: "X-ray 업로드 버킷 (uploads/ 프리픽스 사용)"
+    Value: !Ref XrayBucket
+    Export: { Name: !Sub "${ProjectName}-xray-bucket" }
+
+  SageMakerEndpointName:
+    Description: "SooNet SageMaker Endpoint"
+    Value: !GetAtt SageMakerEndpoint.EndpointName
+    Export: { Name: !Sub "${ProjectName}-sagemaker-endpoint" }
+
+  Phase2LambdaArn:
+    Description: "Phase 2 Vision Lambda ARN"
+    Value: !GetAtt Phase2LambdaFunction.Arn
+    Export: { Name: !Sub "${ProjectName}-phase2-lambda-arn" }
+
+  Phase2LambdaName:
+    Value: !Ref Phase2LambdaFunction

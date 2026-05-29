@@ -1,13 +1,12 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// GitHub Pages base path · production 빌드에서만 적용
-// repo: heotaewoong/aws_say2_project → https://heotaewoong.github.io/aws_say2_project/
-const REPO_BASE = '/aws_say2_project/';
+// CloudFront + S3 배포용: base '/' (origin path /frontend 설정됨)
+// GitHub Pages 사용 시에는 '/aws_say2_project/'로 변경 필요
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
-  base: command === 'build' ? REPO_BASE : '/',
+  base: '/',
   plugins: [react()],
   server: {
     port: 5173,
