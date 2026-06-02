@@ -1,0 +1,152 @@
+{
+  "_comment": "Phase 3 입력 예시 — Lab raw 데이터 (EMR ingestion 팀 OWN: phase3_lab_raw 테이블의 SELECT 결과). 미생물 결과(phase3_micro_raw)도 함께 포함.",
+  "_source_tables": ["phase3_lab_raw", "phase3_micro_raw"],
+  "_query": "SELECT * FROM phase3_lab_raw WHERE case_id = 'P00123' AND measured_at BETWEEN ... ORDER BY measured_at",
+  "case_id": "P00123",
+  "measurement_window": {
+    "start": "2026-05-14T08:00:00Z",
+    "end": "2026-05-14T10:00:00Z"
+  },
+  "lab_results": [
+    {
+      "itemid": 50820,
+      "name": "pH",
+      "value": 7.36,
+      "unit": "",
+      "ref_range_lower": 7.35,
+      "ref_range_upper": 7.45,
+      "measured_at": "2026-05-14T09:10:00Z"
+    },
+    {
+      "itemid": 50818,
+      "name": "pCO2",
+      "value": 38.5,
+      "unit": "mmHg",
+      "ref_range_lower": 35.0,
+      "ref_range_upper": 45.0,
+      "measured_at": "2026-05-14T09:10:00Z"
+    },
+    {
+      "itemid": 50821,
+      "name": "pO2",
+      "value": 62.0,
+      "unit": "mmHg",
+      "ref_range_lower": 75.0,
+      "ref_range_upper": 100.0,
+      "measured_at": "2026-05-14T09:10:00Z",
+      "_note": "Hypoxemia"
+    },
+    {
+      "itemid": 220277,
+      "name": "SpO2",
+      "value": 91.0,
+      "unit": "%",
+      "ref_range_lower": 95.0,
+      "ref_range_upper": 100.0,
+      "measured_at": "2026-05-14T09:32:00Z"
+    },
+    {
+      "itemid": 220045,
+      "name": "Heart Rate",
+      "value": 112.0,
+      "unit": "bpm",
+      "ref_range_lower": 60.0,
+      "ref_range_upper": 100.0,
+      "measured_at": "2026-05-14T09:32:00Z"
+    },
+    {
+      "itemid": 220210,
+      "name": "Respiratory Rate",
+      "value": 28.0,
+      "unit": "/min",
+      "ref_range_lower": 12.0,
+      "ref_range_upper": 20.0,
+      "measured_at": "2026-05-14T09:32:00Z"
+    },
+    {
+      "itemid": 223761,
+      "name": "Body Temperature",
+      "value": 39.2,
+      "unit": "°C",
+      "ref_range_lower": 36.5,
+      "ref_range_upper": 37.5,
+      "measured_at": "2026-05-14T09:32:00Z"
+    },
+    {
+      "itemid": 220179,
+      "name": "Systolic BP",
+      "value": 105.0,
+      "unit": "mmHg",
+      "ref_range_lower": 90.0,
+      "ref_range_upper": 140.0,
+      "measured_at": "2026-05-14T09:32:00Z"
+    },
+    {
+      "itemid": 51301,
+      "name": "WBC",
+      "value": 18.5,
+      "unit": "10^3/uL",
+      "ref_range_lower": 4.5,
+      "ref_range_upper": 11.0,
+      "measured_at": "2026-05-14T09:15:00Z",
+      "_note": "Leukocytosis"
+    },
+    {
+      "itemid": 50889,
+      "name": "C-Reactive Protein",
+      "value": 184.0,
+      "unit": "mg/L",
+      "ref_range_lower": 0.0,
+      "ref_range_upper": 10.0,
+      "measured_at": "2026-05-14T09:15:00Z",
+      "_note": "Markedly elevated CRP"
+    },
+    {
+      "itemid": 51275,
+      "name": "Procalcitonin",
+      "value": 2.8,
+      "unit": "ng/mL",
+      "ref_range_lower": 0.0,
+      "ref_range_upper": 0.25,
+      "measured_at": "2026-05-14T09:15:00Z",
+      "_note": "Bacterial infection range"
+    },
+    {
+      "itemid": 51265,
+      "name": "Platelet Count",
+      "value": 220.0,
+      "unit": "10^3/uL",
+      "ref_range_lower": 150.0,
+      "ref_range_upper": 450.0,
+      "measured_at": "2026-05-14T09:15:00Z"
+    },
+    {
+      "itemid": 50912,
+      "name": "Creatinine",
+      "value": 1.1,
+      "unit": "mg/dL",
+      "ref_range_lower": 0.7,
+      "ref_range_upper": 1.3,
+      "measured_at": "2026-05-14T09:15:00Z"
+    },
+    {
+      "itemid": 51006,
+      "name": "Urea (BUN)",
+      "value": 22.0,
+      "unit": "mg/dL",
+      "ref_range_lower": 7.0,
+      "ref_range_upper": 20.0,
+      "measured_at": "2026-05-14T09:15:00Z",
+      "_note": "Mildly elevated — CURB-65 1 point"
+    }
+  ],
+  "micro_results": [
+    {
+      "specimen_type": "Sputum",
+      "organism": "Streptococcus pneumoniae",
+      "positivity": "Positive",
+      "method": "Culture",
+      "measured_at": "2026-05-14T09:45:00Z"
+    }
+  ]
+}

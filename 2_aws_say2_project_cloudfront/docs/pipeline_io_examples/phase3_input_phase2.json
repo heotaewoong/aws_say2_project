@@ -1,0 +1,25 @@
+{
+  "_comment": "Phase 3 입력 예시 — Phase 2 SooNet CXR 결과 (Phase 2 팀 OWN: phase2_cxr_findings 테이블의 SELECT 결과). Option E simplified — 라벨 + 확률 2개 필드만.",
+  "_source_table": "phase2_cxr_findings",
+  "_query": "SELECT case_id, chexpert_label, probability FROM phase2_cxr_findings WHERE case_id = 'P00123' AND exam_id = 'EXAM-20260514-001'",
+  "case_id": "P00123",
+  "exam_id": "EXAM-20260514-001",
+  "extracted_at": "2026-05-14T09:35:42Z",
+  "_note": "1 exam = 14 row (CheXpert 14 카테고리). 본 예시는 CAP 시나리오 — Pneumonia/Consolidation/Lung Opacity 높음.",
+  "rows": [
+    {"chexpert_label": "Atelectasis",                "probability": 0.12},
+    {"chexpert_label": "Cardiomegaly",               "probability": 0.18},
+    {"chexpert_label": "Consolidation",              "probability": 0.78},
+    {"chexpert_label": "Edema",                      "probability": 0.09},
+    {"chexpert_label": "Enlarged Cardiomediastinum", "probability": 0.07},
+    {"chexpert_label": "Fracture",                   "probability": 0.03},
+    {"chexpert_label": "Lung Lesion",                "probability": 0.21},
+    {"chexpert_label": "Lung Opacity",               "probability": 0.65},
+    {"chexpert_label": "No Finding",                 "probability": 0.05},
+    {"chexpert_label": "Pleural Effusion",           "probability": 0.12},
+    {"chexpert_label": "Pleural Other",              "probability": 0.06},
+    {"chexpert_label": "Pneumonia",                  "probability": 0.92},
+    {"chexpert_label": "Pneumothorax",               "probability": 0.04},
+    {"chexpert_label": "Support Devices",            "probability": 0.15}
+  ]
+}

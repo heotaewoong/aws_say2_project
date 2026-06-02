@@ -1,0 +1,30 @@
+# ── Core ──────────────────────────────────────────────────────
+pandas>=2.0
+numpy>=1.24
+pyyaml>=6.0
+openpyxl>=3.1
+
+# ── Settings ──────────────────────────────────────────────────
+pydantic>=2.0
+pydantic-settings>=2.0
+
+# ── ML / Image ────────────────────────────────────────────────
+torch>=2.0
+torchvision>=0.15
+Pillow>=10.0
+grad-cam>=1.5
+
+# ── API ───────────────────────────────────────────────────────
+fastapi>=0.100
+uvicorn[standard]>=0.20      # [standard] = websockets + watchfiles 포함
+httpx>=0.25                  # api/app/services/poller_fhir.py · async FHIR HTTP client
+pyjwt[crypto]>=2.8           # api/app/deps.py · SMART JWT 검증 (RS256)
+sqlalchemy[asyncio]>=2.0     # api/shared/db_models.py
+asyncpg>=0.29                # PostgreSQL async driver (Aurora)
+aiosqlite>=0.19              # 로컬 dev sqlite fallback
+
+# ── AWS (점진 확장) ───────────────────────────────────────────
+boto3>=1.28                  # api/app/services/s3_emr.py · S3 mock EMR fetch
+
+# ── ETL ───────────────────────────────────────────────────────
+pyarrow>=14.0
