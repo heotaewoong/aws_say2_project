@@ -153,7 +153,7 @@ DenseNet-121이 X-ray 영상의 어느 부분을 주목했는지 **Grad-CAM 히�
 ### 5️⃣ 분석 대시보드 — 임상 지표
 
 <div align="center">
-<img src="docs/images/screenshot_tab_분석_대시보드.png" width="750" alt="임상 분석 대시보드"/>
+<img src="docs/images/screenshot_tab_analysis_dashboard.png" width="750" alt="임상 분석 대시보드"/>
 <p><em>분석 대시보드 — 진단 통계 · 진단 분포 · 일별 동의율 · 희귀질환 ORPHA 분포</em></p>
 </div>
 
