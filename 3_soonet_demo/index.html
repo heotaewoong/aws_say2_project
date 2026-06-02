@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Rare-Link AI — 희귀 폐질환 임상 의사결정 지원 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#08122a;--navy2:#0f1d3d;
+  --blue:#2563eb;--blue2:#3b82f6;--blue3:#60a5fa;--blue-soft:#eff6ff;
+  --teal:#0d9488;--teal-soft:#f0fdfa;
+  --purple:#7c3aed;--purple-soft:#faf5ff;
+  --amber:#d97706;--green:#059669;
+  --slate:#f8fafc;--slate2:#f1f5f9;--slate3:#e2e8f0;--slate4:#94a3b8;
+  --ink:#0f172a;--ink2:#1e293b;--ink3:#475569;--ink4:#64748b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'PretendardVariable',sans-serif;color:var(--ink);background:#fff;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit;border:none;background:none}
+.mono{font-family:'JetBrains Mono',monospace}
+.container{max-width:1160px;margin:0 auto;padding:0 28px}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.04em}
+.tag-blue{background:var(--blue-soft);color:var(--blue)}
+.tag-teal{background:var(--teal-soft);color:var(--teal)}
+.tag-purple{background:var(--purple-soft);color:var(--purple)}
+.tag-navy{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.15)}
+
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes borderPulse{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.4)}50%{box-shadow:0 0 0 10px rgba(37,99,235,0)}}
+
+.au{opacity:0;transform:translateY(32px);transition:opacity .7s ease,transform .7s ease}
+.au.v{opacity:1;transform:translateY(0)}
+.au-d1{transition-delay:.1s}.au-d2{transition-delay:.2s}.au-d3{transition-delay:.3s}
+
+/* NAV */
+#nav{position:fixed;top:0;left:0;right:0;z-index:900;transition:background .3s,box-shadow .3s}
+#nav.scroll{background:rgba(255,255,255,.93);backdrop-filter:blur(20px);box-shadow:0 1px 0 rgba(0,0,0,.06),0 4px 24px rgba(0,0,0,.05)}
+.nav-inner{max-width:1160px;margin:0 auto;padding:0 28px;height:64px;display:flex;align-items:center}
+.nav-logo{display:flex;align-items:center;gap:11px;margin-right:32px}
+.nav-mark{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:linear-gradient(135deg,#2563eb,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.4)}
+.nav-name{font-size:15px;font-weight:700;color:var(--ink)}
+.nav-name small{display:block;font-size:10px;font-weight:500;color:var(--ink4);font-family:'JetBrains Mono',monospace;letter-spacing:.06em;margin-top:1px}
+.nav-links{display:flex;gap:1px}
+.nl{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink3);transition:all .15s}
+.nl:hover{background:var(--slate);color:var(--ink)}
+.nl.a{color:var(--blue);background:var(--blue-soft)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.btn-ghost{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;color:var(--blue);border:1.5px solid var(--blue);transition:all .15s}
+.btn-ghost:hover{background:var(--blue-soft)}
+.btn-fill{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;color:#fff;background:var(--blue);box-shadow:0 2px 10px rgba(37,99,235,.35);transition:all .15s}
+.btn-fill:hover{background:#1d4ed8;box-shadow:0 4px 18px rgba(37,99,235,.5);transform:translateY(-1px)}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;background:var(--navy);position:relative;overflow:hidden;padding-top:64px}
+.hero-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hb-grid{position:absolute;inset:0;background:linear-gradient(rgba(37,99,235,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.14) 1px,transparent 1px);background-size:52px 52px;opacity:.5}
+.hb-g1{position:absolute;top:-20%;left:-15%;width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.22) 0%,transparent 65%)}
+.hb-g2{position:absolute;bottom:-20%;right:-10%;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.16) 0%,transparent 65%)}
+.hero-wrap{position:relative;z-index:1;max-width:1160px;margin:0 auto;width:100%;padding:72px 28px 80px;display:grid;grid-template-columns:1fr 480px;gap:72px;align-items:center}
+.hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.hero-dot{width:7px;height:7px;border-radius:50%;background:var(--blue2);animation:pulse 2s infinite}
+.hero-mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase}
+.hero-h1{font-size:clamp(38px,5.5vw,62px);font-weight:700;color:#fff;line-height:1.1;letter-spacing:-.03em;margin-bottom:12px}
+.hero-h1 em{font-style:italic;color:var(--blue3);font-family:'Gowun Batang',serif;font-weight:400}
+.hero-lead{font-size:17px;color:rgba(255,255,255,.55);line-height:1.78;max-width:540px;margin-bottom:36px}
+.hero-lead strong{color:rgba(255,255,255,.82);font-weight:500}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:52px}
+.hero-cta-p{display:inline-flex;align-items:center;gap:9px;padding:14px 30px;background:var(--blue);color:#fff;border-radius:10px;font-size:15px;font-weight:600;box-shadow:0 4px 24px rgba(37,99,235,.5);transition:all .2s;border:none;cursor:pointer;animation:borderPulse 3s 2s ease-in-out infinite}
+.hero-cta-p:hover{background:#1d4ed8;transform:translateY(-2px);box-shadow:0 8px 32px rgba(37,99,235,.6)}
+.hero-cta-g{display:inline-flex;align-items:center;gap:9px;padding:14px 28px;color:rgba(255,255,255,.75);border-radius:10px;font-size:15px;font-weight:600;border:1.5px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);transition:all .2s;cursor:pointer}
+.hero-cta-g:hover{border-color:rgba(255,255,255,.3);color:#fff;background:rgba(255,255,255,.1)}
+.hero-kpis{display:flex;gap:0;border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03)}
+.hkpi{padding:20px 26px;border-right:1px solid rgba(255,255,255,.08);flex:1;min-width:0}
+.hkpi:last-child{border-right:none}
+.hkpi-val{font-size:28px;font-weight:700;color:#fff;line-height:1;font-variant-numeric:tabular-nums;font-family:'JetBrains Mono',monospace}
+.hkpi-lbl{font-size:10px;color:rgba(255,255,255,.35);margin-top:5px;text-transform:uppercase;letter-spacing:.08em}
+.hkpi-sub{font-size:10px;color:rgba(255,255,255,.22);margin-top:2px;font-family:'JetBrains Mono',monospace}
+
+/* hero card */
+.hero-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:18px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.05) inset;animation:float 6s ease-in-out infinite}
+.hc-bar{background:rgba(0,0,0,.3);border-bottom:1px solid rgba(255,255,255,.07);padding:11px 16px;display:flex;align-items:center;gap:6px}
+.hc-dots span{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px}
+.hc-title{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.22);text-transform:uppercase;letter-spacing:.08em}
+.hc-body{padding:20px}
+.hc-patient{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.25);border-radius:8px;margin-bottom:14px}
+.hc-urg{width:9px;height:9px;border-radius:50%;background:#ef4444;flex-shrink:0}
+.hc-pt-name{font-size:13px;font-weight:600;color:rgba(255,255,255,.85)}
+.hc-pt-sub{font-size:10px;color:rgba(255,255,255,.32);margin-top:1px;font-family:'JetBrains Mono',monospace}
+.hc-badge{margin-left:auto;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:700;background:rgba(139,92,246,.15);color:#a78bfa}
+.hc-cxr{background:#020509;border-radius:8px;overflow:hidden;position:relative;margin-bottom:14px}
+.hc-cxr canvas{display:block;width:100%;height:180px}
+.hc-cxr-lbl{position:absolute;bottom:7px;right:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.3);background:rgba(0,0,0,.5);padding:2px 7px;border-radius:3px}
+.hc-slbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.hc-dx-row{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.hc-dx-r{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.22);width:18px}
+.hc-dx-name{font-size:11px;color:rgba(255,255,255,.72);flex:1;font-weight:500}
+.hc-dx-track{width:80px;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.hc-dx-fill{height:100%;border-radius:2px}
+.hc-dx-pct{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.38);width:26px;text-align:right}
+.hc-rare{margin-top:12px;padding:10px 12px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.22);border-radius:7px;font-size:11px;color:rgba(255,255,255,.58)}
+.hc-rare strong{color:#a78bfa;font-weight:600}
+
+/* SECTION COMMON */
+section{padding:100px 0}
+.sec-head{text-align:center;margin-bottom:64px}
+.sec-h2{font-size:clamp(28px,4vw,42px);font-weight:700;color:var(--ink);letter-spacing:-.025em;line-height:1.2;margin:10px 0 14px}
+.sec-h2 em{color:var(--blue);font-style:italic;font-family:'Gowun Batang',serif;font-weight:400}
+.sec-p{font-size:16px;color:var(--ink3);max-width:600px;margin:0 auto;line-height:1.75}
+
+/* ABOUT */
+#about{background:var(--slate)}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.about-h2{font-size:clamp(28px,4vw,42px);font-weight:700;color:var(--ink);letter-spacing:-.025em;line-height:1.2;margin:12px 0 18px}
+.about-h2 em{color:var(--blue);font-style:italic;font-family:'Gowun Batang',serif;font-weight:400}
+.about-desc{font-size:15px;color:var(--ink3);line-height:1.85;margin-bottom:28px}
+.about-pts{display:flex;flex-direction:column;gap:14px}
+.about-pt{display:flex;align-items:flex-start;gap:12px}
+.about-pt-icon{width:28px;height:28px;border-radius:8px;background:var(--blue-soft);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:1px}
+.about-pt-text{font-size:14px;color:var(--ink2);line-height:1.65}
+.about-pt-text strong{color:var(--ink);display:block;margin-bottom:2px}
+.about-cards{display:flex;flex-direction:column;gap:14px}
+.about-card{background:#fff;border:1px solid var(--slate3);border-radius:14px;padding:22px 24px;display:flex;align-items:center;gap:18px;transition:box-shadow .2s,transform .2s}
+.about-card:hover{box-shadow:0 10px 32px rgba(0,0,0,.08);transform:translateY(-2px)}
+.about-card-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.about-card-val{font-size:30px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.about-card-lbl{font-size:11px;color:var(--ink4);margin-top:4px;text-transform:uppercase;letter-spacing:.07em;font-family:'JetBrains Mono',monospace}
+.about-card-note{font-size:11px;color:var(--ink4);margin-top:3px}
+
+/* FEATURES */
+#features{background:#fff}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:48px}
+.feat-card{border-radius:18px;overflow:hidden;border:1px solid var(--slate3);transition:transform .2s,box-shadow .2s}
+.feat-card:hover{transform:translateY(-5px);box-shadow:0 20px 48px rgba(0,0,0,.12)}
+.feat-hdr{padding:30px 26px 24px;position:relative;overflow:hidden}
+.feat-hdr::after{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.06)}
+.feat-icon{font-size:36px;margin-bottom:16px;display:block;position:relative;z-index:1}
+.feat-tag-wrap{margin-bottom:12px;position:relative;z-index:1}
+.feat-h3{font-size:20px;font-weight:700;color:#fff;margin-bottom:7px;line-height:1.2;position:relative;z-index:1}
+.feat-eng{font-size:11px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.42);letter-spacing:.06em;text-transform:uppercase;position:relative;z-index:1}
+.feat-body{padding:24px 26px;background:#fff}
+.feat-desc{font-size:14px;color:var(--ink3);line-height:1.8;margin-bottom:18px}
+.feat-metrics{display:flex;gap:0;border-top:1px solid var(--slate3);padding-top:16px;margin-bottom:16px}
+.feat-metric{flex:1;text-align:center;border-right:1px solid var(--slate3)}
+.feat-metric:last-child{border-right:none}
+.feat-metric-val{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.feat-metric-lbl{font-size:10px;color:var(--ink4);margin-top:3px;text-transform:uppercase;letter-spacing:.07em}
+.feat-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:9px 16px;border-radius:8px;border:1.5px solid;transition:all .15s}
+.fc-blue .feat-hdr{background:linear-gradient(145deg,#1e3a8a,#2563eb)}
+.fc-blue .feat-metric-val{color:var(--blue)}.fc-blue .feat-link{color:var(--blue);border-color:var(--blue)}.fc-blue .feat-link:hover{background:var(--blue-soft)}
+.fc-teal .feat-hdr{background:linear-gradient(145deg,#134e4a,#0f766e)}
+.fc-teal .feat-metric-val{color:var(--teal)}.fc-teal .feat-link{color:var(--teal);border-color:var(--teal)}.fc-teal .feat-link:hover{background:var(--teal-soft)}
+.fc-purple .feat-hdr{background:linear-gradient(145deg,#4c1d95,#7c3aed)}
+.fc-purple .feat-metric-val{color:var(--purple)}.fc-purple .feat-link{color:var(--purple);border-color:var(--purple)}.fc-purple .feat-link:hover{background:var(--purple-soft)}
+
+/* pipeline */
+.pipe-strip{background:var(--navy2);border-radius:18px;padding:36px;display:flex;align-items:stretch;overflow-x:auto;border:1px solid rgba(255,255,255,.05)}
+.pipe-step{display:flex;align-items:center;flex:1;min-width:130px}
+.pipe-box{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 12px;text-align:center;transition:all .2s;cursor:default}
+.pipe-box:hover{background:rgba(255,255,255,.08);border-color:rgba(37,99,235,.4)}
+.pipe-box.hl{border-color:rgba(37,99,235,.35);background:rgba(37,99,235,.08)}
+.pipe-box.hlp{border-color:rgba(124,58,237,.35);background:rgba(124,58,237,.07)}
+.pipe-num{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.22);margin-bottom:5px;letter-spacing:.1em;text-transform:uppercase}
+.pipe-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.8);line-height:1.3}
+.pipe-engine{font-size:10px;color:rgba(255,255,255,.28);font-family:'JetBrains Mono',monospace;margin-top:4px}
+.pipe-ms{font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;margin-top:5px}
+.pipe-arr{flex-shrink:0;padding:0 8px;color:rgba(255,255,255,.15);font-size:18px;display:flex;align-items:center}
+
+/* DEMO */
+#demo{background:var(--slate)}
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.demo-h2{font-size:clamp(26px,4vw,40px);font-weight:700;color:var(--ink);letter-spacing:-.025em;line-height:1.25;margin:12px 0 16px}
+.demo-lead{font-size:15px;color:var(--ink3);line-height:1.85;margin-bottom:32px}
+.demo-steps{display:flex;flex-direction:column;gap:18px;margin-bottom:36px}
+.demo-step{display:flex;gap:16px;align-items:flex-start}
+.demo-step-num{width:30px;height:30px;border-radius:9px;background:var(--blue);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.demo-step-t{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.demo-step-s{font-size:13px;color:var(--ink3)}
+.demo-btns{display:flex;gap:12px;flex-wrap:wrap}
+.demo-btn-p{display:inline-flex;align-items:center;gap:8px;padding:12px 26px;background:var(--blue);color:#fff;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(37,99,235,.35);transition:all .2s;cursor:pointer}
+.demo-btn-p:hover{background:#1d4ed8;transform:translateY(-1px)}
+.demo-btn-s{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;color:var(--blue);border:1.5px solid var(--blue);border-radius:10px;font-size:14px;font-weight:600;transition:all .2s;cursor:pointer;background:#fff}
+.demo-btn-s:hover{background:var(--blue-soft)}
+.hitl-note{margin-top:24px;padding:14px 18px;background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.25);border-radius:10px;display:flex;gap:10px;font-size:12px;color:var(--ink3);line-height:1.6}
+.hitl-note strong{color:var(--amber)}
+.mock-browser{background:var(--navy2);border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.06);box-shadow:0 24px 64px rgba(0,0,0,.25)}
+.mb-bar{background:rgba(0,0,0,.35);padding:11px 16px;display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.06)}
+.mb-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px}
+.mb-url{flex:1;background:rgba(255,255,255,.05);border-radius:5px;padding:4px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.22);margin:0 12px;text-align:center}
+.mb-body{padding:20px}
+.wl-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:6px;cursor:default;transition:background .1s}
+.wl-row:hover{background:rgba(255,255,255,.03)}
+.wl-row.sel{background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2)}
+.wl-urg{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.wl-info{flex:1;min-width:0}
+.wl-n{font-size:12px;font-weight:600;color:rgba(255,255,255,.82)}
+.wl-d{font-size:10px;color:rgba(255,255,255,.28);margin-top:1px}
+.wl-pb{width:70px}
+.wl-pbt{height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.wl-pbf{height:100%;border-radius:2px}
+.wl-pv{font-size:9px;color:rgba(255,255,255,.28);text-align:right;margin-top:2px;font-family:'JetBrains Mono',monospace}
+.wl-s{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;flex-shrink:0}
+.ws-done{background:rgba(5,150,105,.12);color:#34d399}
+.ws-rare{background:rgba(139,92,246,.12);color:#a78bfa}
+.ws-crit{background:rgba(239,68,68,.12);color:#f87171}
+
+/* ARCHITECTURE */
+#arch{background:#fff}
+.arch-wrap{background:var(--navy2);border-radius:20px;padding:44px;border:1px solid rgba(255,255,255,.04);position:relative;overflow:hidden}
+.arch-grid-bg{position:absolute;inset:0;background:linear-gradient(rgba(37,99,235,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.1) 1px,transparent 1px);background-size:36px 36px;opacity:.5}
+.arch-in{position:relative;z-index:1}
+.arch-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.18);text-transform:uppercase;letter-spacing:.12em;text-align:center;margin-bottom:28px}
+.arch-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.ab{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:12px 18px;text-align:center;min-width:115px;transition:all .2s;cursor:default}
+.ab:hover{background:rgba(255,255,255,.08);border-color:rgba(37,99,235,.4)}
+.ab.blue{border-color:rgba(37,99,235,.4);background:rgba(37,99,235,.1)}
+.ab.purple{border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.08)}
+.ab.teal{border-color:rgba(13,148,136,.4);background:rgba(13,148,136,.08)}
+.ab-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.8);line-height:1.3}
+.ab-sub{font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.24);margin-top:3px}
+.aa{color:rgba(255,255,255,.16);font-size:18px;flex-shrink:0}
+.arch-sep{height:1px;background:rgba(255,255,255,.06);margin:18px 0}
+.arch-sect{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.17);text-transform:uppercase;letter-spacing:.12em;text-align:center;margin-bottom:12px}
+.aws-tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+.aws-tag{display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,153,0,.07);border:1px solid rgba(255,153,0,.16);border-radius:7px;font-size:11px;font-weight:600;color:rgba(255,153,0,.7)}
+.aws-tag.on{background:rgba(255,153,0,.12);border-color:rgba(255,153,0,.28);color:rgba(255,153,0,.88)}
+
+/* PERFORMANCE */
+#perf{background:var(--slate)}
+.perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.pc{background:#fff;border:1px solid var(--slate3);border-radius:18px;padding:30px}
+.pc-h{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:22px;display:flex;align-items:center;gap:8px}
+.auroc-rows{display:flex;flex-direction:column;gap:10px}
+.ar-row{display:flex;align-items:center;gap:10px}
+.ar-lbl{font-size:12px;color:var(--ink2);width:185px;flex-shrink:0}
+.ar-track{flex:1;height:8px;background:var(--slate3);border-radius:4px;overflow:hidden}
+.ar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--teal))}
+.ar-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--blue);width:42px;text-align:right;flex-shrink:0}
+.ar-val.top{color:var(--teal)}
+.ar-val.avg{color:var(--purple)}
+.ar-div{height:1px;background:var(--slate3);margin:6px 0}
+.pt-rows{display:flex;flex-direction:column;gap:9px}
+.pt-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--slate);border-radius:9px}
+.pt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pt-name{font-size:13px;color:var(--ink2);flex:1}
+.pt-lat{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600}
+.perf-note{margin-top:10px;font-size:11px;color:var(--ink4);padding:9px 11px;background:var(--slate);border-radius:8px}
+
+/* EVIDENCE */
+#evidence{background:#fff}
+.ev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.ev-card{border:1px solid var(--slate3);border-radius:14px;padding:24px;transition:box-shadow .2s,transform .2s}
+.ev-card:hover{box-shadow:0 10px 32px rgba(0,0,0,.08);transform:translateY(-3px)}
+.ev-journal{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px;font-weight:600}
+.ev-title{font-size:14px;font-weight:600;color:var(--ink);line-height:1.45;margin-bottom:8px}
+.ev-auth{font-size:12px;color:var(--ink4);margin-bottom:11px;line-height:1.5}
+.ev-use{font-size:12px;color:var(--ink2);padding:9px 11px;background:var(--slate);border-radius:7px;border-left:3px solid var(--blue);line-height:1.5}
+
+/* TEAM */
+#team{background:var(--slate)}
+.team-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;margin-bottom:20px}
+.team-card{background:#fff;border:1px solid var(--slate3);border-radius:14px;padding:24px 18px;text-align:center;transition:all .2s}
+.team-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.1)}
+.team-av{width:60px;height:60px;border-radius:18px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:26px}
+.team-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:5px}
+.team-role{font-size:11px;color:var(--ink4);line-height:1.5}
+.team-chips{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.team-chip{font-size:10px;padding:2px 8px;border-radius:4px;background:var(--blue-soft);color:var(--blue);font-weight:600}
+.mentor-row{display:flex;justify-content:center}
+.mentor-card{display:inline-flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--slate3);border-radius:12px;padding:14px 24px}
+.mentor-av{width:44px;height:44px;border-radius:13px;background:var(--slate2);display:flex;align-items:center;justify-content:center;font-size:20px}
+.mentor-name{font-size:14px;font-weight:600;color:var(--ink)}
+.mentor-role{font-size:12px;color:var(--ink4)}
+
+/* CTA */
+#cta{background:var(--navy);padding:96px 0;position:relative;overflow:hidden}
+#cta::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 100% 120% at 50% 110%,rgba(37,99,235,.28) 0%,transparent 60%)}
+.cta-inner{position:relative;z-index:1;text-align:center;max-width:680px;margin:0 auto;padding:0 28px}
+.cta-h2{font-size:clamp(30px,5vw,48px);font-weight:700;color:#fff;letter-spacing:-.025em;line-height:1.15;margin-bottom:16px}
+.cta-h2 em{font-style:italic;color:var(--blue3);font-family:'Gowun Batang',serif;font-weight:400}
+.cta-lead{font-size:16px;color:rgba(255,255,255,.48);margin:0 auto 40px;line-height:1.75;max-width:520px}
+.cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:36px}
+.cta-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.cta-badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 12px;border-radius:4px;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.32);letter-spacing:.08em;text-transform:uppercase}
+
+/* FOOTER */
+footer{background:#040c1c;padding:44px 0}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:16px}
+.footer-brand{display:flex;align-items:center;gap:10px}
+.footer-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff}
+.footer-name{font-size:14px;font-weight:700;color:rgba(255,255,255,.6)}
+.footer-links{display:flex;gap:20px}
+.footer-link{font-size:12px;color:rgba(255,255,255,.27);transition:color .15s}
+.footer-link:hover{color:rgba(255,255,255,.6)}
+.footer-copy{font-size:12px;color:rgba(255,255,255,.2);font-family:'JetBrains Mono',monospace}
+.footer-disclaimer{font-size:11px;color:rgba(255,255,255,.17);max-width:700px;margin:0 auto;text-align:center;line-height:1.7;padding-top:16px;border-top:1px solid rgba(255,255,255,.05)}
+
+@media(max-width:960px){
+  .hero-wrap,.about-grid,.demo-grid,.perf-grid{grid-template-columns:1fr}
+  .hero-wrap{gap:48px;padding-top:48px}
+  .feat-grid,.ev-grid{grid-template-columns:1fr}
+  .team-grid{grid-template-columns:repeat(2,1fr)}
+  .pipe-strip{flex-direction:column}
+  .pipe-arr{transform:rotate(90deg);text-align:center;padding:6px 0}
+  .hero-kpis{flex-wrap:wrap}
+  .arch-row{gap:8px}
+}
+@media(max-width:640px){section{padding:64px 0}.nav-links{display:none}.team-grid{grid-template-columns:1fr 1fr}.hkpi{padding:16px 18px}}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-mark">RL</div>
+      <div class="nav-name">Rare-Link AI<small>SKKU AWS SAY 2기 · 2팀</small></div>
+    </a>
+    <div class="nav-links">
+      <a href="#about" class="nl">소개</a>
+      <a href="#features" class="nl">핵심 기능</a>
+      <a href="#demo" class="nl">데모</a>
+      <a href="#arch" class="nl">아키텍처</a>
+      <a href="#perf" class="nl">성능</a>
+      <a href="#team" class="nl">팀</a>
+    </div>
+    <div class="nav-right">
+      <a href="https://d300v14l8u0wx7.cloudfront.net/?demo=1" target="_blank" class="btn-ghost">데모 체험</a>
+      <a href="#cta" class="btn-fill">자세히 보기 →</a>
+    </div>
+  </div>
+</nav>
+
+<section id="hero">
+  <div class="hero-bg">
+    <div class="hb-grid"></div><div class="hb-g1"></div>
+    <div style="position:absolute;bottom:-20%;right:-10%;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.16) 0%,transparent 65%)"></div>
+  </div>
+  <div class="hero-wrap">
+    <div>
+      <div class="hero-eyebrow">
+        <div class="hero-dot"></div>
+        <span class="hero-mono">SKKU AWS SAY 2기 · 2팀 · Final Project 2026</span>
+      </div>
+      <h1 class="hero-h1">의사가<br><em>이미 아는</em> 언어로,<br>희귀 폐질환을<br>놓치지 않게</h1>
+      <p class="hero-lead">
+        <strong>AnatomySooNetV5 (UNet + DenseNet)</strong> 흉부 X선 모델과<br>
+        <strong>HPO 기반 LIRICAL 엔진</strong>이 Orphanet 528종 희귀 폐질환을<br>
+        AWS Step Functions 6단계 파이프라인으로 실시간 스크리닝합니다.
+      </p>
+      <div class="hero-actions">
+        <a href="https://d300v14l8u0wx7.cloudfront.net/?demo=1" target="_blank" class="hero-cta-p">🚀 라이브 데모 체험하기</a>
+        <a href="#features" class="hero-cta-g">핵심 기능 보기 →</a>
+      </div>
+      <div class="hero-kpis">
+        <div class="hkpi"><div class="hkpi-val" style="color:#60a5fa">0.7572</div><div class="hkpi-lbl">Best mAUROC</div><div class="hkpi-sub">14-label · epoch 4 · S3 실측</div></div>
+        <div class="hkpi"><div class="hkpi-val" style="color:#a78bfa">528종</div><div class="hkpi-lbl">희귀 폐질환 DB</div><div class="hkpi-sub">Orphanet · LIRICAL LR≥5.0</div></div>
+        <div class="hkpi"><div class="hkpi-val" style="color:#34d399">6개</div><div class="hkpi-lbl">Lambda 함수</div><div class="hkpi-sub">VPC · ap-northeast-2</div></div>
+        <div class="hkpi"><div class="hkpi-val" style="color:#fb923c">11,514</div><div class="hkpi-lbl">HPO Terms</div><div class="hkpi-sub">OBO Graph JSON · Haiku</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="hero-card">
+        <div class="hc-bar">
+          <div class="hc-dots"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <div class="hc-title">Rare-Link AI · Phase 5 LIRICAL 결과</div>
+        </div>
+        <div class="hc-body">
+          <div class="hc-patient">
+            <div class="hc-urg"></div>
+            <div><div class="hc-pt-name">정○○ · 35세 F · MRN 26-301102</div><div class="hc-pt-sub">LAM 의심 · 재발성 기흉 × 2 · VEGF-D 1200 pg/mL</div></div>
+            <div class="hc-badge">🟣 희귀</div>
+          </div>
+          <div class="hc-cxr">
+            <canvas id="hero-cxr" width="440" height="180"></canvas>
+            <div class="hc-cxr-lbl">AnatomySooNetV5 · Grad-CAM · 컬러맵</div>
+          </div>
+          <div class="hc-slbl">Phase 5 · LIRICAL 희귀질환 스크리닝 (Orphanet LR≥5.0)</div>
+          <div class="hc-dx-row"><span class="hc-dx-r">#1</span><span class="hc-dx-name">림프관평활근종증 (LAM)</span><div class="hc-dx-track"><div class="hc-dx-fill" style="width:86%;background:linear-gradient(90deg,#6366f1,#8b5cf6)"></div></div><span class="hc-dx-pct">86%</span></div>
+          <div class="hc-dx-row"><span class="hc-dx-r">#2</span><span class="hc-dx-name">폐 랑게르한스세포 조직구증</span><div class="hc-dx-track"><div class="hc-dx-fill" style="width:21%;background:#334155"></div></div><span class="hc-dx-pct">21%</span></div>
+          <div class="hc-dx-row"><span class="hc-dx-r">#3</span><span class="hc-dx-name">재발성 자발 기흉</span><div class="hc-dx-track"><div class="hc-dx-fill" style="width:14%;background:#1e293b"></div></div><span class="hc-dx-pct">14%</span></div>
+          <div class="hc-rare"><strong>ORPHA:538 · TSC1/TSC2 유전자 변이 의심</strong><br>VEGF-D 1200 pg/mL (≥800 cut-off) · HRCT + TSC 유전자 검사 즉시 권고</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="au">
+        <div style="margin-bottom:14px"><span class="tag tag-blue">About Rare-Link AI</span></div>
+        <h2 class="about-h2">Rare-Link AI란?<br><em>놓치기 쉬운 희귀질환을</em><br>6단계로 스크리닝</h2>
+        <p class="about-desc">Phase 1(HPO 추출) → Phase 2(X선 추론) → Phase 3(멀티모달 통합) → Phase 4(LLM 검증) → Phase 5(LIRICAL LR) → RAG 소견서 생성까지 — AWS Step Functions가 Lambda 6개를 병렬·순차 오케스트레이션합니다.</p>
+        <div class="about-pts">
+          <div class="about-pt"><div class="about-pt-icon">🧠</div><div class="about-pt-text"><strong>AnatomySooNetV5 (UNet + DenseNet)</strong>Anatomy Soft Attention + A³ Aggregation. 흉부 14개 소견 동시 검출. Best mAUROC 0.7572 (epoch 4, S3 실측).</div></div>
+          <div class="about-pt"><div class="about-pt-icon">🧬</div><div class="about-pt-text"><strong>LIRICAL HPO Likelihood Ratio 엔진</strong>11,514개 HPO term, LR threshold 5.0, Orphanet 528종 희귀 폐질환 스크리닝. phase5-lr-dev Lambda.</div></div>
+          <div class="about-pt"><div class="about-pt-icon">☁️</div><div class="about-pt-text"><strong>Aurora PostgreSQL + Step Functions 풀스택</strong>soopulai 스키마, phase_execution_log 통합 로깅. (DynamoDB 아님)</div></div>
+          <div class="about-pt"><div class="about-pt-icon">⚖️</div><div class="about-pt-text"><strong>EU AI Act Art.22 Human-in-the-Loop</strong>SMART on FHIR v2.2 SSO. 모든 AI 출력에 의사 검토 배너 필수.</div></div>
+        </div>
+      </div>
+      <div class="about-cards au au-d2">
+        <div class="about-card"><div class="about-card-icon" style="background:#eff6ff">🎯</div><div><div class="about-card-val" style="color:var(--blue)">0.7572</div><div class="about-card-lbl">Best mAUROC · S3 실측</div><div class="about-card-note">chexnet-2team-v4 · epoch 4 · training.log 기준</div></div></div>
+        <div class="about-card"><div class="about-card-icon" style="background:#f0fdfa">🟣</div><div><div class="about-card-val" style="color:var(--teal)">528종</div><div class="about-card-lbl">희귀 폐질환 레지스트리</div><div class="about-card-note">Orphanet · lung_dx DB · LR threshold ≥ 5.0</div></div></div>
+        <div class="about-card"><div class="about-card-icon" style="background:#faf5ff">⚡</div><div><div class="about-card-val" style="color:var(--purple)">6개</div><div class="about-card-lbl">Lambda 함수 (VPC 내 배포)</div><div class="about-card-note">ap-northeast-2 · vpc-06dd0ad1f2335ea74</div></div></div>
+        <div class="about-card"><div class="about-card-icon" style="background:#eff6ff">📊</div><div><div class="about-card-val" style="color:var(--blue)">11,514</div><div class="about-card-lbl">HPO Term 매핑</div><div class="about-card-note">OBO Graph JSON · Bedrock Haiku 2-step 추출</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="container">
+    <div class="sec-head au">
+      <span class="tag tag-blue">핵심 기능</span>
+      <h2 class="sec-h2">3축 데이터 분석으로<br><em>완성형 감별진단</em></h2>
+      <p class="sec-p">X선 영상 · 임상 증상 · 혈액검사를 동시 분석해 Orphanet 528종 희귀 폐질환까지 스크리닝합니다.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card fc-blue au">
+        <div class="feat-hdr"><span class="feat-icon">🫁</span><div class="feat-tag-wrap"><span class="tag tag-navy" style="font-size:10px">Phase 2 · SageMaker · say2-2team-phase2-vision</span></div><h3 class="feat-h3">AnatomySooNetV5<br>흉부 X선 AI 판독</h3><div class="feat-eng">UNet lung/heart mask + DenseNet 14-label · Anatomy Soft Attention · A³ Aggregation</div></div>
+        <div class="feat-body"><p class="feat-desc">UNet으로 폐·심장 마스크를 먼저 분리하고, DenseNet이 14개 CheXpert 소견을 동시 검출합니다. Grad-CAM 히트맵을 소견별로 ON/OFF하며 병변 위치를 시각화합니다.</p><div class="feat-metrics"><div class="feat-metric"><div class="feat-metric-val" style="color:var(--blue)">0.7572</div><div class="feat-metric-lbl">mAUROC</div></div><div class="feat-metric"><div class="feat-metric-val" style="color:var(--blue)">0.8572</div><div class="feat-metric-lbl">Edema</div></div><div class="feat-metric"><div class="feat-metric-val" style="color:var(--blue)">0.8563</div><div class="feat-metric-lbl">Pleural Eff.</div></div></div><a href="https://d300v14l8u0wx7.cloudfront.net/?demo=1" target="_blank" class="feat-link" style="color:var(--blue);border-color:var(--blue)">CXR 분석 직접 체험 →</a></div>
+      </div>
+      <div class="feat-card fc-teal au au-d1">
+        <div class="feat-hdr"><span class="feat-icon">🧬</span><div class="feat-tag-wrap"><span class="tag tag-navy" style="font-size:10px">Phase 1 · Bedrock Haiku + Phase 5 · phase5-lr-dev</span></div><h3 class="feat-h3">HPO 기반<br>희귀질환 스크리닝</h3><div class="feat-eng">2-step HPO Discovery → LIRICAL LR engine · LR threshold ≥ 5.0</div></div>
+        <div class="feat-body"><p class="feat-desc">Bedrock Haiku가 11,514개 HPO 코드로 증상을 변환하고, phase5-lr-dev Lambda의 LIRICAL 엔진이 Orphanet 528종 희귀 폐질환과의 우도비를 계산합니다.</p><div class="feat-metrics"><div class="feat-metric"><div class="feat-metric-val" style="color:var(--teal)">528종</div><div class="feat-metric-lbl">희귀 폐질환</div></div><div class="feat-metric"><div class="feat-metric-val" style="color:var(--teal)">LR≥5</div><div class="feat-metric-lbl">검출 임계값</div></div><div class="feat-metric"><div class="feat-metric-val" style="color:var(--teal)">11,514</div><div class="feat-metric-lbl">HPO Terms</div></div></div><a href="https://d300v14l8u0wx7.cloudfront.net/?demo=1" target="_blank" class="feat-link" style="color:var(--teal);border-color:var(--teal)">LIRICAL 결과 직접 체험 →</a></div>
+      </div>
+      <div class="feat-card fc-purple au au-d2">
+        <div class="feat-hdr"><span class="feat-icon">📄</span><div class="feat-tag-wrap"><span class="tag tag-navy" style="font-size:10px">Final · phase5-rag-dev · Bedrock Claude Sonnet 3.5 v2</span></div><h3 class="feat-h3">Hybrid Dual RAG<br>AI 소견서 생성</h3><div class="feat-eng">PubCaseFinder · Monarch Initiative · Orphanet · ClinicalTrials.gov</div></div>
+        <div class="feat-body"><p class="feat-desc">phase5-rag-dev Lambda가 Bedrock Claude Sonnet 3.5 v2를 통해 구조화된 소견서를 스트리밍 생성합니다. PubMed·Orphanet·Monarch Initiative RAG로 최신 근거 문헌 자동 참조.</p><div class="feat-metrics"><div class="feat-metric"><div class="feat-metric-val" style="color:var(--purple)">실시간</div><div class="feat-metric-lbl">스트리밍 생성</div></div><div class="feat-metric"><div class="feat-metric-val" style="color:var(--purple)">편집</div><div class="feat-metric-lbl">의사 수정 가능</div></div><div class="feat-metric"><div class="feat-metric-val" style="color:var(--purple)">PDF</div><div class="feat-metric-lbl">1-click 출력</div></div></div><a href="https://d300v14l8u0wx7.cloudfront.net/?demo=1" target="_blank" class="feat-link" style="color:var(--purple);border-color:var(--purple)">소견서 생성 직접 체험 →</a></div>
+      </div>
+    </div>
+    <div class="pipe-strip au">
+      <div class="pipe-step"><div class="pipe-box"><div class="pipe-num">Phase 1</div><div class="pipe-name">증상 → HPO 변환</div><div class="pipe-engine">phase1-symptom-dev · Bedrock Haiku</div><div class="pipe-ms" style="color:#60a5fa">~1.1s</div></div><div class="pipe-arr">→</div></div>
+      <div class="pipe-step"><div class="pipe-box hl"><div class="pipe-num">Phase 2</div><div class="pipe-name">CXR + Grad-CAM</div><div class="pipe-engine">say2-2team-phase2-vision · SageMaker</div><div class="pipe-ms" style="color:#60a5fa">~2.0s</div></div><div class="pipe-arr">→</div></div>
+      <div class="pipe-step"><div class="pipe-box"><div class="pipe-num">Phase 3</div><div class="pipe-name">멀티모달 통합 스코어링</div><div class="pipe-engine">phase3-scorer-dev · Aurora PG</div><div class="pipe-ms" style="color:#60a5fa">~16s</div></div><div class="pipe-arr">→</div></div>
+      <div class="pipe-step"><div class="pipe-box"><div class="pipe-num">Phase 4 ‖ 5</div><div class="pipe-name">LLM 검증 ‖ LIRICAL LR</div><div class="pipe-engine">phase4-verifier-dev ‖ phase5-lr-dev</div><div class="pipe-ms" style="color:#fb923c">병렬 실행</div></div><div class="pipe-arr">→</div></div>
+      <div class="pipe-step"><div class="pipe-box hlp"><div class="pipe-num">Final (RAG)</div><div class="pipe-name">AI 소견서 생성</div><div class="pipe-engine">phase5-rag-dev · Bedrock Sonnet 3.5 v2</div><div class="pipe-ms" style="color:#a78bfa">~12s</div></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="container">
+    <div class="demo-grid">
+      <div class="au">
+        <div style="margin-bottom:14px"><span class="tag tag-blue">라이브 데모</span></div>
+        <h2 class="demo-h2">지금 바로 체험하세요<br>환자 케이스 7건 내장</h2>
+        <p class="demo-lead">실제 임상 워크플로우를 그대로 구현했습니다. Step Functions 6단계 파이프라인 애니메이션과 함께 감별진단 결과를 실시간으로 확인하세요.</p>
+        <div class="demo-steps">
+          <div class="demo-step"><div class="demo-step-num">1</div><div><div class="demo-step-t">케이스 선택</div><div class="demo-step-s">LAM, IPF, SSc-ILD, COPD, 폐색전증 등 7개 환자 케이스</div></div></div>
+          <div class="demo-step"><div class="demo-step-num">2</div><div><div class="demo-step-t">Phase 1~5 파이프라인 실행 시각화</div><div class="demo-step-s">Step Functions 단계별 진행 상황 및 소요 시간 실시간 표시</div></div></div>
+          <div class="demo-step"><div class="demo-step-num">3</div><div><div class="demo-step-t">CXR Grad-CAM + LR 양방향 바</div><div class="demo-step-s">소견별 히트맵 레이어 ON/OFF · Robinson 2020 방식 지지/반박 시각화</div></div></div>
+          <div class="demo-step"><div class="demo-step-num">4</div><div><div class="demo-step-t">LIRICAL 결과 & AI 소견서</div><div class="demo-step-s">ORPHA 코드 · 유전자 정보 · 다음 검사 권고 · PDF 출력</div></div></div>
+        </div>
+        <div class="demo-btns">
+          <a href="https://d300v14l8u0wx7.cloudfront.net/?demo=1" target="_blank" class="demo-btn-p">🚀 데모 사이트 열기</a>
+          <a href="https://ap-northeast-2.console.aws.amazon.com/s3/home?region=ap-northeast-2" target="_blank" class="demo-btn-s">AWS S3 콘솔 →</a>
+        </div>
+        <div class="hitl-note"><span>⚠️</span><div><strong>Research · Educational Prototype</strong> — SaMD 허가 전 단계. AI 출력은 반드시 주치의 검토 필수. <span class="mono" style="font-size:10px;color:var(--ink4)">[EU AI Act Art.22]</span></div></div>
+      </div>
+      <div class="au au-d1">
+        <div class="mock-browser">
+          <div class="mb-bar"><span class="mb-dot" style="background:#ff5f57"></span><span class="mb-dot" style="background:#febc2e"></span><span class="mb-dot" style="background:#28c840"></span><div class="mb-url">d300v14l8u0wx7.cloudfront.net · DEMO</div></div>
+          <div class="mb-body">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">케이스 워크리스트 · 7명 · 당일 외래</div>
+            <div class="wl-row sel"><div class="wl-urg" style="background:#ef4444"></div><div class="wl-info"><div class="wl-n">정○○ · 35세 F · ORPHA:538</div><div class="wl-d">LAM 의심 · VEGF-D 1200 pg/mL · 재발성 기흉</div></div><div class="wl-pb"><div class="wl-pbt"><div class="wl-pbf" style="width:86%;background:linear-gradient(90deg,#6366f1,#8b5cf6)"></div></div><div class="wl-pv">LIRICAL 86%</div></div><div class="wl-s ws-rare">🟣 희귀</div></div>
+            <div class="wl-row"><div class="wl-urg" style="background:#ef4444"></div><div class="wl-info"><div class="wl-n">최○○ · 67세 M</div><div class="wl-d">편평세포 폐암 의심 · Lung Lesion 85%</div></div><div class="wl-pb"><div class="wl-pbt"><div class="wl-pbf" style="width:58%;background:#475569"></div></div><div class="wl-pv">58%</div></div><div class="wl-s ws-crit">⚠ 긴급</div></div>
+            <div class="wl-row"><div class="wl-urg" style="background:#f97316"></div><div class="wl-info"><div class="wl-n">윤○○ · 58세 M</div><div class="wl-d">폐색전증 의심 · Wells score 계산 필요</div></div><div class="wl-pb"><div class="wl-pbt"><div class="wl-pbf" style="width:74%;background:#2563eb"></div></div><div class="wl-pv">74%</div></div><div class="wl-s ws-done">✓ 완료</div></div>
+            <div class="wl-row"><div class="wl-urg" style="background:#eab308"></div><div class="wl-info"><div class="wl-n">박○○ · 72세 M · ORPHA:2032</div><div class="wl-d">IPF 의심 · UIP 패턴 확인 필요</div></div><div class="wl-pb"><div class="wl-pbt"><div class="wl-pbf" style="width:62%;background:#7c3aed"></div></div><div class="wl-pv">62%</div></div><div class="wl-s ws-rare">🟣 희귀</div></div>
+            <div class="wl-row"><div class="wl-urg" style="background:#22c55e"></div><div class="wl-info"><div class="wl-n">이○○ · 69세 M</div><div class="wl-d">COPD 급성 악화 · No Finding 78%</div></div><div class="wl-pb"><div class="wl-pbt"><div class="wl-pbf" style="width:88%;background:#059669"></div></div><div class="wl-pv">88%</div></div><div class="wl-s ws-done">✓ 완료</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="arch">
+  <div class="container">
+    <div class="sec-head au">
+      <span class="tag tag-blue">AWS 아키텍처</span>
+      <h2 class="sec-h2">Step Functions 기반<br><em>서버리스 풀스택</em></h2>
+      <p class="sec-p">6개 Lambda + Aurora PostgreSQL + Bedrock + SageMaker를 Step Functions가 오케스트레이션합니다.</p>
+    </div>
+    <div class="arch-wrap au">
+      <div class="arch-grid-bg"></div>
+      <div class="arch-in">
+        <div class="arch-lbl">Rare-Link AI · AWS Architecture · ap-northeast-2 · Account: 666803869796</div>
+        <div class="arch-sect">Client Layer</div>
+        <div class="arch-row">
+          <div class="ab blue"><div class="ab-name">React 18 + Vite</div><div class="ab-sub">Frontend · S3 + CloudFront</div></div>
+          <div class="aa">→</div>
+          <div class="ab blue"><div class="ab-name">FastAPI</div><div class="ab-sub">/sessions · /patients · WebSocket</div></div>
+          <div class="aa">→</div>
+          <div class="ab"><div class="ab-name">SMART on FHIR v2.2</div><div class="ab-sub">SSO 인증</div></div>
+          <div class="aa">→</div>
+          <div class="ab"><div class="ab-name">CloudFront CDN</div><div class="ab-sub">d300v14l8u0wx7</div></div>
+        </div>
+        <div class="arch-sep"></div>
+        <div class="arch-sect">Step Functions (rare-link-pipeline-dev)</div>
+        <div class="arch-row">
+          <div class="ab"><div class="ab-name">Parallel(Phase1 ‖ Phase2)</div><div class="ab-sub">HPO 추출 ‖ X선 추론</div></div>
+          <div class="aa">→</div>
+          <div class="ab blue"><div class="ab-name">Phase 3</div><div class="ab-sub">Multimodal Weighted Scoring</div></div>
+          <div class="aa">→</div>
+          <div class="ab"><div class="ab-name">Parallel(Phase4 ‖ Phase5-LR)</div><div class="ab-sub">LLM 검증 ‖ LIRICAL</div></div>
+          <div class="aa">→</div>
+          <div class="ab purple"><div class="ab-name">RAG (Final)</div><div class="ab-sub">소견서 생성</div></div>
+        </div>
+        <div class="arch-sep"></div>
+        <div class="arch-sect">Lambda Functions (VPC: vpc-06dd0ad1f2335ea74)</div>
+        <div class="arch-row">
+          <div class="ab teal"><div class="ab-name">phase1-symptom-dev</div><div class="ab-sub">HPO 추출</div></div>
+          <div class="ab blue"><div class="ab-name">say2-2team-phase2-vision</div><div class="ab-sub">UNet + DenseNet</div></div>
+          <div class="ab blue"><div class="ab-name">phase3-scorer-dev</div><div class="ab-sub">멀티모달 스코어링</div></div>
+          <div class="ab"><div class="ab-name">phase4-verifier-dev</div><div class="ab-sub">LLM 검증</div></div>
+          <div class="ab purple"><div class="ab-name">phase5-lr-dev</div><div class="ab-sub">LIRICAL LR</div></div>
+          <div class="ab purple"><div class="ab-name">phase5-rag-dev</div><div class="ab-sub">Hybrid Dual RAG</div></div>
+        </div>
+        <div class="arch-sep"></div>
+        <div class="arch-sect">Data Layer</div>
+        <div class="arch-row">
+          <div class="ab teal"><div class="ab-name">Aurora PostgreSQL</div><div class="ab-sub">soopulai 스키마</div></div>
+          <div class="aa">·</div>
+          <div class="ab"><div class="ab-name">S3</div><div class="ab-sub">say2-2team-bucket</div></div>
+          <div class="aa">·</div>
+          <div class="ab blue"><div class="ab-name">Bedrock Sonnet 3.5 v2</div><div class="ab-sub">Claude · us.anthropic</div></div>
+          <div class="aa">·</div>
+          <div class="ab"><div class="ab-name">SageMaker</div><div class="ab-sub">AnatomySooNetV5</div></div>
+          <div class="aa">·</div>
+          <div class="ab"><div class="ab-name">lung_dx KB</div><div class="ab-sub">528종 희귀 폐질환</div></div>
+        </div>
+        <div class="aws-tags">
+          <div class="aws-tag on">🟠 Step Functions</div>
+          <div class="aws-tag on">🟠 Lambda × 6</div>
+          <div class="aws-tag on">🟠 SageMaker</div>
+          <div class="aws-tag on">🟠 Bedrock Claude Sonnet 3.5 v2</div>
+          <div class="aws-tag">🟠 Aurora PostgreSQL</div>
+          <div class="aws-tag on">🟠 CloudFront</div>
+          <div class="aws-tag">🟠 S3</div>
+          <div class="aws-tag">🟠 Secrets Manager</div>
+          <div class="aws-tag">🟠 API Gateway</div>
+          <div class="aws-tag">🟠 VPC + NAT Gateway</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="perf">
+  <div class="container">
+    <div class="sec-head au">
+      <span class="tag tag-teal">S3 실측 데이터</span>
+      <h2 class="sec-h2">과장 없는<br><em>실제 학습 결과</em></h2>
+      <p class="sec-p">S3 training.log (chexnet-2team-v4) 기반 실측 성능 지표입니다.</p>
+    </div>
+    <div class="perf-grid au">
+      <div class="pc">
+        <div class="pc-h">🎯 소견별 AUROC — epoch 4 (Best mAUROC: 0.7572)</div>
+        <div class="auroc-rows">
+          <div class="ar-row"><span class="ar-lbl">Edema</span><div class="ar-track"><div class="ar-fill" style="width:85.72%"></div></div><span class="ar-val top">0.8572</span></div>
+          <div class="ar-row"><span class="ar-lbl">Pleural Effusion</span><div class="ar-track"><div class="ar-fill" style="width:85.63%"></div></div><span class="ar-val top">0.8563</span></div>
+          <div class="ar-row"><span class="ar-lbl">Support Devices</span><div class="ar-track"><div class="ar-fill" style="width:83.8%"></div></div><span class="ar-val">0.8380</span></div>
+          <div class="ar-row"><span class="ar-lbl">Pneumothorax</span><div class="ar-track"><div class="ar-fill" style="width:82%"></div></div><span class="ar-val">0.8200</span></div>
+          <div class="ar-row"><span class="ar-lbl">Fracture</span><div class="ar-track"><div class="ar-fill" style="width:78.05%"></div></div><span class="ar-val">0.7805</span></div>
+          <div class="ar-row"><span class="ar-lbl">Consolidation</span><div class="ar-track"><div class="ar-fill" style="width:76.12%"></div></div><span class="ar-val">0.7612</span></div>
+          <div class="ar-row"><span class="ar-lbl">Atelectasis</span><div class="ar-track"><div class="ar-fill" style="width:73.83%"></div></div><span class="ar-val">0.7383</span></div>
+          <div class="ar-row"><span class="ar-lbl">Pneumonia</span><div class="ar-track"><div class="ar-fill" style="width:72.93%"></div></div><span class="ar-val">0.7293</span></div>
+          <div class="ar-row"><span class="ar-lbl">Lung Lesion</span><div class="ar-track"><div class="ar-fill" style="width:70.09%"></div></div><span class="ar-val">0.7009</span></div>
+          <div class="ar-row"><span class="ar-lbl">Cardiomegaly</span><div class="ar-track"><div class="ar-fill" style="width:71.14%"></div></div><span class="ar-val">0.7114</span></div>
+          <div class="ar-row"><span class="ar-lbl">Lung Opacity</span><div class="ar-track"><div class="ar-fill" style="width:62.82%"></div></div><span class="ar-val">0.6282</span></div>
+          <div class="ar-div"></div>
+          <div class="ar-row"><span class="ar-lbl" style="color:var(--blue);font-weight:700">Mean AUROC (13 labels)</span><div class="ar-track"><div class="ar-fill" style="width:75.72%;background:linear-gradient(90deg,var(--purple),var(--blue))"></div></div><span class="ar-val avg">0.7572</span></div>
+        </div>
+        <div class="perf-note">💡 No Finding: N/A (클래스 불균형, F1=0.000 제외) · 학습: MIMIC-CXR-JPG + CheXpert</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <div class="pc">
+          <div class="pc-h">📈 학습 곡선 — chexnet-2team-v4 (9 epochs, Early stopping)</div>
+          <svg id="train-svg" width="100%" height="110" viewBox="0 0 400 110" style="display:block;overflow:visible"></svg>
+          <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--ink4)">
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:3px;background:#2563eb;display:inline-block;border-radius:2px"></span>Train Loss</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:3px;background:#dc2626;display:inline-block;border-radius:2px"></span>Val Loss</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:3px;background:#059669;display:inline-block;border-radius:2px"></span>mAUROC</span>
+          </div>
+        </div>
+        <div class="pc">
+          <div class="pc-h">⚡ Phase별 처리 시간 (S3 문서 기준)</div>
+          <div class="pt-rows">
+            <div class="pt-row"><div class="pt-dot" style="background:#34d399"></div><span class="pt-name">Phase 1 · Bedrock Haiku (HPO)</span><span class="pt-lat" style="color:#34d399">~1.1s</span></div>
+            <div class="pt-row"><div class="pt-dot" style="background:#60a5fa"></div><span class="pt-name">Phase 2 · SageMaker (SooNetV5)</span><span class="pt-lat" style="color:#60a5fa">~2.0s</span></div>
+            <div class="pt-row"><div class="pt-dot" style="background:#60a5fa"></div><span class="pt-name">Phase 3 · Lambda (Multimodal)</span><span class="pt-lat" style="color:#60a5fa">~16s</span></div>
+            <div class="pt-row"><div class="pt-dot" style="background:#fb923c"></div><span class="pt-name">Phase 4 · Bedrock Sonnet</span><span class="pt-lat" style="color:#fb923c">~4.5s</span></div>
+            <div class="pt-row"><div class="pt-dot" style="background:#a78bfa"></div><span class="pt-name">Phase 5-LR · LIRICAL Lambda</span><span class="pt-lat" style="color:#a78bfa">~70s*</span></div>
+            <div class="pt-row"><div class="pt-dot" style="background:#34d399"></div><span class="pt-name">RAG · Hybrid Dual RAG</span><span class="pt-lat" style="color:#34d399">~12s</span></div>
+          </div>
+          <div class="perf-note">*Phase 5-LR: 단독 invoke 70s 정상. SFN 병렬 cold start 시 timeout → Catch+Pass 우회 적용 중.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="evidence">
+  <div class="container">
+    <div class="sec-head au">
+      <span class="tag tag-purple">근거 기반 설계</span>
+      <h2 class="sec-h2">모든 설계에<br><em>논문 근거</em>가 있습니다</h2>
+    </div>
+    <div class="ev-grid au">
+      <div class="ev-card"><div class="ev-journal">Am J Hum Genet · 2020</div><div class="ev-title">LIRICAL: GenePhenotype Likelihood Ratio Interpretation of Clinical AbnormaLities</div><div class="ev-auth">Robinson PN et al. (2020) 107:403–417</div><div class="ev-use">Phase 5 핵심 엔진 — LR threshold 5.0, HPO 우도비 계산 방식 직접 적용</div></div>
+      <div class="ev-card"><div class="ev-journal">Radiol Med · 2023</div><div class="ev-title">Explainable AI in radiology: a white paper of the ESR and ESOR</div><div class="ev-auth">Neri E et al. (2023) 128:755–764</div><div class="ev-use">Grad-CAM 히트맵 + LR 바 기본값 ON — Explainability 설계 원칙의 근거</div></div>
+      <div class="ev-card"><div class="ev-journal">BMC Med Inform · 2003</div><div class="ev-title">Does a diagnosis support system improve the accuracy of clinical diagnosis?</div><div class="ev-auth">Ramnarayan P et al. (2003) 3:8</div><div class="ev-use">Don't miss 플래그 — LR 하위여도 위중 희귀질환은 별도 표시</div></div>
+      <div class="ev-card"><div class="ev-journal">JAMIA · 2016</div><div class="ev-title">SMART on FHIR: a standards-based, interoperable apps platform for EHRs</div><div class="ev-auth">Mandel JC et al. (2016) 23:899–908</div><div class="ev-use">EMR SSO 연동 기반 — SMART Health IT Sandbox v2.2 인증 구현</div></div>
+      <div class="ev-card"><div class="ev-journal">Am J Respir Crit Care Med · 2022</div><div class="ev-title">Idiopathic Pulmonary Fibrosis — ATS/ERS/JRS/ALAT Guideline Update</div><div class="ev-auth">Raghu G et al. (2022) 205:e18–e47</div><div class="ev-use">IPF 진단 기준 — UIP 패턴 HRCT 권고 로직의 임상 근거</div></div>
+      <div class="ev-card"><div class="ev-journal">EU AI Act · 2024/1680/EU</div><div class="ev-title">Regulation on AI Systems — High-risk Medical AI, Article 22</div><div class="ev-auth">Human oversight requirements</div><div class="ev-use">모든 AI 출력 화면에 HITL 배너 필수 표시 — 의료 AI 규정 준수의 법적 근거</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="team">
+  <div class="container">
+    <div class="sec-head au">
+      <span class="tag tag-blue">팀 소개</span>
+      <h2 class="sec-h2">SKKU AWS SAY 2기 · <em>2팀</em></h2>
+      <p class="sec-p">성균관대학교 × AWS 산학협력 프로그램. 희귀 폐질환 AI 진단의 임상 적용 가능성을 연구합니다.</p>
+    </div>
+    <div class="team-grid au">
+      <div class="team-card"><div class="team-av" style="background:#eff6ff">🎨</div><div class="team-name">박성수</div><div class="team-role">Frontend Lead<br>Backend · UI/UX</div><div class="team-chips"><span class="team-chip">React</span><span class="team-chip">FastAPI</span></div></div>
+      <div class="team-card"><div class="team-av" style="background:#f0fdf4">🤖</div><div class="team-name">배기태</div><div class="team-role">Model Training<br>AWS Infra · SageMaker</div><div class="team-chips"><span class="team-chip">PyTorch</span><span class="team-chip">SageMaker</span></div></div>
+      <div class="team-card"><div class="team-av" style="background:#faf5ff">⚙️</div><div class="team-name">허태웅</div><div class="team-role">Model Training<br>AWS Infra · Lambda</div><div class="team-chips"><span class="team-chip">DenseNet</span><span class="team-chip">Lambda</span></div></div>
+      <div class="team-card"><div class="team-av" style="background:#f0fdfa">🧬</div><div class="team-name">권미라</div><div class="team-role">Data Engineering<br>KB · Phase 5 LR 설계</div><div class="team-chips"><span class="team-chip">MIMIC-IV</span><span class="team-chip">LIRICAL</span></div></div>
+      <div class="team-card"><div class="team-av" style="background:#fff7ed">📊</div><div class="team-name">양희인</div><div class="team-role">Data Engineering<br>Orphanet · RAG KB</div><div class="team-chips"><span class="team-chip">Orphanet</span><span class="team-chip">RAG</span></div></div>
+    </div>
+    <div class="mentor-row au">
+      <div class="mentor-card"><div class="mentor-av">👨‍🏫</div><div><div class="mentor-name">이희찬</div><div class="mentor-role">AWS Mentor · Solutions Architect</div></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="cta">
+  <div class="container">
+    <div class="cta-inner">
+      <h2 class="cta-h2">지금 바로<br><em>Rare-Link AI</em>를<br>직접 체험하세요</h2>
+      <p class="cta-lead">설치 없이 브라우저에서 바로 실행됩니다. 7개 환자 케이스와 함께 6단계 AI 파이프라인을 경험하세요.</p>
+      <div class="cta-btns">
+        <a href="https://d300v14l8u0wx7.cloudfront.net/?demo=1" target="_blank" class="hero-cta-p" style="font-size:15px;padding:15px 34px">🚀 데모 사이트 열기</a>
+        <a href="https://github.com/heotaewoong/aws_say2_project" target="_blank" class="hero-cta-g" style="font-size:15px;padding:15px 28px">GitHub →</a>
+      </div>
+      <div class="cta-badges">
+        <span class="cta-badge">EU AI Act Art.22</span>
+        <span class="cta-badge">SMART on FHIR v2.2</span>
+        <span class="cta-badge">Orphanet 528 DX</span>
+        <span class="cta-badge">AWS Step Functions</span>
+        <span class="cta-badge">Aurora PostgreSQL</span>
+        <span class="cta-badge">Research Prototype</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand"><div class="footer-mark">RL</div><div class="footer-name">Rare-Link AI</div></div>
+      <div class="footer-links">
+        <a href="https://d300v14l8u0wx7.cloudfront.net/?demo=1" target="_blank" class="footer-link">라이브 데모</a>
+        <a href="https://github.com/heotaewoong/aws_say2_project" target="_blank" class="footer-link">GitHub</a>
+        <a href="https://ap-northeast-2.console.aws.amazon.com/s3/home?region=ap-northeast-2" target="_blank" class="footer-link">AWS S3 콘솔</a>
+        <a href="https://ap-northeast-2.console.aws.amazon.com/states/home?region=ap-northeast-2" target="_blank" class="footer-link">Step Functions</a>
+      </div>
+      <div class="footer-copy mono">© 2026 SKKU AWS SAY 2기 2팀</div>
+    </div>
+    <div class="footer-disclaimer">본 시스템은 SKKU AWS SAY 2기 2팀의 연구·교육 목적 프로토타입입니다. SaMD 허가 전 단계이며, 모든 AI 출력은 반드시 주치의의 임상적 판단에 따라야 합니다. [EU AI Act Art.22]</div>
+  </div>
+</footer>
+
+<script>
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scroll',window.scrollY>30),{passive:true});
+
+const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target);}}),{threshold:.1,rootMargin:'0px 0px -50px 0px'});
+document.querySelectorAll('.au').forEach(el=>obs.observe(el));
+
+const sids=['about','features','demo','arch','perf','evidence','team'];
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY+80;
+  sids.forEach(id=>{
+    const el=document.getElementById(id),link=document.querySelector(`.nl[href="#${id}"]`);
+    if(!el||!link) return;
+    if(el.offsetTop<=y&&el.offsetTop+el.offsetHeight>y){document.querySelectorAll('.nl').forEach(l=>l.classList.remove('a'));link.classList.add('a');}
+  });
+},{passive:true});
+
+// Hero CXR canvas
+(function(){
+  const cv=document.getElementById('hero-cxr');if(!cv) return;
+  const ctx=cv.getContext('2d'),W=440,H=180;
+  cv.width=W;cv.height=H;
+  ctx.fillStyle='#020509';ctx.fillRect(0,0,W,H);
+  const lg=ctx.createRadialGradient(W/2,H*.44,0,W/2,H*.44,W*.38);
+  lg.addColorStop(0,'rgba(36,36,36,.5)');lg.addColorStop(1,'rgba(6,6,6,0)');
+  ctx.fillStyle=lg;ctx.fillRect(0,0,W,H);
+  drawL(ctx,90,90,62,78,-.07);drawL(ctx,348,92,54,72,.07);
+  ctx.strokeStyle='rgba(165,165,165,.13)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(220,14);ctx.lineTo(220,62);ctx.stroke();
+  ctx.lineWidth=1.8;
+  ctx.beginPath();ctx.moveTo(220,62);ctx.bezierCurveTo(202,70,170,76,155,83);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(220,62);ctx.bezierCurveTo(240,70,272,76,287,83);ctx.stroke();
+  ctx.strokeStyle='rgba(145,145,145,.11)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(12,148);ctx.bezierCurveTo(88,136,340,136,428,148);ctx.stroke();
+  [{x:.15,y:.28,r:.09,s:.78,c:'rgba(239,68,68,'},{x:.79,y:.36,r:.07,s:.61,c:'rgba(59,130,246,'}].forEach(hs=>{
+    const px=hs.x*W,py=hs.y*H,pr=hs.r*W,g=ctx.createRadialGradient(px,py,0,px,py,pr);
+    g.addColorStop(0,hs.c+(hs.s*.75)+')');g.addColorStop(.5,hs.c+(hs.s*.32)+')');g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,pr,0,Math.PI*2);ctx.fill();
+  });
+  function drawL(ctx,cx,cy,rx,ry,t){
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy-ry*.2,Math.max(rx,ry));
+    g.addColorStop(0,'rgba(185,185,185,.17)');g.addColorStop(.6,'rgba(135,135,135,.07)');g.addColorStop(1,'rgba(40,40,40,0)');
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(t);ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();ctx.restore();
+  }
+})();
+
+// Training curve SVG (actual S3 data from chexnet-2team-v4 training.log)
+(function(){
+  const svg=document.getElementById('train-svg');if(!svg) return;
+  const tL=[0.8542,0.813,0.7922,0.7753,0.759,0.7447,0.725,0.7006,0.6573];
+  const vL=[0.8144,0.7811,0.769,0.7589,0.7665,0.7815,0.7796,0.7742,0.7796];
+  const au=[0.7243,0.7368,0.7512,0.7572,0.7553,0.7564,0.7567,0.7516,0.7547];
+  const W=400,H=110,pl=10,pr=10,pt=10,pb=22,cW=W-pl-pr,cH=H-pt-pb;
+  const tx=i=>pl+i*(cW/8);
+  const ty=(v,mn,mx)=>pt+cH-(v-mn)/(mx-mn)*cH;
+  const lmn=0.62,lmx=0.88,amn=0.71,amx=0.775;
+  const mkPath=(a,mn,mx,c,sw=2)=>`<path d="${a.map((v,i)=>i===0?`M${tx(i).toFixed(1)},${ty(v,mn,mx).toFixed(1)}`:`L${tx(i).toFixed(1)},${ty(v,mn,mx).toFixed(1)}`).join(' ')}" stroke="${c}" stroke-width="${sw}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const bx=tx(3),by=ty(0.7572,amn,amx);
+  svg.innerHTML=mkPath(tL,lmn,lmx,'#2563eb')
+    +mkPath(vL,lmn,lmx,'#dc2626')
+    +mkPath(au,amn,amx,'#059669',2.5)
+    +au.map((v,i)=>`<circle cx="${tx(i).toFixed(1)}" cy="${ty(v,amn,amx).toFixed(1)}" r="3" fill="#059669" stroke="#fff" stroke-width="1.2"/>`).join('')
+    +[1,2,3,4,5,6,7,8,9].map((e,i)=>`<text x="${tx(i).toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="JetBrains Mono,monospace">ep${e}</text>`).join('')
+    +`<text x="${bx.toFixed(1)}" y="${(by-9).toFixed(1)}" text-anchor="middle" font-size="9" fill="#059669" font-weight="bold" font-family="JetBrains Mono,monospace">★ Best 0.7572</text>`;
+})();
+</script>
+</body>
+</html>

@@ -279,17 +279,17 @@ flowchart TB
 
 ## 📊 모델 성능
 
-### DenseNet-121 — 14-Label CXR 분류
+### AnatomySooNetV5 (UNet + DenseNet) — 14-Label CXR 분류
 
-> 학습 데이터: NIH ChestX-ray14 + MIMIC-CXR-JPG · 검증: MIMIC-CXR-JPG 외부 검증
+> 학습 데이터: MIMIC-CXR-JPG + CheXpert · 검증: MIMIC-CXR-JPG · 모델: chexnet-2team-v4 · **S3 training.log 실측값**
 
 | 소견 | AUROC | 판정 | 소견 | AUROC | 판정 |
 |------|:-----:|:----:|------|:-----:|:----:|
-| **Pleural Effusion** | **0.982** | 🟢 매우 우수 | Lung Opacity | 0.764 | 🟡 양호 |
-| Edema | 0.884 | 🟢 우수 | Pneumonia | 0.742 | 🟡 양호 |
-| Cardiomegaly | 0.847 | 🟢 우수 | Pneumothorax | 0.775 | 🟡 양호 |
-| Atelectasis | 0.818 | 🟢 우수 | No Finding | 0.726 | 🟡 양호 |
-| Consolidation | 0.784 | 🟡 양호 | **평균 (14 labels)** | **0.776** | |
+| **Edema** | **0.8572** | 🟢 우수 | Fracture | 0.7805 | 🟡 양호 |
+| **Pleural Effusion** | **0.8563** | 🟢 우수 | Consolidation | 0.7612 | 🟡 양호 |
+| Support Devices | 0.8380 | 🟢 우수 | Pneumonia | 0.7293 | 🟡 양호 |
+| Pneumothorax | 0.8200 | 🟢 우수 | Atelectasis | 0.7383 | 🟡 양호 |
+| Lung Opacity | 0.6282 | 🟠 보통 | **평균 (13 labels)** | **0.7572** | |
 
 ### 실험 이력
 
@@ -297,10 +297,10 @@ flowchart TB
 |:---:|------|---------|:------:|:-------:|
 | 2차 | 20K (언더샘플링) | CLAHE + pos_weight | 0.726 | 0.35 |
 | 3차 | 20K + Sampler | 희귀질환 오버샘플링 | 0.729 | 0.38 |
-| **4차** | **220K (전체 MIMIC)** | **전체 데이터 스케일업** | **0.770** | 0.40 |
+| **4차 (v4)** | **220K (전체 MIMIC)** | **전체 데이터 스케일업** | **0.7572** | 0.4390 |
 | 5차(b) | Balanced CSV | 균형 CSV 직접 사용 | 0.764 | **0.478** |
 
-> **핵심 발견**: 데이터 스케일업 (20K → 220K)이 mAUROC **+0.044** 로 가장 큰 성능 향상
+> **핵심 발견**: 데이터 스케일업 (20K → 220K)이 mAUROC 향상 핵심 기여 · v4 Best epoch: 4 (early stopping epoch 9)
 
 ---
 
@@ -312,7 +312,7 @@ flowchart TB
 | **Amazon Bedrock** | Haiku (HPO 추출) · Sonnet 3.5 (감별진단 + 소견서) | `us-east-1` |
 | **AWS Lambda** | 혈액검사 HPO 통합 · LIRICAL 계산 | `ap-northeast-2` |
 | **Amazon S3** | 학습 데이터 · 모델 가중치 (`say2-2team-bucket`) | `ap-northeast-2` |
-| **Amazon DynamoDB** | 일반 질환 스코어링 · 희귀질환 Knowledge Base | `ap-northeast-2` |
+| **Aurora PostgreSQL** | 진단 세션 · phase 실행 로그 · 희귀질환 결과 (`soopulai` 스키마) | `ap-northeast-2` |
 | **Amazon CloudFront** | 프론트엔드 CDN 배포 (`d300v14l8u0wx7`) | `Global` |
 | **AWS CloudFormation** | IaC 인프라 자동화 (원클릭 배포) | `ap-northeast-2` |
 
