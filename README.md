@@ -279,28 +279,37 @@ flowchart TB
 
 ## 📊 모델 성능
 
-### AnatomySooNetV5 (UNet + DenseNet) — 14-Label CXR 분류
+### SooNet V8 최종 — 14-Label CXR 분류
 
-> 학습 데이터: MIMIC-CXR-JPG + CheXpert · 검증: MIMIC-CXR-JPG · 모델: chexnet-2team-v4 · **S3 training.log 실측값**
+> **최종 모델**: SooNet V8 · 학습: MIMIC-CXR-JPG + CheXpert · SageMaker SooNet 통합 보고서 실측값
 
-| 소견 | AUROC | 판정 | 소견 | AUROC | 판정 |
-|------|:-----:|:----:|------|:-----:|:----:|
-| **Edema** | **0.8572** | 🟢 우수 | Fracture | 0.7805 | 🟡 양호 |
-| **Pleural Effusion** | **0.8563** | 🟢 우수 | Consolidation | 0.7612 | 🟡 양호 |
-| Support Devices | 0.8380 | 🟢 우수 | Pneumonia | 0.7293 | 🟡 양호 |
-| Pneumothorax | 0.8200 | 🟢 우수 | Atelectasis | 0.7383 | 🟡 양호 |
-| Lung Opacity | 0.6282 | 🟠 보통 | **평균 (13 labels)** | **0.7572** | |
+| 질환명 | AUROC | F1 | Recall | Precision |
+|--------|:-----:|:--:|:------:|:---------:|
+| No Finding (정상) | **0.851** | 0.440 | 0.557 | 0.364 |
+| Pleural Effusion (흉수) | **0.850** | 0.756 | 0.821 | 0.701 |
+| Support Devices (기기) | 0.840 | **0.794** | **0.856** | **0.740** |
+| Edema (부종) | 0.832 | 0.655 | 0.768 | 0.572 |
+| Lung Lesion (폐 병변) | 0.813 | 0.367 | 0.464 | 0.303 |
+| Pneumothorax (기흉) | 0.799 | 0.430 | 0.435 | 0.425 |
+| Cardiomegaly (심비대) | 0.798 | 0.500 | 0.568 | 0.447 |
+| Pneumonia (폐렴) | 0.792 | 0.487 | 0.572 | 0.424 |
+| Pleural Other (기타 흉막) | 0.779 | 0.204 | 0.304 | 0.153 |
+| Fracture (골절) | 0.747 | 0.264 | 0.358 | 0.209 |
+| Lung Opacity (폐 음영) | 0.704 | 0.705 | **0.885** | 0.586 |
+| Atelectasis (무기폐) | 0.701 | 0.550 | 0.802 | 0.418 |
+| Consolidation (경화) | 0.674 | 0.397 | 0.683 | 0.280 |
+| Enlarged Cardio. (EC) | 0.647 | 0.298 | 0.365 | 0.252 |
+| **Macro Average** | **0.773** | — | **61.5%** | — |
 
-### 실험 이력
+### 단계별 진화 이력
 
-| 차수 | 데이터 | 주요 변경 | mAUROC | Macro F1 |
-|:---:|------|---------|:------:|:-------:|
-| 2차 | 20K (언더샘플링) | CLAHE + pos_weight | 0.726 | 0.35 |
-| 3차 | 20K + Sampler | 희귀질환 오버샘플링 | 0.729 | 0.38 |
-| **4차 (v4)** | **220K (전체 MIMIC)** | **전체 데이터 스케일업** | **0.7572** | 0.4390 |
-| 5차(b) | Balanced CSV | 균형 CSV 직접 사용 | 0.764 | **0.478** |
+| 단계 | 핵심 기법 | Macro AUROC |
+|:---:|---------|:-----------:|
+| Phase 1 (Baseline) | 50:50 Sampler — 편향 붕괴 | 0.744 |
+| Phase 2&3 (V7) | Consist Loss + Asymmetric Loss | 0.772 |
+| **Phase 4 (V8, 최종)** | **F1 집중 강화 + Booster 가중치 + lr 1e-6** | **0.773** |
 
-> **핵심 발견**: 데이터 스케일업 (20K → 220K)이 mAUROC 향상 핵심 기여 · v4 Best epoch: 4 (early stopping epoch 9)
+> **핵심 발견**: 50:50 Sampler로 편향 붕괴 후 Asymmetric Loss로 희귀 병변 미세 수렴 → Fracture 초기 대비 +5.6%p, Consolidation Recall 2배 이상 향상
 
 ---
 
@@ -399,9 +408,49 @@ aws_say2_project/
 ├── 📂 3_soonet_demo/                   # 🎮 독립형 랜딩 페이지 (단일 HTML)
 │   └── index.html                      #   브라우저에서 바로 실행
 │
+├── 📂 docs/images/                     # 📸 스크린샷 · Grad-CAM 이미지
 ├── 📄 README.md                        # ← 이 파일
 └── 📄 .gitignore
 ```
+
+---
+
+## 📂 각 폴더 상세 설명
+
+### 1️⃣ `1_aws_say2_project/` — 최신 개발 버전
+
+> 허태웅 · 배기태 주도 개발. SooNet V8 모델 + 전체 AWS 파이프라인 통합 버전.
+
+| 폴더 | 내용 |
+|------|------|
+| `Phase_1/` | 증상 텍스트 → HPO 코드 추출 (Bedrock Haiku Lambda) |
+| `Phase_2/` | SooNet V8 CXR 추론 + Grad-CAM (SageMaker) |
+| `Phase_3/` | Lab 수치 → HPO 통합 스코어링 (Rule-based Lambda) |
+| `Phase_4/` | LLM 감별진단 검증 Top-3 (Bedrock Sonnet) |
+| `Phase_5/` | LIRICAL LR 희귀질환 528종 스크리닝 |
+| `RAG/` | Hybrid Dual RAG 최종 소견서 (PubMed · Orphanet · ClinicalTrials) |
+| `api/` | FastAPI 백엔드 + Step Functions 연동 |
+| `frontend/` | React 18 + Vite 프론트엔드 |
+| `infra/` | CloudFormation IaC · Lambda · SageMaker 배포 |
+| `database/` | Aurora PostgreSQL DDL · DynamoDB 스키마 |
+| `mock-emr/` | SMART on FHIR 시뮬레이션 EMR |
+
+---
+
+### 2️⃣ `2_aws_say2_project_cloudfront/` — CloudFront 라이브 배포 버전
+
+> 박성수 주도 배포. **현재 실제로 돌아가는 데모** → [d300v14l8u0wx7.cloudfront.net](https://d300v14l8u0wx7.cloudfront.net/?demo=1)
+
+1번 폴더와 동일한 구조이며 추가로:
+- `weights/` — SageMaker 추론 모델 가중치 참조
+- `README.md` — 배포 상세 가이드 + 아키텍처 다이어그램
+
+---
+
+### 3️⃣ `3_soonet_demo/` — 독립형 랜딩 페이지
+
+> `index.html` 하나로 구성된 **Rare-Link AI 프로젝트 소개 페이지**.  
+> 설치 없이 브라우저에서 바로 실행 가능. 데모 링크 · 성능 지표 · 기능 소개 포함.
 
 ---
 

@@ -26,7 +26,8 @@ dist/
 /database/
 /deploy/
 /digital_detox_agent/
-/docs/
+/docs/*.md
+/docs/pipeline_io_examples/
 /eval_norm_link.py
 /frontend/
 /infra/

@@ -279,28 +279,35 @@ flowchart TB
 
 ## 📊 모델 성능
 
-### DenseNet-121 — 14-Label CXR 분류
+### SooNet V8 최종 — 14-Label CXR 분류 (배포 모델)
 
-> 학습 데이터: NIH ChestX-ray14 + MIMIC-CXR-JPG · 검증: MIMIC-CXR-JPG 외부 검증
+> **최종 모델**: SooNet V8 (`soonet_v8_phase4_best.pth`) · S3: `say2-2team-bucket/Phase_2/` · 최종 통합 보고서 실측값
 
-| 소견 | AUROC | 판정 | 소견 | AUROC | 판정 |
-|------|:-----:|:----:|------|:-----:|:----:|
-| **Pleural Effusion** | **0.982** | 🟢 매우 우수 | Lung Opacity | 0.764 | 🟡 양호 |
-| Edema | 0.884 | 🟢 우수 | Pneumonia | 0.742 | 🟡 양호 |
-| Cardiomegaly | 0.847 | 🟢 우수 | Pneumothorax | 0.775 | 🟡 양호 |
-| Atelectasis | 0.818 | 🟢 우수 | No Finding | 0.726 | 🟡 양호 |
-| Consolidation | 0.784 | 🟡 양호 | **평균 (14 labels)** | **0.776** | |
+| 질환명 | AUROC | F1 | Recall | Precision |
+|--------|:-----:|:--:|:------:|:---------:|
+| No Finding (정상) | **0.851** | 0.440 | 0.557 | 0.364 |
+| Pleural Effusion (흉수) | **0.850** | 0.756 | 0.821 | 0.701 |
+| Support Devices (기기) | 0.840 | **0.794** | **0.856** | **0.740** |
+| Edema (부종) | 0.832 | 0.655 | 0.768 | 0.572 |
+| Lung Lesion (폐 병변) | 0.813 | 0.367 | 0.464 | 0.303 |
+| Pneumothorax (기흉) | 0.799 | 0.430 | 0.435 | 0.425 |
+| Cardiomegaly (심비대) | 0.798 | 0.500 | 0.568 | 0.447 |
+| Pneumonia (폐렴) | 0.792 | 0.487 | 0.572 | 0.424 |
+| Pleural Other (기타 흉막) | 0.779 | 0.204 | 0.304 | 0.153 |
+| Fracture (골절) | 0.747 | 0.264 | 0.358 | 0.209 |
+| Lung Opacity (폐 음영) | 0.704 | 0.705 | **0.885** | 0.586 |
+| Atelectasis (무기폐) | 0.701 | 0.550 | 0.802 | 0.418 |
+| Consolidation (경화) | 0.674 | 0.397 | 0.683 | 0.280 |
+| Enlarged Cardio. (EC) | 0.647 | 0.298 | 0.365 | 0.252 |
+| **Macro Average** | **0.773** | — | **61.5%** | — |
 
-### 실험 이력
+### 단계별 진화 이력
 
-| 차수 | 데이터 | 주요 변경 | mAUROC | Macro F1 |
-|:---:|------|---------|:------:|:-------:|
-| 2차 | 20K (언더샘플링) | CLAHE + pos_weight | 0.726 | 0.35 |
-| 3차 | 20K + Sampler | 희귀질환 오버샘플링 | 0.729 | 0.38 |
-| **4차** | **220K (전체 MIMIC)** | **전체 데이터 스케일업** | **0.770** | 0.40 |
-| 5차(b) | Balanced CSV | 균형 CSV 직접 사용 | 0.764 | **0.478** |
-
-> **핵심 발견**: 데이터 스케일업 (20K → 220K)이 mAUROC **+0.044** 로 가장 큰 성능 향상
+| 단계 | 핵심 기법 | Macro AUROC |
+|:---:|---------|:-----------:|
+| Phase 1 (Baseline) | 50:50 Sampler | 0.744 |
+| Phase 2&3 (V7) | Consist Loss + Asymmetric Loss | 0.772 |
+| **Phase 4 (V8, 최종)** | **F1 강화 + Booster + lr 1e-6** | **0.773** |
 
 ---
 
@@ -498,11 +505,11 @@ bash infra/deploy.sh destroy
 
 | 역할 | 이름 | 담당 |
 |:----:|:----:|------|
-| 🎯 Frontend Lead | 박성수 (팀장) | React UI · SMART on FHIR 연동 |
-| 🧠 Model & Infra | 허태웅 | DenseNet-121 학습 · VPC/Subnet · SageMaker |
-| 🧠 Model & Data | 배기태 | 모델 훈련 · 데이터 전처리 |
-| 📊 Data & Backend | 양희인 | MIMIC-IV 데이터 · RAG 백엔드 |
-| 📊 Data & Presentation | 권미라 | 데이터 분석 · 발표자료 |
+| 🎯 Frontend & Backend Lead | 박성수 (팀장) | React UI · SMART on FHIR 연동 · Lambda/Step Functions 통합 |
+| 🧠 Model · RAG · Arch | 허태웅 | SooNet V8 학습 · AWS 아키텍처 · RAG 파이프라인 · 최종 발표 |
+| 🧠 Model & Data | 배기태 | SooNet 모델 훈련 · 데이터 전처리 |
+| 📊 Data | 양희인 | MIMIC-IV 데이터 수집 · 전처리 |
+| 🗃 RAG & DB | 권미라 | RAG 파이프라인 · Aurora PostgreSQL DDL · 데이터 분석 |
 | 🏫 AWS Mentor | 이희찬 | AWS AINATION 멘토링 |
 
 ---
