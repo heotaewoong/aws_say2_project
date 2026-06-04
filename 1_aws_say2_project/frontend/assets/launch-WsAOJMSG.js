@@ -1,0 +1,2 @@
+import{F as c}from"./browser-BR0-WZ3V.js";import{E as a,F as r}from"./emrVendors-Dk-IT2wW.js";const i=new URLSearchParams(window.location.search),s=(i.get("iss")||"").replace(/\/$/,"");function l(n){return n&&Object.values(a).find(o=>n.startsWith(o.fhirBase.replace(/\/$/,"")))||null}const e=l(s),t=e&&e.status==="active"?e:a[r];console.info("[launch] iss:",s||"(none)","· vendor:",t.key,e&&e.status!=="active"?"(fallback from pending_contract)":"");c.oauth2.authorize({client_id:t.clientId,scope:t.scope,redirectUri:"app.html"});
+//# sourceMappingURL=launch-WsAOJMSG.js.map

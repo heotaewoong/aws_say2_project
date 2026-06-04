@@ -1,0 +1,169 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+# Phase 5 — 희귀질환 LR 스코어링 SAM 템플릿
+# 작성자: AWS SAY2기 권미라
+# 작성일: 2026-05-12
+# 근거:
+#   - Phase 3 패턴 (infra/aws/phase3/template.yaml) 기반
+#   - 4-layer-db-team-guide.md: DB 경유 규칙, Secrets Manager
+#   - LR_pipeline_v2.docx 경로 C (희귀질환)
+#   - Robinson et al. LIRICAL, PMID:32755546
+
+Description: >
+  Rare-Link AI Phase 5 — 희귀질환 LR 스코어링 Lambda
+  phase3_integrated_ranking DB 읽기 → LR 계산 → phase5_rare_listing DB 저장
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 30
+    MemorySize: 512
+    Environment:
+      Variables:
+        LOG_LEVEL:            "INFO"
+        LR_THRESHOLD:         "5.0"
+        DEFAULT_BACKGROUND_P: "0.05"
+        RARE_DB_VER:          "rare_disease_profiles_v3_1"
+        LR_PIPELINE_VER:      "LR_pipeline_v2"
+        # DB 연결 (4-layer-db-team-guide.md 기준)
+        DB_HOST:    "patient-db-cluster.cluster-cxmiyawwwhbt.ap-northeast-2.rds.amazonaws.com"
+        DB_PORT:    "5432"
+        DB_NAME:    "rarelink"
+        DB_SCHEMA:  "rarelinkai"
+        DB_SECRET_ARN: "rare-link-ai/aurora/app-user"
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+  YamlS3Bucket:
+    Type: String
+    Default: "say2-2team-bucket"
+    Description: S3 버킷명 (허태웅 확인 후 수정)
+  YamlS3Key:
+    Type: String
+    Default: "Phase_5/rare_disease_profiles_v3_1.yaml"
+    Description: YAML S3 경로 (허태웅 확인 후 수정)
+
+Resources:
+
+  # ── Lambda Layer ────────────────────────────────────────────────────────────
+  Phase5KBLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName:   !Sub "phase5-kb-${Stage}"
+      Description: >
+        희귀질환 KB (rare_disease_profiles_v3_1.yaml) +
+        phase5 스코어링 코드 + psycopg2
+      ContentUri: layer/
+      CompatibleRuntimes:
+        - python3.11
+      RetentionPolicy: Retain
+    Metadata:
+      BuildMethod: python3.11
+
+  # ── Phase 5 Lambda ──────────────────────────────────────────────────────────
+  Phase5LRScorer:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "phase5-lr-scorer-${Stage}"
+      Description:  >
+        Phase 5 희귀질환 LR 스코어링
+        입력: session_id (Step Functions)
+        처리: phase3_integrated_ranking 읽기 → LR 계산
+        출력: phase5_rare_listing 저장
+      CodeUri: lambda/
+      Handler: handler.lambda_handler
+      Layers:
+        - !Ref Phase5KBLayer
+      Environment:
+        Variables:
+          S3_BUCKET: !Ref YamlS3Bucket
+          S3_KEY:    !Ref YamlS3Key
+      Policies:
+        - CloudWatchLogsFullAccess
+        - AWSXRayDaemonWriteAccess
+      Role: "arn:aws:iam::666803869796:role/say2-2team-lambda-role"
+        # Secrets Manager — DB 비밀번호 조회
+        - Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub
+                - "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SecretName}*"
+                - SecretName: "rare-link-ai/aurora/app-user"
+        # S3 — YAML KB 로드
+        - Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+              Resource: !Sub "arn:aws:s3:::${YamlS3Bucket}/${YamlS3Key}"
+      Tracing: Active
+      VpcConfig:
+        # Aurora RDS는 VPC 내부에 있음 — Phase 3 패턴 동일
+        # SubnetIds / SecurityGroupIds는 배포 시 파라미터로 주입
+        SubnetIds:        !Split [",", !Ref VpcSubnetIds]
+        SecurityGroupIds: !Split [",", !Ref VpcSecurityGroupIds]
+
+  # ── CloudWatch 알람 ────────────────────────────────────────────────────────
+  Phase5ErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName:        !Sub "phase5-error-rate-${Stage}"
+      AlarmDescription: Phase 5 Lambda 오류율 5회 초과 시 알람
+      MetricName:       Errors
+      Namespace:        AWS/Lambda
+      Dimensions:
+        - Name:  FunctionName
+          Value: !Ref Phase5LRScorer
+      Statistic:          Sum
+      Period:             300
+      EvaluationPeriods:  1
+      Threshold:          5
+      ComparisonOperator: GreaterThanThreshold
+
+  Phase5DurationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName:        !Sub "phase5-duration-${Stage}"
+      AlarmDescription: Phase 5 Lambda p95 처리 시간 10초 초과 시 알람
+      MetricName:       Duration
+      Namespace:        AWS/Lambda
+      Dimensions:
+        - Name:  FunctionName
+          Value: !Ref Phase5LRScorer
+      Statistic:          p95
+      Period:             300
+      EvaluationPeriods:  1
+      Threshold:          10000
+      ComparisonOperator: GreaterThanThreshold
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+  YamlS3Bucket:
+    Type: String
+    Default: "say2-2team-bucket"
+  YamlS3Key:
+    Type: String
+    Default: "Phase_5/rare_disease_profiles_v3_1.yaml"
+  VpcSubnetIds:
+    Type: String
+    Default: "subnet-02eed659772bac6aa,subnet-08f8d0eaa597b4f04"
+    Description: "Private Subnet 1,2 (say2-2team-private-1, private-2)"
+  VpcSecurityGroupIds:
+    Type: String
+    Default: "sg-08d35c498d8886a98"
+    Description: "say2-2team-sg-lambda"
+
+Outputs:
+  Phase5FunctionArn:
+    Description: Phase 5 Lambda ARN (Step Functions 연결용)
+    Value: !GetAtt Phase5LRScorer.Arn
+  Phase5LayerArn:
+    Description: Phase 5 KB Layer ARN
+    Value: !Ref Phase5KBLayer

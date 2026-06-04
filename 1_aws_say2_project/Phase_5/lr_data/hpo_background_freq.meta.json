@@ -1,0 +1,19 @@
+{
+  "source": "HPO Consortium phenotype.hpoa",
+  "source_version": "version: 2026-02-16",
+  "n_disease_total": 12974,
+  "n_hpo_terms_with_annotation": 11514,
+  "rows_total": 282723,
+  "rows_with_explicit_frequency": 211717,
+  "rows_negated_skipped": 720,
+  "aspect_distribution": {
+    "P": 264965,
+    "C": 8444,
+    "I": 9105,
+    "M": 78,
+    "H": 131
+  },
+  "smoothing_floor": 3.853861569292431e-05,
+  "method": "background_freq(HP) = sum over diseases D of f(HP|D) / N_diseases. Per-disease frequency f parsed from HPOA 'frequency' column: n/m fractions, %, HP:00402xx categorical (Obligate=1.0, Very frequent=0.9, Frequent=0.55, Occasional=0.17, Very rare=0.025, Excluded=0). Missing frequency -> 0.5 (LIRICAL default). Laplace-style floor = 1 / (2 * N_diseases).",
+  "intended_use": "Phase 5 LIRICAL-style scoring denominator. Per Robinson PN et al. Am J Hum Genet 2020;107(3):403-417 (PMID:32755546). LR(HP|D) = freq_in_disease(HP|D) / background_freq(HP)."
+}

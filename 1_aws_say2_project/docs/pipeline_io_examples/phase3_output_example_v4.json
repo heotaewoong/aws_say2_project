@@ -1,0 +1,252 @@
+{
+  "_meta": {
+    "description": "Phase 3 출력 예시 (v4, owner-aligned) — 가상 환자 P00123 (65세 남성, CAP 의심).",
+    "_schema": "rarelinkai.phase3_integrated_ranking (단일 row)",
+    "_format": "PostgreSQL row의 JSON view. 실제 저장은 정규 컬럼 + JSONB 컬럼. JSON 파일 자체는 운영에서 생성 안 됨 (디버깅/API용).",
+    "_owner_decisions_preserved": [
+      "Scoring 공식: clip(weighted + W4 adjustments, 0, 1) — 0~1 capped",
+      "W4(a-g) 7종 보정 (mild/moderate/severe/critical additive 미사용)",
+      "Disease 범위 105 (일반 53 + 기타 52)",
+      "Option E: CheXpert 14 카테고리만, xray_hpo_inferred 무시",
+      "Positive HPO only (negative HPO 미수집)",
+      "Single-stage screening (two-stage 미사용)",
+      "YAML/Excel v3_3/v8 SSOT — disease별 가중치"
+    ]
+  },
+
+  "session_id": "5b7a634d-387f-42ab-b882-955e64ae93d7",
+  "phase": 3,
+  "executed_at": "2026-05-14T09:36:18+09:00",
+
+  "_section_phase1_audit": "── Phase 1 audit snapshot ──",
+  "unified_positive_hpo": [
+    {"hpo": "HP:0001945", "label": "Fever", "label_kr": "발열", "confidence": 0.95},
+    {"hpo": "HP:0012735", "label": "Cough", "label_kr": "기침", "confidence": 0.98},
+    {"hpo": "HP:0033709", "label": "Increased sputum production", "label_kr": "객담 증가", "confidence": 0.90},
+    {"hpo": "HP:0034777", "label": "Purulent sputum", "label_kr": "화농성 객담", "confidence": 0.92},
+    {"hpo": "HP:0002094", "label": "Dyspnea", "label_kr": "호흡곤란", "confidence": 0.88},
+    {"hpo": "HP:0033771", "label": "Pleuritic chest pain", "label_kr": "흉막성 흉통", "confidence": 0.85},
+    {"hpo": "HP:0002789", "label": "Tachypnea", "label_kr": "빈호흡", "confidence": 0.92},
+    {"hpo": "HP:0001649", "label": "Tachycardia", "label_kr": "빈맥", "confidence": 0.93},
+    {"hpo": "HP:0025143", "label": "Chills", "label_kr": "오한", "confidence": 0.80}
+  ],
+  "_note_negative_hpo_excluded": "owner 결정 — Phase 1에서 negative_hpo 추출 안 함. unified_negative_hpo 컬럼 자체 제외.",
+
+  "_section_lab_anomalies": "── Lab 이상치 audit (ingestion 단계에서 severity 계산됨) ──",
+  "lab_anomalies": [
+    {"loinc": "1988-5", "test_name_ko": "CRP", "value": 184.0, "unit": "mg/L",
+     "ref_low": 0.0, "ref_high": 10.0, "abnormal_flag": "H", "severity": "critical"},
+    {"loinc": "6690-2", "test_name_ko": "WBC", "value": 18.5, "unit": "10^3/uL",
+     "ref_low": 4.5, "ref_high": 11.0, "abnormal_flag": "H", "severity": "abnormal"},
+    {"loinc": "33959-8", "test_name_ko": "Procalcitonin", "value": 2.8, "unit": "ng/mL",
+     "ref_low": 0.0, "ref_high": 0.25, "abnormal_flag": "H", "severity": "critical"},
+    {"loinc": "2703-7", "test_name_ko": "pO2", "value": 62.0, "unit": "mmHg",
+     "ref_low": 75.0, "ref_high": 100.0, "abnormal_flag": "L", "severity": "abnormal"},
+    {"loinc": "59408-5", "test_name_ko": "SpO2", "value": 91.0, "unit": "%",
+     "ref_low": 95.0, "ref_high": 100.0, "abnormal_flag": "L", "severity": "abnormal"}
+  ],
+  "lab_ref_ver": "mimic_iv_v3_0",
+
+  "_section_scoring_config": "── Scoring 설정 (owner SSOT) ──",
+  "modality_weights": {
+    "_note": "disease별 다른 가중치 적용됨 (YAML v3_3 SSOT). 본 case의 Top 1 CAP에 적용된 가중치 예시.",
+    "S": 0.30, "L": 0.25, "R": 0.30, "M": 0.15
+  },
+  "thresholds_bonus_config": {
+    "_note": "owner W4(a-g) 7종 보정 config. 팀원 v4의 mild/moderate/severe/critical additive bonus 미사용.",
+    "W4a_critical_lab_bonus": 0.05,
+    "W4b_news2_high_bonus": 0.03,
+    "W4c_negative_pathognomonic": -0.10,
+    "W4d_modality_redistribution": "enabled",
+    "W4e_min_criteria_normalization": 3,
+    "W4f_coverage_factor": "sqrt(active/patient)",
+    "W4g_severity_weighting": {"critical": 2.0, "abnormal": 1.0}
+  },
+
+  "_section_versions": "── 버전 트래킹 ──",
+  "yaml_ssot_ver": "v3_6",
+  "excel_db_ver": "v9",
+  "rare_db_ver": null,
+  "scorer_code_sha": "abc123def456...",
+  "evaluated_disease_count": 104,
+
+  "_section_scoring_result": "── Scoring 결과 (3 JSONB: scoring + ranking + scoring_process) ──",
+  "scoring": [
+    {
+      "disease_key": "community_acquired_pneumonia",
+      "name_en": "Community-acquired pneumonia",
+      "name_kr": "지역사회획득폐렴",
+      "category": "common",
+      "icd10": ["J18.9", "J15.9"],
+      "total_score": 0.8421,
+      "base_score": 0.7600,
+      "weighted_score": 0.7600,
+      "adjustments_total": 0.0821,
+      "confidence": "STRONG",
+      "modality_scores": {"S": 0.667, "L": 0.785, "R": 1.000, "M": 0.333},
+      "weights_applied": {"S": 0.30, "L": 0.25, "R": 0.30, "M": 0.15},
+      "matched_count": 11,
+      "total_criteria": 17
+    },
+    {
+      "disease_key": "bacterial_pneumonia_nec",
+      "name_en": "Bacterial pneumonia, NEC",
+      "name_kr": "기타 명시된 세균성 폐렴",
+      "category": "common",
+      "icd10": ["J15.8"],
+      "total_score": 0.6259,
+      "base_score": 0.5759,
+      "weighted_score": 0.5759,
+      "adjustments_total": 0.0500,
+      "confidence": "MODERATE",
+      "modality_scores": {"S": 0.500, "L": 0.714, "R": 1.000, "M": 0.333},
+      "weights_applied": {"S": 0.30, "L": 0.40, "R": 0.10, "M": 0.20},
+      "matched_count": 8,
+      "total_criteria": 15
+    },
+    {
+      "disease_key": "viral_pneumonia",
+      "name_en": "Viral pneumonia",
+      "name_kr": "바이러스성 폐렴",
+      "category": "common",
+      "icd10": ["J12.9"],
+      "total_score": 0.4187,
+      "base_score": 0.4830,
+      "weighted_score": 0.4187,
+      "adjustments_total": -0.0643,
+      "confidence": "MODERATE",
+      "modality_scores": {"S": 0.667, "L": 0.286, "R": 0.500, "M": 0.000},
+      "weights_applied": {"S": 0.25, "L": 0.20, "R": 0.35, "M": 0.20},
+      "matched_count": 5,
+      "total_criteria": 12
+    }
+  ],
+
+  "ranking": [
+    {"rank": 1, "disease_key": "community_acquired_pneumonia", "icd10": ["J18.9", "J15.9"]},
+    {"rank": 2, "disease_key": "bacterial_pneumonia_nec",      "icd10": ["J15.8"]},
+    {"rank": 3, "disease_key": "viral_pneumonia",              "icd10": ["J12.9"]}
+  ],
+
+  "scoring_process": [
+    {
+      "disease_key": "community_acquired_pneumonia",
+      "evidence": [
+        {"modality": "symptoms", "finding": "Fever",                             "source_hpo": "HP:0001945",   "matched": true,  "severity_weight": 1.0},
+        {"modality": "symptoms", "finding": "Cough",                             "source_hpo": "HP:0012735",   "matched": true,  "severity_weight": 1.0},
+        {"modality": "symptoms", "finding": "Increased sputum production",       "source_hpo": "HP:0033709",   "matched": true,  "severity_weight": 1.0},
+        {"modality": "symptoms", "finding": "Purulent sputum",                   "source_hpo": "HP:0034777",   "matched": true,  "severity_weight": 1.0},
+        {"modality": "radiology","finding": "consolidation",                     "source_chexpert": "Consolidation", "prob": 0.78, "matched": true},
+        {"modality": "radiology","finding": "air bronchogram",                   "source_chexpert": "Pneumonia",     "prob": 0.92, "matched": true,
+         "detail": "expansion via Fleischner 2024 PMID 38411514 + ATS/IDSA CAP 2019 PMID 31573350"},
+        {"modality": "radiology","finding": "infiltrate",                        "source_chexpert": "Pneumonia",     "prob": 0.92, "matched": true},
+        {"modality": "radiology","finding": "opacity",                           "source_chexpert": "Lung Opacity",  "prob": 0.65, "matched": true},
+        {"modality": "lab",      "finding": "Markedly Elevated CRP",             "source_loinc": "1988-5",     "severity": "critical", "severity_weight": 2.0, "matched": true},
+        {"modality": "lab",      "finding": "Leukocytosis",                      "source_loinc": "6690-2",     "severity": "abnormal", "severity_weight": 1.0, "matched": true},
+        {"modality": "lab",      "finding": "Elevated procalcitonin",            "source_loinc": "33959-8",    "severity": "critical", "severity_weight": 2.0, "matched": true},
+        {"modality": "lab",      "finding": "Hypoxemia",                         "source_loinc": "2703-7",     "severity": "abnormal", "severity_weight": 1.0, "matched": true},
+        {"modality": "micro",    "finding": "Streptococcus pneumoniae",          "source": "sputum_culture",   "positivity": "Positive", "matched": true}
+      ],
+      "adjustments": [
+        {"kind": "W4g_severity_weighting",         "delta":  0.000, "reason": "Critical lab 2건 (CRP+PCT) severity_weight 2.0 적용 → L축 ratio 0.785"},
+        {"kind": "W4e_min_criteria_normalization", "delta":  0.000, "reason": "R축 4 match / MIN=3 → ratio 1.0 cap"},
+        {"kind": "W4f_coverage_factor",            "delta":  0.000, "reason": "active 4 / patient 4 → sqrt(1.0)=1.0 (감점 없음)"},
+        {"kind": "W4a_critical_lab_bonus",         "delta":  0.050, "reason": "Critical lab finding (CRP 184) → CAP profile 매칭"},
+        {"kind": "W4b_news2_high_bonus",           "delta":  0.030, "reason": "NEWS2 score 8 ≥ 7 + 감염성 질환"}
+      ],
+      "matched_hpo_phase1": ["HP:0001945", "HP:0012735", "HP:0033709", "HP:0034777"],
+      "matched_chexpert_labels": ["Consolidation", "Pneumonia", "Lung Opacity"],
+      "_note_option_e": "matched_chexpert_labels는 14 카테고리 raw text. xray_hpo_inferred 사용 안 함 (owner Option E)."
+    },
+    {
+      "disease_key": "bacterial_pneumonia_nec",
+      "evidence": [
+        {"modality": "symptoms", "finding": "Fever", "source_hpo": "HP:0001945", "matched": true, "severity_weight": 1.0},
+        {"modality": "radiology","finding": "consolidation",         "source_chexpert": "Consolidation", "prob": 0.78, "matched": true},
+        {"modality": "lab",      "finding": "Markedly Elevated CRP",  "source_loinc": "1988-5", "severity": "critical", "severity_weight": 2.0, "matched": true},
+        {"modality": "lab",      "finding": "Leukocytosis",           "source_loinc": "6690-2", "severity": "abnormal", "severity_weight": 1.0, "matched": true},
+        {"modality": "lab",      "finding": "Elevated procalcitonin", "source_loinc": "33959-8","severity": "critical", "severity_weight": 2.0, "matched": true},
+        {"modality": "micro",    "finding": "Streptococcus pneumoniae","source": "sputum_culture", "positivity": "Positive", "matched": true}
+      ],
+      "adjustments": [
+        {"kind": "W4a_critical_lab_bonus", "delta": 0.050, "reason": "Critical CRP + PCT → bacterial pneumonia"},
+        {"kind": "W4f_coverage_factor",    "delta": 0.000, "reason": "sqrt(4/4)=1.0"}
+      ],
+      "matched_hpo_phase1": ["HP:0001945"],
+      "matched_chexpert_labels": ["Consolidation"]
+    },
+    {
+      "disease_key": "viral_pneumonia",
+      "evidence": [
+        {"modality": "symptoms", "finding": "Fever", "source_hpo": "HP:0001945", "matched": true, "severity_weight": 1.0},
+        {"modality": "symptoms", "finding": "Cough", "source_hpo": "HP:0012735", "matched": true, "severity_weight": 1.0},
+        {"modality": "radiology","finding": "ground glass", "source_chexpert": "Pneumonia", "prob": 0.92, "matched": true}
+      ],
+      "adjustments": [
+        {"kind": "W4f_coverage_factor",    "delta": -0.064, "reason": "active 3 / patient 4 → sqrt(0.75)=0.866 감점"},
+        {"kind": "W4c_negative_pathognomonic", "delta":  0.000, "reason": "음성 pathognomonic 없음"}
+      ],
+      "matched_hpo_phase1": ["HP:0001945", "HP:0012735"],
+      "matched_chexpert_labels": ["Pneumonia"]
+    },
+    {
+      "_comment": "── v3_6 sub_code_radiology_findings B 옵션 — sub-code specific 매칭 example (2026-05-19) ──",
+      "disease_key": "pneumothorax",
+      "evidence": [
+        {"modality": "symptoms", "finding": "Sudden chest pain",    "source_hpo": "HP:0033193", "matched": true, "severity_weight": 1.0},
+        {"modality": "symptoms", "finding": "Dyspnea",              "source_hpo": "HP:0002094", "matched": true, "severity_weight": 1.0},
+        {"modality": "radiology","finding": "visceral pleural line", "source_chexpert": "Pneumothorax", "prob": 0.88, "matched": true,
+         "profile_criterion": "AI keyword match",
+         "detail": "category radiology_findings — Fleischner 2024 PMID:38411514 pneumothorax 15 hits verbatim"},
+        {"modality": "radiology","finding": "absent lung markings",  "source_chexpert": "Pneumothorax", "prob": 0.88, "matched": true,
+         "profile_criterion": "AI keyword match",
+         "detail": "category radiology_findings — Fleischner 2024 PMID:38411514"},
+        {"modality": "radiology","finding": "apical blebs",          "source_chexpert": "Pneumothorax", "prob": 0.88, "matched": true,
+         "profile_criterion": "AI keyword match (sub-code specific)",
+         "matched_sub_code": "J93.11",
+         "sub_code_authority": "Tschopp ERS 2015 PMID:26113675 (primary spontaneous pneumothorax)",
+         "detail": "v3_6 sub_code_radiology_findings B 옵션 — J93.11 (primary spontaneous) specific hallmark. Phase 2 candidate_icd_codes에 J93.11 포함 시 활성"},
+        {"modality": "radiology","finding": "primary spontaneous features", "source_chexpert": "Pneumothorax", "prob": 0.88, "matched": true,
+         "profile_criterion": "AI keyword match (sub-code specific)",
+         "matched_sub_code": "J93.11",
+         "sub_code_authority": "Tschopp ERS 2015 PMID:26113675"}
+      ],
+      "adjustments": [
+        {"kind": "W4f_coverage_factor", "delta": 0.000, "reason": "match 4 / active 4 — full coverage"},
+        {"kind": "W4e_min_criteria_normalization", "delta": 0.000, "reason": "R축 4 match / MIN=3 → ratio 1.0 cap"}
+      ],
+      "matched_hpo_phase1": ["HP:0033193", "HP:0002094"],
+      "matched_chexpert_labels": ["Pneumothorax"],
+      "matched_sub_codes": ["J93.11"],
+      "_note_sub_code_v3_6": "v3_6 B 옵션 매칭 사례 — Phase 2 X-ray AI가 J93.11 후보 출력 시 Tschopp ERS 2015 기반 sub-code specific 토큰 (apical blebs, primary spontaneous features) 추가 매칭. 카테고리 fallback과 분리 가능."
+    }
+  ],
+
+  "_section_meta": "── 운영 메타 ──",
+  "inference_time_ms": 1842,
+  "input_data_meta": {
+    "input_collected_at": "2026-05-14T09:36:12+09:00",
+    "source_phase_executed_at": {
+      "phase1": "2026-05-14T09:30:48+09:00",
+      "phase2_studies": {
+        "d6f5a4b3-2c1e-7d9f-...": "2026-05-14T09:35:42+09:00"
+      }
+    },
+    "result_emitted_at": "2026-05-14T09:36:18+09:00",
+    "data_age": {
+      "oldest_lab_measured_at": "2026-05-13T09:00:00+09:00",
+      "latest_lab_measured_at": "2026-05-14T09:32:00+09:00"
+    },
+    "count_summary": {
+      "phase1_positive_count": 9,
+      "phase2_study_count": 1,
+      "phase2_chexpert_count": 14,
+      "lab_count": 14,
+      "vital_sign_count": 4,
+      "microbiology_count": 1,
+      "disease_evaluated_count": 105,
+      "top_k_returned": 3
+    },
+    "option_e_status": "applied — xray_hpo_inferred ignored, only densenet_findings read from phase2"
+  }
+}
