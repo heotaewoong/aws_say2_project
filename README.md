@@ -374,45 +374,33 @@ flowchart TB
 ```
 aws_say2_project/
 │
-├── 📂 aws_say2_project_vision/        # 🧠 메인 시스템 (AI 모델 + 백엔드)
-│   ├── rag/                            #   RAG 파이프라인 (5단계)
-│   │   ├── bedrock_extractor.py        #     Phase 1: 증상 → HPO (Bedrock Haiku)
-│   │   ├── lirical_scorer.py           #     LIRICAL LR 희귀질환 스코어링
-│   │   ├── general_disease_scorer.py   #     일반 폐질환 가중치 스코어링
-│   │   ├── pubcasefinder.py            #     HPO → 희귀질환 후보 (DBCLS API)
-│   │   ├── orphanet_fetcher.py         #     OrphaCode → 유전자/역학 (로컬 XML)
-│   │   ├── pubmed_fetcher.py           #     질환명 → 케이스리포트 (NCBI API)
-│   │   └── valid/                      #     검증 스크립트 & 보고서
-│   ├── scripts/                        #   학습 / 평가 / 전처리
-│   │   ├── train/                      #     SageMaker Spot 학습 스크립트
-│   │   ├── eval/                       #     AUROC/F1 평가 도구
-│   │   └── preprocess/                 #     MIMIC 전처리 파이프라인
-│   ├── frontend/                       #   React 프론트엔드 (Vite)
-│   ├── infra/                          #   AWS 인프라 (CloudFormation + Lambda)
-│   │   ├── cloudformation/             #     00-simple · 01-network · 02-phase2
-│   │   ├── lambda/                     #     Lambda 컨테이너 (Dockerfile + app.py)
-│   │   └── sagemaker/                  #     SageMaker 추론 엔트리포인트
-│   └── aws_architecture/              #   아키텍처 문서 & 다이어그램
+├── 📂 1_aws_say2_project/              # 🧠 최신 개발 버전 (AI 모델 + 백엔드 + 인프라)
+│   ├── Phase_1/                        #   Phase 1: 증상 → HPO (Bedrock Haiku)
+│   ├── Phase_2/                        #   Phase 2: DenseNet-121 CXR 추론 (SageMaker)
+│   ├── Phase_3/                        #   Phase 3: Lab HPO 통합 스코어링
+│   ├── Phase_4/                        #   Phase 4: LLM 감별진단 검증 (Bedrock Sonnet)
+│   ├── Phase_5/                        #   Phase 5: LIRICAL 희귀질환 스크리닝
+│   ├── RAG/                            #   RAG 파이프라인 (최종 소견서 생성)
+│   │   └── rag_llm_3.py               #     Hybrid Dual RAG — PubMed · Orphanet · ClinicalTrials
+│   ├── api/                            #   FastAPI 백엔드
+│   ├── frontend/                       #   React 18 + Vite 프론트엔드
+│   ├── infra/                          #   AWS 인프라 (CloudFormation + Lambda + SageMaker)
+│   ├── lung_dx/                        #   폐질환 진단 모듈
+│   ├── mock-emr/                       #   Mock EMR (SMART on FHIR 시뮬레이션)
+│   └── database/                       #   Aurora PostgreSQL 스키마 · DynamoDB
 │
-├── 📂 2_aws_say2_project_cloudfront/   # ☁️ CloudFront 배포 프로젝트
-│   ├── Phase_1~5/                      #   단계별 Lambda 함수
+├── 📂 2_aws_say2_project_cloudfront/   # ☁️ CloudFront 배포 버전 (라이브 데모)
+│   ├── Phase_1~5/ · RAG/              #   단계별 Lambda 함수
 │   ├── frontend/                       #   배포용 빌드 결과물
 │   ├── api/                            #   API Gateway 설정
-│   ├── database/                       #   DynamoDB 스키마
+│   ├── weights/                        #   모델 가중치 참조
 │   └── deploy/                         #   S3 + CloudFront 배포 스크립트
 │
-├── 📂 3_soonet_demo/                   # 🎮 독립형 데모 (단일 HTML)
+├── 📂 3_soonet_demo/                   # 🎮 독립형 랜딩 페이지 (단일 HTML)
 │   └── index.html                      #   브라우저에서 바로 실행
 │
-├── 📂 mini_project/                    # 🔬 MVP 프로토타입
-│   ├── app.py                          #   Streamlit 대시보드
-│   ├── cam_results/                    #   Grad-CAM 시각화 이미지
-│   └── soonet_architecture.png         #   아키텍처 다이어그램
-│
-├── 📂 docs/images/                     # 📸 실제 사이트 스크린샷
-│
 ├── 📄 README.md                        # ← 이 파일
-└── 📄 [2팀]프리프로젝트_결과보고서.md  # 프리프로젝트 결과보고서
+└── 📄 .gitignore
 ```
 
 ---
@@ -432,7 +420,7 @@ npx serve 3_soonet_demo/
 ### 프론트엔드 개발
 
 ```bash
-cd aws_say2_project_vision/frontend
+cd 1_aws_say2_project/frontend
 npm install
 npm run dev
 # → http://localhost:5173
@@ -441,8 +429,8 @@ npm run dev
 ### 백엔드 (Python)
 
 ```bash
-cd aws_say2_project_vision
-pip install -r requirements.txt
+cd 1_aws_say2_project
+pip install -r api/requirements.txt
 
 # .env 설정
 cat > .env <<EOF
@@ -452,23 +440,24 @@ AWS_DEFAULT_REGION=ap-northeast-2
 EOF
 
 # RAG 파이프라인 실행
-python rag_pipeline.py
+python RAG/rag_llm_3.py
 ```
 
 ### SooNet 모델 평가
 
 ```bash
-python scripts/eval/eval_soonet_local.py --samples 50
+cd 1_aws_say2_project
+python Phase_2/soo_net_5.py --eval --samples 50
 ```
 
 ### AWS 배포 (원클릭)
 
 ```bash
 # CloudFormation 스택 배포
-bash infra/deploy.sh
+bash 1_aws_say2_project/infra/deploy.sh
 
 # 삭제
-bash infra/deploy.sh destroy
+bash 1_aws_say2_project/infra/deploy.sh destroy
 ```
 
 ---
@@ -498,11 +487,11 @@ bash infra/deploy.sh destroy
 
 | 역할 | 이름 | 담당 |
 |:----:|:----:|------|
-| 🎯 Frontend Lead | 박성수 (팀장) | React UI · SMART on FHIR 연동 |
-| 🧠 Model & Infra | 허태웅 | DenseNet-121 학습 · VPC/Subnet · SageMaker |
+| 🎯 Frontend & Backend Lead | 박성수 (팀장) | React UI · SMART on FHIR 연동 · Lambda/Step Functions 통합 |
+| 🧠 Model · RAG · Arch | 허태웅 | DenseNet-121 학습 · AWS 아키텍처 · RAG 파이프라인 · 최종 발표 |
 | 🧠 Model & Data | 배기태 | 모델 훈련 · 데이터 전처리 |
-| 📊 Data & Backend | 양희인 | MIMIC-IV 데이터 · RAG 백엔드 |
-| 📊 Data & Presentation | 권미라 | 데이터 분석 · 발표자료 |
+| 📊 Data | 양희인 | MIMIC-IV 데이터 수집 · 전처리 |
+| 🗃 RAG & DB | 권미라 | RAG 파이프라인 · Aurora PostgreSQL DDL · 데이터 분석 |
 | 🏫 AWS Mentor | 이희찬 | AWS AINATION 멘토링 |
 
 ---
